@@ -1,0 +1,38 @@
+0. Get a pattent of this game:
+    10S rules: 
+        How many players can play : 2,3,4,6,8
+    Game’s objective: 
+        To catch as much 10s as possible?
+        A.when all the 10S will be catched Game Over
+        Who will win : 
+            1. The Player or Team which has most number of 10S will win
+            2. If two players or Two Teams posses same count of 10S:
+              One who has more points
+1.How Players will get the points: 
+        10 has highest points = 100
+        Ace = 14
+        King = 13
+        Queen = 12
+        Jack = 11
+        2,3,4,5,6,7,8 and 9 has same value as there number.
+        There will be a feature using which players can know a particular card is left in the pile or not
+        Each player / Team has 30 seconds time to play there chance
+        If one player left, he or his Team will be thrown away from the game and his or his team’s cards will be distributed to other players after shuffling.
+2.Game Play : 
+        Total number of cards players will play with : 
+        Two players = 16 each from 1 deck
+        Three players = 17 each from 1 deck
+        Four players = 13 each form 2 decks highest valued
+        Six players = 13 each from 2 decks highest valued
+        Eight players = 13 each from 2 decks highest valued
+
+    First of all 5 cards will be given to everyone
+    With a shuffle one player will be selected to start the game 
+    Every player has to put a card from same pattern, whoever has the greatest valued card will will the “Chaal” and start the next move :
+    If a player does not have same pattern he will make the trump by putting a different pattern card and that pattern will become trump for the game.
+    Whoever has the biggest card or biggest trump will win the current “Chaal”
+    To Catch the 10S a player has to win twice in a row along with one or more 10s.
+    The cards which a person can play will be highlighted (only be accessible to you)
+Chat with your Team mates to share card details and make strategy , tell your friends to put the 10s if they have
+4. How you will earn money : 
+	1. By advertising: Show one add before starting the game every time
