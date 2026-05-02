@@ -5,6 +5,7 @@ import Login from '@/pages/Login'
 import Register from '@/pages/Register'
 import LobbyBrowser from '@/pages/LobbyBrowser'
 import LobbyRoom from '@/pages/LobbyRoom'
+import GameTable from '@/pages/GameTable'
 import CardShowcase from '@/pages/CardShowcase'
 import NotFound from '@/pages/NotFound'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
@@ -32,6 +33,14 @@ function App() {
         element={
           <ProtectedRoute>
             <LobbyRoom />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/game/:gameId"
+        element={
+          <ProtectedRoute>
+            <GameTable />
           </ProtectedRoute>
         }
       />
