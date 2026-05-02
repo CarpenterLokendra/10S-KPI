@@ -356,7 +356,9 @@ async def end_game(
         )
 
     try:
+        from datetime import datetime
         game.status = "finished"
+        game.end_time = datetime.utcnow()
         db.commit()
 
         logger.info(f"🏁 Game ended: {game_id}")
@@ -364,7 +366,9 @@ async def end_game(
         return {
             "message": "Game ended successfully",
             "game_id": game.id,
+            "lobby_id": game.lobby_id,
             "status": game.status,
+            "end_time": game.end_time.isoformat(),
             "final_results": {}  # TODO: Calculate scores
         }
     except Exception as e:

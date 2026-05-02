@@ -16,8 +16,9 @@ from loguru import logger
 import uuid
 
 from database import get_db
-from models import Lobby, User, Game
+from models import Lobby, LobbyPlayer, User, Game
 from security import verify_token
+from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/lobbies", tags=["lobbies"])
 
@@ -68,12 +69,21 @@ async def create_lobby(
             code=lobby_code,
             creator_id=user_id,
             max_players=max_players,
-            current_players=1
+            current_players=1,
+            expires_at=datetime.utcnow() + timedelta(minutes=10)
         )
 
         db.add(lobby)
         db.commit()
         db.refresh(lobby)
+
+        # Add creator to lobby players
+        lobby_player = LobbyPlayer(
+            lobby_id=lobby.id,
+            user_id=user_id
+        )
+        db.add(lobby_player)
+        db.commit()
 
         logger.info(f"✅ Lobby created: {lobby.code} by {user_id}")
 
@@ -125,6 +135,16 @@ async def list_lobbies(
             detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
         )
 
+    # Auto-close expired lobbies
+    expired_lobbies = db.query(Lobby).filter(
+        Lobby.status == "waiting",
+        Lobby.expires_at < datetime.utcnow()
+    ).all()
+    for lobby in expired_lobbies:
+        lobby.status = "closed"
+    if expired_lobbies:
+        db.commit()
+
     lobbies = db.query(Lobby).filter(Lobby.status == lobby_status).all()
 
     logger.info(f"📋 Retrieved {len(lobbies)} lobbies with status: {lobby_status}")
@@ -167,6 +187,26 @@ async def get_lobby_details(code: str, db: Session = Depends(get_db)):
             detail="Lobby not found"
         )
 
+    # Auto-close expired lobbies
+    if lobby.status == "waiting" and lobby.expires_at and datetime.utcnow() > lobby.expires_at:
+        lobby.status = "closed"
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Lobby expired after 10 minutes of inactivity"
+        )
+
+    # Get players in lobby
+    lobby_players = db.query(LobbyPlayer).filter(LobbyPlayer.lobby_id == lobby.id).all()
+    players = [
+        {
+            "user_id": lp.user_id,
+            "username": db.query(User).filter(User.id == lp.user_id).first().username,
+            "joined_at": lp.joined_at.isoformat()
+        }
+        for lp in lobby_players if lp.status.value == "active"
+    ]
+
     logger.info(f"📋 Retrieved lobby details: {code}")
 
     return {
@@ -176,7 +216,10 @@ async def get_lobby_details(code: str, db: Session = Depends(get_db)):
         "current_players": lobby.current_players,
         "status": lobby.status.value,
         "created_at": lobby.created_at,
-        "expires_at": lobby.expires_at
+        "expires_at": lobby.expires_at,
+        "players": players,
+        "can_join": lobby.current_players < lobby.max_players and lobby.status.value == "waiting",
+        "can_start": lobby.current_players >= 2
     }
 
 # ============================================
@@ -222,18 +265,55 @@ async def join_lobby(
             detail="Lobby not found"
         )
 
+    # Auto-close expired lobbies
+    if lobby.expires_at and datetime.utcnow() > lobby.expires_at:
+        lobby.status = "closed"
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Lobby expired after 10 minutes of inactivity"
+        )
+
     if lobby.status != "waiting":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Lobby is not accepting new players"
         )
 
-    # TODO: Add player to lobby
+    if lobby.current_players >= lobby.max_players:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Lobby is full"
+        )
+
+    # Check if already in lobby
+    existing = db.query(LobbyPlayer).filter(
+        LobbyPlayer.lobby_id == lobby.id,
+        LobbyPlayer.user_id == user_id
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Already in this lobby"
+        )
+
+    # Add player to lobby
+    lobby_player = LobbyPlayer(
+        lobby_id=lobby.id,
+        user_id=user_id
+    )
+    db.add(lobby_player)
+    lobby.current_players += 1
+    db.commit()
+    db.refresh(lobby)
+
     logger.info(f"✅ User {user_id} joined lobby: {code}")
 
     return {
         "message": f"Successfully joined lobby {code}",
-        "status": "joined"
+        "status": "joined",
+        "current_players": lobby.current_players
     }
 
 # ============================================
@@ -278,12 +358,37 @@ async def leave_lobby(
             detail="Lobby not found"
         )
 
-    # TODO: Remove player from lobby
+    # Remove player from lobby
+    lobby_player = db.query(LobbyPlayer).filter(
+        LobbyPlayer.lobby_id == lobby.id,
+        LobbyPlayer.user_id == user_id
+    ).first()
+
+    if not lobby_player:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Not in this lobby"
+        )
+
+    db.delete(lobby_player)
+    lobby.current_players = max(0, lobby.current_players - 1)
+
+    # If creator left, reassign to oldest remaining player
+    if str(lobby.creator_id) == user_id:
+        remaining = db.query(LobbyPlayer).filter(LobbyPlayer.lobby_id == lobby.id).order_by(LobbyPlayer.joined_at).first()
+        if remaining:
+            lobby.creator_id = remaining.user_id
+        elif lobby.current_players == 0:
+            # Close lobby if empty
+            lobby.status = "closed"
+
+    db.commit()
     logger.info(f"✅ User {user_id} left lobby: {code}")
 
     return {
         "message": f"Successfully left lobby {code}",
-        "status": "left"
+        "status": "left",
+        "current_players": lobby.current_players
     }
 
 # ============================================
@@ -336,10 +441,32 @@ async def start_game_from_lobby(
             detail="Only lobby creator can start the game"
         )
 
-    logger.info(f"🎮 Game started from lobby: {code}")
+    if lobby.current_players < 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least 2 players are required to start"
+        )
+
+    # Create game linked to this lobby
+    game = Game(
+        lobby_id=lobby.id,
+        creator_id=user_id,
+        num_players=lobby.current_players,
+        game_type="LOBBY"
+    )
+    db.add(game)
+
+    # Update lobby status
+    lobby.status = "in_progress"
+
+    db.commit()
+    db.refresh(game)
+
+    logger.info(f"🎮 Game {game.id} started from lobby: {code}")
 
     return {
         "message": "Game started successfully",
-        "game_id": str(uuid.uuid4()),
+        "game_id": game.id,
+        "lobby_id": lobby.id,
         "status": "started"
     }

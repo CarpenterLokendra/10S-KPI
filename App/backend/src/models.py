@@ -111,6 +111,28 @@ class Lobby(Base):
     def __repr__(self):
         return f"<Lobby {self.code}>"
 
+class LobbyPlayer(Base):
+    __tablename__ = "lobby_players"
+    __table_args__ = (
+        {"schema": SCHEMA},
+        {"uniqueconstraint": ("lobby_id", "user_id")},
+    )
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    lobby_id = Column(String, ForeignKey(f"{SCHEMA}.lobbies.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey(f"{SCHEMA}.users.id"), nullable=False, index=True)
+
+    status = Column(Enum(PlayerStatus), default=PlayerStatus.ACTIVE)
+    joined_at = Column(DateTime, default=datetime.utcnow)
+    left_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    lobby = relationship("Lobby")
+    user = relationship("User")
+
+    def __repr__(self):
+        return f"<LobbyPlayer lobby_id={self.lobby_id} user_id={self.user_id}>"
+
 class Game(Base):
     __tablename__ = "games"
     __table_args__ = {"schema": SCHEMA}
