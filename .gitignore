@@ -1,0 +1,95 @@
+# 🔐 SECURITY - Environment & Secrets
+.env
+.env.local
+.env.*.local
+src/.env
+App/backend/src/.env
+
+# 📦 Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# 🧪 Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# 🔍 IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# 🖥️ OS
+.DS_Store
+.DS_Store?
+._*
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+
+# 📊 Type Checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# 🔧 Development
+.venv
+*.local
+debug.log
+*.db
+*.sqlite
+*.sqlite3
+
+# 📝 Logs
+logs/
+*.log
+
+# 🔐 SSL/TLS Certificates (local development only)
+*.pem
+*.key
+*.crt
+*.cert
+
+# 📂 Database backups
+*.sql
+*.dump
+backups/
+
+# 🎯 Project specific
+App/backend/venv/
+App/backend/.venv/
+initial\ draft/
