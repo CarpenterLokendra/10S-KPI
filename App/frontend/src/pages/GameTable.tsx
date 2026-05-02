@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { CardHand, CardPile } from '@/components/playing-card'
 import {
   TrumpIndicator,
@@ -19,7 +20,9 @@ import { useWebSocket } from '@/hooks/useWebSocket'
 
 export default function GameTable() {
   const { gameId } = useParams<{ gameId: string }>()
+  const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { isGameEnded, lobbyId } = useGameStore()
 
   // Get game state from Zustand
   const {
@@ -41,6 +44,19 @@ export default function GameTable() {
   const [roundWinner, setRoundWinner] = useState<string>()
   const [tensCaught, setTensCaught] = useState<string>()
   const [chatOpen, setChatOpen] = useState(true)
+
+  // Redirect to lobby when game ends
+  useEffect(() => {
+    if (isGameEnded && lobbyId) {
+      // Show toast notification
+      toast.success('🎉 Game finished! Returning to lobby...')
+      // Redirect after 2 seconds
+      const timer = setTimeout(() => {
+        navigate(`/lobbies/${lobbyId}`)
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [isGameEnded, lobbyId, navigate])
 
   // Mock data for demonstration (will be replaced with real data from backend)
   const mockHand = [

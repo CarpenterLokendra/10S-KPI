@@ -22,6 +22,8 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
     addChatMessage,
     setPlayerDisconnected,
     setWebSocketConnected,
+    setGameEnded,
+    setLobbyId,
   } = useGameStore()
 
   const { token } = useAuthStore()
@@ -100,6 +102,14 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
       case 'game-state':
         // Handle full game state updates
         console.log('Game state update:', message)
+        break
+
+      case 'game-ended':
+        if (message.lobby_id) {
+          setLobbyId(message.lobby_id)
+        }
+        setGameEnded(true, message.lobby_id)
+        console.log('Game ended, returning to lobby:', message.lobby_id)
         break
 
       default:

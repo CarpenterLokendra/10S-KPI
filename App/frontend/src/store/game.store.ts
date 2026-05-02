@@ -13,8 +13,11 @@ export interface ChatMessage {
 const initialGameState: GameState & {
   chatMessages: ChatMessage[]
   isWebSocketConnected: boolean
+  lobbyId: string | null
+  isGameEnded: boolean
 } = {
   gameId: null,
+  lobbyId: null,
   status: 'waiting' as GameStatus,
   players: [],
   myHand: [],
@@ -29,6 +32,7 @@ const initialGameState: GameState & {
   lastEventType: null,
   chatMessages: [],
   isWebSocketConnected: false,
+  isGameEnded: false,
 }
 
 export interface GameStoreActions {
@@ -69,6 +73,10 @@ export interface GameStoreActions {
   // WebSocket
   setWebSocketConnected: (connected: boolean) => void
   setGameId: (gameId: string) => void
+  setLobbyId: (lobbyId: string | null) => void
+
+  // Game end
+  setGameEnded: (ended: boolean, lobbyId?: string) => void
 
   // State
   setLastEventType: (eventType: string) => void
@@ -196,10 +204,11 @@ export const useGameStore = create<GameStore>((set) => ({
     set({ lastRoundWinner: winnerId })
   },
 
-  setGameEnded: (winnerId: string) => {
+  setGameEnded: (ended: boolean, lobbyId?: string) => {
     set({
-      status: 'completed' as GameStatus,
-      lastRoundWinner: winnerId,
+      status: ended ? ('completed' as GameStatus) : ('waiting' as GameStatus),
+      isGameEnded: ended,
+      lobbyId: lobbyId || undefined,
     })
   },
 
@@ -223,5 +232,9 @@ export const useGameStore = create<GameStore>((set) => ({
 
   setGameId: (gameId: string) => {
     set({ gameId })
+  },
+
+  setLobbyId: (lobbyId: string | null) => {
+    set({ lobbyId })
   },
 }))
