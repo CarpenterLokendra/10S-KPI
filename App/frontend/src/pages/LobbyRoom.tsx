@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import LobbyCodeDisplay from '@/components/lobby/LobbyCodeDisplay'
 import PlayerSlot from '@/components/lobby/PlayerSlot'
@@ -9,10 +10,31 @@ export default function LobbyRoom() {
   const { code } = useParams<{ code: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
 
   const { data: lobby, isLoading, error } = useLobby(code || null)
   const { mutate: leaveLobby, isPending: isLeaving } = useLeaveLobby()
   const { mutate: startGame, isPending: isStarting } = useStartGame()
+
+  // Calculate time remaining until lobby expires
+  useEffect(() => {
+    if (!lobby?.expires_at) return
+
+    const updateTimer = () => {
+      const expireTime = new Date(lobby.expires_at).getTime()
+      const now = new Date().getTime()
+      const remaining = Math.max(0, Math.floor((expireTime - now) / 1000))
+      setTimeRemaining(remaining)
+
+      if (remaining === 0) {
+        setTimeRemaining(null)
+      }
+    }
+
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+    return () => clearInterval(interval)
+  }, [lobby?.expires_at])
 
   if (!code) {
     return (
@@ -48,38 +70,32 @@ export default function LobbyRoom() {
   const isFull = lobby.current_players >= lobby.max_players
   const canStart = isCreator && lobby.current_players >= 2
 
-  // Mock player list (in real app, would come from backend)
-  const mockPlayers = [
-    { username: user?.username || 'You', isCreator, isYou: true },
-    ...Array(lobby.current_players - 1)
-      .fill(null)
-      .map((_, i) => ({
-        username: `Player ${i + 2}`,
-        isCreator: false,
-        isYou: false,
-      })),
-  ]
+  // Get real players from backend
+  const players = lobby.players || []
+  const isInLobby = players.some(p => p.user_id === user?.id)
 
-  const emptySlots = Array(lobby.max_players - lobby.current_players).fill(null)
+  const emptySlots = Array(Math.max(0, lobby.max_players - lobby.current_players)).fill(null)
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
 
   return (
     <div className="min-h-screen bg-bg-base text-text-primary px-4 py-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-heading-lg font-rajdhani mb-4">Game Lobby</h1>
+          <h1 className="text-heading-lg font-rajdhani mb-4">🎮 Game Lobby</h1>
           <LobbyCodeDisplay code={code} large />
         </div>
 
         {/* Lobby Info */}
-        <div className="card-base grid grid-cols-2 gap-4 mb-8">
+        <div className="card-base grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div>
             <p className="text-text-secondary text-sm">Status</p>
             <p className="text-lg font-semibold text-blue-500 capitalize">{lobby.status}</p>
-          </div>
-          <div>
-            <p className="text-text-secondary text-sm">Game Type</p>
-            <p className="text-lg font-semibold text-gold-500 capitalize">{lobby.game_type}</p>
           </div>
           <div>
             <p className="text-text-secondary text-sm">Players</p>
@@ -88,23 +104,27 @@ export default function LobbyRoom() {
             </p>
           </div>
           <div>
-            <p className="text-text-secondary text-sm">Privacy</p>
-            <p className="text-lg font-semibold capitalize">
-              {lobby.is_private ? 'Private' : 'Public'}
+            <p className="text-text-secondary text-sm">Expires In</p>
+            <p className={`text-lg font-semibold ${timeRemaining && timeRemaining < 60 ? 'text-red-500 animate-pulse' : 'text-gold-500'}`}>
+              {timeRemaining !== null ? formatTime(timeRemaining) : '—'}
             </p>
+          </div>
+          <div>
+            <p className="text-text-secondary text-sm">In Lobby</p>
+            <p className="text-lg font-semibold">{isInLobby ? '✓' : '✗'}</p>
           </div>
         </div>
 
-        {/* Players Grid */}
+        {/* Players List */}
         <div className="mb-8">
-          <h2 className="text-heading-md font-rajdhani mb-4">Players</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {mockPlayers.map((player, idx) => (
+          <h2 className="text-heading-md font-rajdhani mb-4">👥 Players</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {players.map((player) => (
               <PlayerSlot
-                key={idx}
-                username={player.username}
-                isCreator={player.isCreator}
-                isYou={player.isYou}
+                key={player.user_id}
+                username={player.username || `Player ${player.user_id.slice(0, 8)}`}
+                isCreator={player.user_id === lobby.creator_id}
+                isYou={player.user_id === user?.id}
               />
             ))}
             {emptySlots.map((_, idx) => (
@@ -120,7 +140,15 @@ export default function LobbyRoom() {
           </div>
         )}
 
-        {!isFull && (
+        {!isFull && !isInLobby && (
+          <div className="card-base bg-blue-500 bg-opacity-10 border border-blue-500 mb-6">
+            <p className="text-blue-500">
+              You're viewing this lobby. {lobby.max_players - lobby.current_players} spot{lobby.max_players - lobby.current_players === 1 ? '' : 's'} available.
+            </p>
+          </div>
+        )}
+
+        {!isFull && isInLobby && (
           <div className="card-base bg-blue-500 bg-opacity-10 border border-blue-500 mb-6">
             <p className="text-blue-500">
               Waiting for {lobby.max_players - lobby.current_players} more{' '}
@@ -131,33 +159,32 @@ export default function LobbyRoom() {
 
         {/* Action Buttons */}
         <div className="flex gap-4">
-          {isCreator && (
+          {isCreator && isInLobby && (
             <Button
-              flex="1"
+              flex
               size="lg"
               onClick={() => startGame(code)}
-              loading={isStarting}
-              disabled={!canStart}
-              variant={canStart ? 'primary' : 'ghost'}
+              disabled={!canStart || isStarting}
+              variant={canStart ? 'primary' : 'secondary'}
             >
-              {!canStart ? 'Need 2+ Players' : 'Start Game'}
+              {isStarting ? 'Starting...' : !canStart ? '⏳ Need 2+ Players' : '▶️ Start Game'}
             </Button>
           )}
           <Button
-            flex={isCreator ? 0 : 1}
+            flex
             size="lg"
-            variant="secondary"
-            onClick={() => leaveLobby(code)}
-            loading={isLeaving}
+            variant={isInLobby ? 'secondary' : 'primary'}
+            onClick={() => isInLobby ? leaveLobby(code) : navigate('/lobbies')}
+            disabled={isLeaving || isStarting}
           >
-            Leave Lobby
+            {isInLobby ? (isLeaving ? 'Leaving...' : '👋 Leave Lobby') : '← Back to Lobbies'}
           </Button>
         </div>
 
         {/* Creator Info */}
-        {!isCreator && (
-          <p className="text-center text-text-muted text-sm mt-6">
-            Waiting for the creator to start the game...
+        {!isCreator && isInLobby && (
+          <p className="text-center text-text-secondary text-sm mt-6">
+            ⏳ Waiting for the creator to start the game...
           </p>
         )}
       </div>

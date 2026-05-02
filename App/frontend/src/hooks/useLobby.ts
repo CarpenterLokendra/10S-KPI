@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { useEffect, useRef } from 'react'
 import { lobbyService } from '@/services/lobby.service'
 import type { LobbyCreate } from '@/types/lobby'
 import { ROUTES } from '@/constants/routes'
@@ -15,7 +16,10 @@ export function useLobbies(status: string = 'waiting') {
 }
 
 export function useLobby(code: string | null) {
-  return useQuery({
+  const navigate = useNavigate()
+  const expiredNotifiedRef = useRef(false)
+
+  const query = useQuery({
     queryKey: ['lobby', code],
     queryFn: () => {
       if (!code) throw new Error('Lobby code required')
@@ -25,6 +29,19 @@ export function useLobby(code: string | null) {
     refetchInterval: 5000, // Poll every 5 seconds
     staleTime: 2000,
   })
+
+  // Detect lobby expiration
+  useEffect(() => {
+    if (query.data?.status === 'closed' && !expiredNotifiedRef.current) {
+      expiredNotifiedRef.current = true
+      toast.error('⏰ Lobby expired after 10 minutes of inactivity')
+      setTimeout(() => {
+        navigate(ROUTES.LOBBY_BROWSER)
+      }, 2000)
+    }
+  }, [query.data?.status, navigate])
+
+  return query
 }
 
 export function useCreateLobby() {
@@ -83,11 +100,13 @@ export function useLeaveLobby() {
 
 export function useStartGame() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (code: string) => lobbyService.startGame(code),
     onSuccess: (data) => {
-      toast.success('Game started!')
+      toast.success('🎮 Game started!')
+      queryClient.invalidateQueries({ queryKey: ['lobby'] })
       navigate(`/game/${data.game_id}`)
     },
     onError: (error: any) => {
