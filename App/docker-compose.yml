@@ -1,0 +1,79 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: 10s_db
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - 10s_network
+    restart: unless-stopped
+
+  # Backend API (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: 10s_backend
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-postgres}
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8000
+      SERVER_RELOAD: ${SERVER_RELOAD:-true}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-your_secret_key_here_change_in_production}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-24}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      TURN_TIMEOUT_SECONDS: ${TURN_TIMEOUT_SECONDS:-30}
+      DISCONNECTION_TIMEOUT_SECONDS: ${DISCONNECTION_TIMEOUT_SECONDS:-120}
+      LOBBY_EXPIRY_SECONDS: ${LOBBY_EXPIRY_SECONDS:-180}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - 10s_network
+    restart: unless-stopped
+    volumes:
+      - ./backend/logs:/app/logs
+
+  # Frontend (React + Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: 10s_frontend
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8000}
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - 10s_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  10s_network:
+    driver: bridge
