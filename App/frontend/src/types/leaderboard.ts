@@ -22,9 +22,10 @@ export interface PlayerStatistics {
   rank: number
 }
 
-export interface GlobalStats {
-  total_games_played: number
+export interface LeaderboardStats {
   total_players: number
-  average_game_duration: number
-  most_common_player_count: number
+  total_games_played: number
+  average_player_rating: number
+  highest_rating: number
+  statistics_updated: string
 }

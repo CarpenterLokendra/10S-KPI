@@ -6,7 +6,10 @@ import Register from '@/pages/Register'
 import LobbyBrowser from '@/pages/LobbyBrowser'
 import LobbyRoom from '@/pages/LobbyRoom'
 import GameTable from '@/pages/GameTable'
+import GameEnd from '@/pages/GameEnd'
 import CardShowcase from '@/pages/CardShowcase'
+import Leaderboard from '@/pages/Leaderboard'
+import Profile from '@/pages/Profile'
 import NotFound from '@/pages/NotFound'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import GameRoute from '@/components/layout/GameRoute'
@@ -50,6 +53,38 @@ function App() {
         element={
           <ProtectedRoute>
             <CardShowcase />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/game/:gameId/end"
+        element={
+          <GameRoute>
+            <GameEnd />
+          </GameRoute>
+        }
+      />
+      <Route
+        path="/leaderboard"
+        element={
+          <ProtectedRoute>
+            <Leaderboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile/:userId"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         }
       />
