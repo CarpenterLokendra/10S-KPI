@@ -9,6 +9,7 @@ import GameTable from '@/pages/GameTable'
 import CardShowcase from '@/pages/CardShowcase'
 import NotFound from '@/pages/NotFound'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
+import GameRoute from '@/components/layout/GameRoute'
 
 function App() {
   return (
@@ -39,9 +40,9 @@ function App() {
       <Route
         path="/game/:gameId"
         element={
-          <ProtectedRoute>
+          <GameRoute>
             <GameTable />
-          </ProtectedRoute>
+          </GameRoute>
         }
       />
       <Route
