@@ -50,7 +50,7 @@ export default function LobbyRoom() {
 
   // Calculate time remaining until lobby expires
   useEffect(() => {
-    if (!lobby?.expires_at) {
+    if (!lobby || !lobby.expires_at) {
       setTimeRemaining(null)
       return
     }
@@ -62,6 +62,7 @@ export default function LobbyRoom() {
 
         // Check if date parsing was successful
         if (isNaN(expireTime)) {
+          console.error('Failed to parse expires_at:', lobby.expires_at)
           setTimeRemaining(null)
           return
         }
@@ -81,7 +82,7 @@ export default function LobbyRoom() {
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
-  }, [lobby?.expires_at])
+  }, [lobby])
 
   // Sync messages from API
   useEffect(() => {
