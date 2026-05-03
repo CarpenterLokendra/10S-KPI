@@ -137,6 +137,14 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
         setGameEnded(true, message.lobby_id, message.username)
         break
 
+      case 'game-timeout':
+        console.log('⏰ Game timeout: No moves for 20 minutes')
+        if (message.lobby_id) {
+          setLobbyId(message.lobby_id)
+        }
+        setGameEnded(true, message.lobby_id, 'Game timeout (20 minutes)')
+        break
+
       case 'game-ended':
         if (message.lobby_id) {
           setLobbyId(message.lobby_id)

@@ -19,7 +19,7 @@ from collections import defaultdict
 from ..database import get_db
 from ..models import Lobby, LobbyPlayer, User, Game, GamePlayer
 from ..security import verify_token
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # In-memory storage for lobby chat messages
 lobby_messages = defaultdict(list)
@@ -477,7 +477,8 @@ async def start_game_from_lobby(
             lobby_id=lobby.id,
             creator_id=user_id,
             num_players=lobby.current_players,
-            game_type="LOBBY"
+            game_type="LOBBY",
+            start_time=datetime.utcnow()  # Set game start time for timeout tracking
         )
         db.add(game)
         db.flush()  # Flush to get the game ID

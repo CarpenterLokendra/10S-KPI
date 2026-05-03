@@ -69,10 +69,13 @@ export default function GameTable() {
   // Redirect to lobby when game ends or is cancelled
   useEffect(() => {
     if (isGameEnded && lobbyId) {
-      // Show toast with the player's name who quit
-      const message = quitterUsername
-        ? `⚠️ ${quitterUsername} left the game. Returning to lobby...`
-        : '⚠️ A player left the game. Returning to lobby...'
+      // Show appropriate message based on why game ended
+      let message = '⚠️ A player left the game. Returning to lobby...'
+      if (quitterUsername === 'Game timeout (20 minutes)') {
+        message = '⏰ Game timeout: No moves made in 20 minutes. Returning to lobby...'
+      } else if (quitterUsername) {
+        message = `⚠️ ${quitterUsername} left the game. Returning to lobby...`
+      }
       toast.error(message)
       // Redirect after 2 seconds
       const timer = setTimeout(() => {

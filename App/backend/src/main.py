@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 import os
+import asyncio
 from dotenv import load_dotenv
 from loguru import logger
 from sqlalchemy.orm import Session
@@ -201,6 +202,63 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+# Game timeout tracking (20 minutes = 1200 seconds)
+GAME_TIMEOUT_SECONDS = 20 * 60  # 20 minutes
+game_timeout_tasks = {}
+
+async def handle_game_timeout(game_id: str):
+    """Handle game timeout - terminate game and redirect all players to lobby"""
+    try:
+        db = SessionLocal()
+        game = db.query(models.Game).filter(models.Game.id == game_id).first()
+
+        if game and game.status != "ENDED":
+            logger.warning(f"⏰ GAME TIMEOUT: Game {game_id} exceeded 20 minutes")
+
+            lobby_id = game.lobby_id
+
+            # Mark game as ended
+            game.status = "ENDED"
+            game.end_time = datetime.utcnow()
+            db.commit()
+            logger.info(f"   ✅ Game marked as ENDED")
+
+            # Broadcast timeout message to all players
+            logger.info(f"   📢 Broadcasting game-timeout to all players...")
+            await manager.broadcast(game_id, {
+                "type": "game-timeout",
+                "message": "Game timeout: No moves made for 20 minutes",
+                "lobby_id": lobby_id,
+                "timestamp": datetime.utcnow().isoformat()
+            })
+
+            logger.info(f"✅ All players notified of timeout. Redirecting to lobby {lobby_id}")
+
+        db.close()
+    except Exception as e:
+        logger.error(f"❌ Error handling game timeout: {str(e)}", exc_info=True)
+    finally:
+        # Clean up the timeout task
+        if game_id in game_timeout_tasks:
+            del game_timeout_tasks[game_id]
+
+async def schedule_game_timeout(game_id: str):
+    """Schedule a timeout check for a game (20 minutes)"""
+    logger.info(f"⏰ Scheduling 20-minute timeout for game {game_id}")
+
+    # Cancel any existing timeout for this game
+    if game_id in game_timeout_tasks:
+        game_timeout_tasks[game_id].cancel()
+
+    # Create a new timeout task
+    async def timeout_callback():
+        await asyncio.sleep(GAME_TIMEOUT_SECONDS)
+        await handle_game_timeout(game_id)
+
+    import asyncio
+    task = asyncio.create_task(timeout_callback())
+    game_timeout_tasks[game_id] = task
+
 async def handle_game_disconnect(game_id: str, user_id: str):
     """Handle game cancellation when a player disconnects/quits"""
     try:
@@ -270,6 +328,10 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
     await manager.connect(game_id, user_id, websocket)
 
     try:
+        # Schedule game timeout if not already scheduled
+        if game_id not in game_timeout_tasks:
+            await schedule_game_timeout(game_id)
+
         # Fetch game and player data from database
         db = SessionLocal()
         try:
