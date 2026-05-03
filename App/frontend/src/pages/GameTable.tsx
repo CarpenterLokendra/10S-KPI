@@ -349,11 +349,9 @@ export default function GameTable() {
             </div>
           </div>
 
-          {/* Play Card button */}
+          {/* Play Card button - styled */}
           <div className="flex-shrink-0">
-            <Button
-              variant="primary"
-              size="lg"
+            <button
               onClick={handlePlayCard}
               disabled={selectedCardIndex === undefined || !isWebSocketConnected || currentTurnDemo !== user?.id}
               title={
@@ -365,9 +363,27 @@ export default function GameTable() {
                       ? 'Select a card first'
                       : ''
               }
+              className="text-white font-bold text-sm transition-all hover:scale-105"
+              style={{
+                background:
+                  selectedCardIndex !== undefined && isWebSocketConnected && currentTurnDemo === user?.id
+                    ? 'linear-gradient(135deg, #2563eb, #1d4ed8)'
+                    : 'rgba(30,35,48,0.7)',
+                borderRadius: '16px',
+                padding: '14px 28px',
+                border: 'none',
+                cursor:
+                  selectedCardIndex !== undefined && isWebSocketConnected && currentTurnDemo === user?.id
+                    ? 'pointer'
+                    : 'not-allowed',
+                opacity:
+                  selectedCardIndex !== undefined && isWebSocketConnected && currentTurnDemo === user?.id
+                    ? 1
+                    : 0.5,
+              }}
             >
               Play Card
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -388,6 +404,19 @@ export default function GameTable() {
 
       {/* Tens Caught Celebration */}
       <TensCaughtCelebration playerName={tensCaught} onDismiss={() => setTensCaught(undefined)} />
+
+      {/* Mobile Floating Chat Button */}
+      <button
+        className="lg:hidden fixed bottom-28 right-4 z-50 w-14 h-14 rounded-full flex items-center justify-center text-2xl transition-transform hover:scale-110"
+        style={{
+          background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+          boxShadow: '0 4px 20px rgba(59,130,246,0.4)',
+        }}
+        onClick={() => setChatOpen(true)}
+        title="Open chat"
+      >
+        💬
+      </button>
     </div>
   )
 }
