@@ -18,7 +18,7 @@ export default function CardPile({
   cardSize = 'md',
   layout = 'cascade',
 }: CardPileProps) {
-  const displayCards = layout === 'cascade' ? cards.slice(-3) : cards.slice(-1)
+  const displayCards = layout === 'cascade' ? cards.slice(-5) : cards.slice(-1)
 
   return (
     <div className={`relative inline-block ${className}`}>
@@ -38,12 +38,12 @@ export default function CardPile({
         </div>
       )}
 
-      {/* Played cards pile */}
-      <div className="relative w-24 h-32">
+      {/* Played cards pile - larger, more prominent */}
+      <div className="relative w-[300px] h-[200px] border border-white/5 rounded-2xl" style={{ boxShadow: '0 0 40px rgba(0,0,0,0.4)' }}>
         <AnimatePresence mode="popLayout">
           {displayCards.map((card, index) => {
-            const offset = layout === 'cascade' ? index * 8 : 0
-            const rotationVariation = layout === 'cascade' ? (index - 1) * 5 : 0
+            const offset = layout === 'cascade' ? index * 14 : 0
+            const rotationVariation = layout === 'cascade' ? (index - 2) * 7 : 0
 
             return (
               <motion.div

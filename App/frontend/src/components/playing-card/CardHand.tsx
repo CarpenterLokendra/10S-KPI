@@ -40,14 +40,14 @@ export default function CardHand({
     const N = cardCount
     if (N === 0) return { containerWidth: 0, containerHeight: 0, positions: [] }
 
-    // Stacked cards in curved fan arrangement
-    const totalSpreadDegrees = 50 // Spread angle for curve
+    // Stacked cards in curved fan arrangement - wider, more natural look
+    const totalSpreadDegrees = 70 // Wider spread for natural fan (was 50°)
     const totalSpreadRadians = (totalSpreadDegrees * Math.PI) / 180
-    const radius = 280 // Arc radius
+    const radius = 320 // Larger arc radius (was 280)
 
-    // Stacking offsets
-    const stackOffsetX = 0.5 // Extremely minimal offset for near-complete overlap
-    const stackOffsetY = 0.2 // Extremely minimal offset for near-complete overlap
+    // Stacking offsets - natural card overlap
+    const stackOffsetX = 12 // Natural card overlap (was 0.5px)
+    const stackOffsetY = 3 // Natural card overlap (was 0.2px)
 
     // Calculate positions on arc with stacking
     const centerIndex = (N - 1) / 2
@@ -160,7 +160,7 @@ export default function CardHand({
                 <motion.div
                   animate={{
                     rotate: isSelected ? rotation - 3 : rotation,
-                    y: isSelected ? -25 : isHovered ? -15 : 0,
+                    y: isSelected ? -35 : isHovered ? -20 : 0,
                   }}
                   whileHover={isPlayable ? { scale: 1.06 } : {}}
                   transition={{ type: 'spring', stiffness: 300, damping: 25 }}

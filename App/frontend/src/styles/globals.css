@@ -155,11 +155,13 @@ select:focus {
   background-size: 50px 50px;
 }
 
-/* Card styling utility */
+/* Card styling utility - glassmorphism */
 .card-base {
-  background-color: var(--color-bg-surface);
-  border-radius: 8px;
-  border: 1px solid #374151;
+  background: rgba(22, 26, 35, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
   padding: 1rem;
 }
 

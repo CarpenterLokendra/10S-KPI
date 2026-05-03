@@ -180,12 +180,29 @@ export default function GameTable() {
   const handCards = myHand
 
   return (
-    <div className="h-screen flex flex-col bg-table-felt text-text-primary relative">
-      {/* Felt background effect */}
-      <div className="absolute inset-0 opacity-30 pointer-events-none bg-gradient-to-b from-table-felt to-black z-0"></div>
+    <div
+      className="h-screen flex flex-col text-text-primary relative"
+      style={{
+        background: 'radial-gradient(ellipse at center, #0d7a46 0%, #065f46 45%, #022c22 100%)',
+        minHeight: '100vh',
+      }}
+    >
+      {/* Vignette overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{ boxShadow: 'inset 0 0 120px rgba(0,0,0,0.5)' }}
+      />
 
       {/* === TOP BAR === */}
-      <div className="flex-shrink-0 bg-bg-surface/90 border-b border-gray-700 px-3 py-2 flex items-center justify-between gap-2 z-10">
+      <div
+        className="flex-shrink-0 h-16 px-4 flex items-center justify-between gap-3 z-20"
+        style={{
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+          background: 'rgba(8,12,20,0.75)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
         {/* Left: Game ID (truncated) + Connection status */}
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-xs text-text-secondary truncate hidden sm:block max-w-[140px]">
@@ -206,9 +223,19 @@ export default function GameTable() {
         </div>
 
         {/* Right: Quit button */}
-        <Button variant="secondary" size="sm" onClick={handleQuitGame} className="flex-shrink-0">
+        <button
+          onClick={handleQuitGame}
+          className="flex-shrink-0 text-white font-bold text-sm transition-transform hover:scale-105"
+          style={{
+            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            borderRadius: '12px',
+            padding: '8px 16px',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
           Quit
-        </Button>
+        </button>
       </div>
 
       {/* === GAME AREA === */}
