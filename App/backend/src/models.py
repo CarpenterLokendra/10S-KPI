@@ -2,12 +2,12 @@
 Database models for 10S Card Game - Uses 10s_schema
 """
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Enum, ForeignKey, Text, JSON
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Enum, ForeignKey, Text, JSON, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
-from database import Base
-from game_constants import (
+from .database import Base
+from .game_constants import (
     GameStatus, PlayerStatus, GameType, LobbyStatus,
     AuthMethod, BotDifficulty, AdType
 )
@@ -114,8 +114,8 @@ class Lobby(Base):
 class LobbyPlayer(Base):
     __tablename__ = "lobby_players"
     __table_args__ = (
+        UniqueConstraint("lobby_id", "user_id", name="uq_lobby_user"),
         {"schema": SCHEMA},
-        {"uniqueconstraint": ("lobby_id", "user_id")},
     )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))

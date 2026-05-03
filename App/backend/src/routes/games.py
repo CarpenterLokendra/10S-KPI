@@ -16,10 +16,10 @@ from loguru import logger
 import uuid
 from typing import List
 
-from database import get_db
-from models import Game, GamePlayer, User, Round
-from security import verify_token
-from schemas import GameCreate
+from ..database import get_db
+from ..models import Game, GamePlayer, User, Round
+from ..security import verify_token
+from ..schemas import GameCreate
 
 router = APIRouter(prefix="/games", tags=["games"])
 

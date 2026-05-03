@@ -78,3 +78,59 @@ Cards are valued as follows:
 ### Revenue Model
 
 **Advertising:** Display one advertisement before each game starts
+
+---
+
+## Development Setup
+
+### Running the Application
+
+#### Backend Server
+```bash
+cd App/backend
+source venv/bin/activate  # or activate.bat on Windows
+uvicorn src.main:app --reload
+```
+Backend runs on: `http://localhost:8000`
+
+#### Frontend Server (Local Access)
+```bash
+cd App/frontend
+npm install
+npm run dev
+```
+Frontend runs on: `http://localhost:5173`
+
+#### Frontend Server (Network Access - From Any Device)
+
+**Your System IP:** `192.168.29.254`
+
+Run the frontend with the `--host` flag to access from any device on your network:
+
+```bash
+cd App/frontend
+npm run dev -- --host
+```
+
+This will display URLs like:
+- Local: `http://localhost:5173`
+- Network: `http://192.168.29.254:5173`
+
+**From other devices on the same network, open:**
+```
+http://192.168.29.254:5173
+```
+
+### Environment Configuration
+
+Create `.env` file in `App/frontend/` if network access is needed:
+```
+VITE_API_URL=http://192.168.29.254:8000
+VITE_WS_URL=ws://192.168.29.254:8000
+```
+
+For local development only:
+```
+VITE_API_URL=http://localhost:8000
+VITE_WS_URL=ws://localhost:8000
+```

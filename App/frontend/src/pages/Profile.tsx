@@ -4,7 +4,7 @@ import { userService } from '@/services/user.service'
 import { useAuthStore } from '@/store/auth.store'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 
 export default function Profile() {
@@ -48,7 +48,7 @@ export default function Profile() {
   })
 
   // Initialize form data when profile loads
-  React.useEffect(() => {
+  useEffect(() => {
     if (profile) {
       setFormData({
         username: profile.username,
@@ -64,9 +64,15 @@ export default function Profile() {
   const loading = profileLoading || statsLoading
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bg-base to-bg-surface">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-green-900/30 to-slate-900 overflow-hidden">
+      {/* Background animation */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-green-500/15 to-green-500/5 rounded-2xl rotate-45 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-500/15 to-green-500/5 rounded-2xl -rotate-45 animate-pulse" style={{animationDelay: '1s'}}></div>
+      </div>
+
       {/* Header */}
-      <div className="bg-bg-surface border-b border-gray-700 px-6 py-4">
+      <div className="relative z-10 bg-bg-surface/80 backdrop-blur border-b border-gray-700 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <h1 className="text-3xl font-bold text-text-primary">👤 Profile</h1>
           <Button variant="secondary" onClick={() => navigate('/lobbies')}>
@@ -115,7 +121,7 @@ export default function Profile() {
                 <p className="text-text-secondary text-sm mb-6">{profile.email}</p>
 
                 {/* Rating Badge */}
-                {stats && (
+                {stats && stats.rating !== undefined && (
                   <div className="bg-bg-elevated rounded-lg p-4 mb-4">
                     <div className="text-gold-500 text-3xl font-bold">{stats.rating.toFixed(0)}</div>
                     <div className="text-text-secondary text-sm">Rating (Rank #{stats.rank})</div>
@@ -173,31 +179,33 @@ export default function Profile() {
                   </div>
                 )}
 
-                {stats && (
+                {stats ? (
                   <div className="grid grid-cols-2 gap-4">
-                    <StatCard label="Games Played" value={stats.total_games_played} />
-                    <StatCard label="Games Won" value={stats.total_games_won} highlight />
-                    <StatCard label="Games Lost" value={stats.total_games_lost} />
+                    <StatCard label="Games Played" value={stats.total_games_played ?? 0} />
+                    <StatCard label="Games Won" value={stats.total_games_won ?? 0} highlight />
+                    <StatCard label="Games Lost" value={stats.total_games_lost ?? 0} />
                     <StatCard
                       label="Win Rate"
-                      value={`${(stats.win_rate * 100).toFixed(1)}%`}
+                      value={stats.win_rate !== undefined ? `${(stats.win_rate * 100).toFixed(1)}%` : 'N/A'}
                       highlight
                     />
                     <StatCard
                       label="Total Points"
-                      value={stats.total_points_scored}
+                      value={stats.total_points_scored ?? 0}
                       highlight
                     />
                     <StatCard
                       label="Avg Points/Game"
-                      value={stats.average_points_per_game.toFixed(0)}
+                      value={stats.average_points_per_game !== undefined ? stats.average_points_per_game.toFixed(0) : 'N/A'}
                     />
                     <StatCard
                       label="10s Caught"
-                      value={stats.tens_caught}
+                      value={stats.tens_caught ?? 0}
                       highlight
                     />
                   </div>
+                ) : (
+                  <div className="text-center text-text-secondary py-8">Loading statistics...</div>
                 )}
               </div>
 

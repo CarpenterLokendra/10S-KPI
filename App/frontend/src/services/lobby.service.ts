@@ -38,4 +38,8 @@ export const lobbyService = {
     const response = await axios.post(API_ENDPOINTS.LOBBY_START(code), {})
     return response.data
   },
+
+  async deleteLobby(code: string): Promise<void> {
+    await axios.delete(API_ENDPOINTS.LOBBY_BY_CODE(code))
+  },
 }

@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
-from game_constants import GameStatus, PlayerStatus, GameType, AuthMethod
+from .game_constants import GameStatus, PlayerStatus, GameType, AuthMethod
 
 # ============================================
 # USER SCHEMAS
@@ -174,6 +174,9 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: Optional[int] = None
     user: UserResponse
+
+class RefreshTokenRequest(BaseModel):
+    token: str = Field(..., description="Current JWT token to refresh")
 
 class TokenData(BaseModel):
     user_id: Optional[str] = None

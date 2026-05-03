@@ -12,9 +12,9 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
 from loguru import logger
 
-from database import get_db
-from security import verify_token
-from models import User, PlayerStatistics
+from ..database import get_db
+from ..security import verify_token
+from ..models import User, PlayerStatistics
 
 router = APIRouter(prefix="/users", tags=["users"])
 

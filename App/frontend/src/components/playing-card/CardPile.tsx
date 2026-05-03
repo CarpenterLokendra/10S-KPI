@@ -48,7 +48,6 @@ export default function CardPile({
             return (
               <motion.div
                 key={`${card.suit}-${card.value}-${index}`}
-                layoutId={`pile-${card.suit}-${card.value}-${index}`}
                 initial={{
                   opacity: 0,
                   scale: 0.5,

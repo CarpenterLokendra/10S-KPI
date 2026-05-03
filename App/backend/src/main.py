@@ -12,9 +12,10 @@ from dotenv import load_dotenv
 from loguru import logger
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from datetime import datetime
 
 # Setup logging (must be imported before any logging calls)
-from logging_config import log_startup_info
+from .logging_config import log_startup_info
 
 # Security: Rate limiting
 try:
@@ -29,12 +30,12 @@ except ImportError:
 load_dotenv()
 
 # Import database and models
-from database import engine, SessionLocal, init_db, Base
-import models
-from config import ENVIRONMENT, ALLOWED_ORIGINS, SERVER_HOST, SERVER_PORT, SERVER_RELOAD, print_security_status
+from .database import engine, SessionLocal, init_db, Base
+from . import models
+from .config import ENVIRONMENT, ALLOWED_ORIGINS, SERVER_HOST, SERVER_PORT, SERVER_RELOAD, print_security_status
 
 # Import route modules
-from routes import auth, users, lobbies, games, leaderboard, admin
+from .routes import auth, users, lobbies, games, leaderboard, admin
 
 # Initialize FastAPI app
 # Disable docs in production for security (reduces attack surface)
@@ -84,7 +85,7 @@ async def startup_event():
 
 # Security Middleware - Trusted Host
 # Allow localhost for development, specific domains for production
-trusted_hosts = ["localhost", "127.0.0.1"]
+trusted_hosts = ["localhost", "127.0.0.1", "192.168.29.254"]
 if ENVIRONMENT == "production":
     # In production, extract hostnames from ALLOWED_ORIGINS
     trusted_hosts.extend([origin.replace("https://", "").replace("http://", "") for origin in ALLOWED_ORIGINS])
@@ -185,15 +186,60 @@ class ConnectionManager:
     
     async def broadcast(self, game_id: str, message: dict, exclude_user: str = None):
         if game_id in self.active_connections:
+            logger.info(f"📢 Broadcasting {message.get('type')} to {len(self.active_connections[game_id])} players in game {game_id}")
             for user_id, connection in self.active_connections[game_id].items():
                 if exclude_user and user_id == exclude_user:
+                    logger.info(f"   ⏭️ Excluding {user_id}")
                     continue
                 try:
                     await connection.send_json(message)
+                    logger.info(f"   ✅ Sent to {user_id}")
                 except Exception as e:
-                    logger.error(f"Error sending message to {user_id}: {str(e)}")
+                    logger.error(f"   ❌ Error sending message to {user_id}: {str(e)}")
+        else:
+            logger.warning(f"⚠️ No active connections for game {game_id}")
 
 manager = ConnectionManager()
+
+async def handle_game_disconnect(game_id: str, user_id: str):
+    """Handle game cancellation when a player disconnects/quits"""
+    try:
+        db = SessionLocal()
+        game = db.query(models.Game).filter(models.Game.id == game_id).first()
+        logger.info(f"🎮 Looking up game {game_id}, found: {game is not None}")
+
+        if game:
+            lobby_id = game.lobby_id
+            logger.info(f"   Lobby ID: {lobby_id}")
+
+            # Get the disconnected player's username
+            disconnected_user = db.query(models.User).filter(models.User.id == user_id).first()
+            username = disconnected_user.username if disconnected_user else "Unknown Player"
+
+            logger.warning(f"⚠️ Game {game_id} stopped because player {username} ({user_id}) disconnected")
+
+            # Update game status to ended
+            game.status = "ENDED"
+            game.end_time = datetime.utcnow()
+            db.commit()
+            logger.info(f"   ✅ Game status updated to ENDED")
+
+            # Notify all players that game was cancelled
+            logger.info(f"   📢 Broadcasting game-cancelled to all players...")
+            await manager.broadcast(game_id, {
+                "type": "game-cancelled",
+                "username": username,
+                "lobby_id": lobby_id,
+                "timestamp": datetime.utcnow().isoformat()
+            })
+
+            logger.info(f"✅ All players notified. {username} left. Redirecting to lobby {lobby_id}")
+        else:
+            logger.warning(f"⚠️ Game {game_id} not found when processing disconnect")
+
+        db.close()
+    except Exception as e:
+        logger.error(f"❌ Error handling disconnect: {str(e)}", exc_info=True)
 
 @app.websocket("/ws/{game_id}/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
@@ -222,8 +268,63 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
     #     return
 
     await manager.connect(game_id, user_id, websocket)
-    
+
     try:
+        # Fetch game and player data from database
+        db = SessionLocal()
+        try:
+            logger.info(f"🔍 WebSocket: User {user_id} connected to game {game_id}")
+
+            game = db.query(models.Game).filter(models.Game.id == game_id).first()
+            logger.info(f"   Game found: {game is not None}")
+
+            if game:
+                logger.info(f"   Game status: {game.status}, Num players: {game.num_players}")
+
+                # Get all players in this game
+                game_players_db = db.query(models.GamePlayer).filter(
+                    models.GamePlayer.game_id == game_id
+                ).all()
+
+                logger.info(f"   GamePlayer records found: {len(game_players_db)}")
+
+                game_players = []
+                for i, gp in enumerate(game_players_db):
+                    user = db.query(models.User).filter(models.User.id == gp.user_id).first()
+                    logger.info(f"   Player {i}: user_id={gp.user_id}, found={user is not None}, username={user.username if user else 'N/A'}")
+
+                    if user:
+                        player_obj = {
+                            "id": user.id,
+                            "username": user.username,
+                            "position": len(game_players),  # Sequential position
+                            "status": "active",
+                            "handSize": 0,
+                            "score": 0,
+                            "caughtTens": [],
+                            "isYourTurn": False,
+                            "avatar_url": user.avatar_url
+                        }
+                        game_players.append(player_obj)
+                        logger.info(f"      Added: {player_obj['username']}")
+
+                # Send initial game state to the newly connected player
+                logger.info(f"✅ Sending game-state message with {len(game_players)} players to {user_id}")
+                await websocket.send_json({
+                    "type": "game-state",
+                    "players": game_players,
+                    "current_turn": None,
+                    "trump_suit": game.current_trump_suit,
+                    "led_suit": game.current_led_suit
+                })
+                logger.info(f"✅ Game state sent successfully")
+            else:
+                logger.warning(f"❌ Game {game_id} not found in database")
+        except Exception as e:
+            logger.error(f"❌ Error fetching game state: {str(e)}", exc_info=True)
+        finally:
+            db.close()
+
         while True:
             data = await websocket.receive_json()
             
@@ -231,6 +332,8 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
             message_type = data.get("type")
             
             if message_type == "play-card":
+                logger.info(f"♠️ Card played by {user_id}")
+
                 # Broadcast card play to all players
                 await manager.broadcast(game_id, {
                     "type": "play-notification",
@@ -238,6 +341,60 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
                     "card": data.get("card"),
                     "timestamp": data.get("timestamp")
                 })
+
+                # Update turn to next player
+                try:
+                    db = SessionLocal()
+                    game = db.query(models.Game).filter(models.Game.id == game_id).first()
+
+                    if game:
+                        # Get all players in order
+                        game_players_db = db.query(models.GamePlayer).filter(
+                            models.GamePlayer.game_id == game_id
+                        ).order_by(models.GamePlayer.player_position).all()
+
+                        if game_players_db:
+                            # Find current player's position
+                            current_pos = next((gp.player_position for gp in game_players_db if gp.user_id == user_id), None)
+
+                            if current_pos is not None:
+                                # Calculate next player (rotate to first if at end)
+                                next_pos = (current_pos + 1) % len(game_players_db)
+                                next_player_id = game_players_db[next_pos].user_id
+
+                                # Update game state
+                                game.current_turn = next_player_id
+                                db.commit()
+
+                                logger.info(f"🔄 Turn switched to player {next_player_id}")
+
+                                # Send updated game state to all players
+                                updated_players = []
+                                for gp in game_players_db:
+                                    user_obj = db.query(models.User).filter(models.User.id == gp.user_id).first()
+                                    if user_obj:
+                                        updated_players.append({
+                                            "id": user_obj.id,
+                                            "username": user_obj.username,
+                                            "position": gp.player_position,
+                                            "status": "active",
+                                            "handSize": 0,
+                                            "score": 0,
+                                            "caughtTens": [],
+                                            "isYourTurn": user_obj.id == next_player_id,
+                                            "avatar_url": user_obj.avatar_url
+                                        })
+
+                                await manager.broadcast(game_id, {
+                                    "type": "game-state",
+                                    "players": updated_players,
+                                    "current_turn": next_player_id,
+                                    "trump_suit": game.current_trump_suit,
+                                    "led_suit": game.current_led_suit
+                                })
+                    db.close()
+                except Exception as e:
+                    logger.error(f"❌ Error updating turn: {str(e)}", exc_info=True)
             
             elif message_type == "chat-message":
                 # Broadcast chat message
@@ -249,18 +406,16 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
                 })
             
             elif message_type == "disconnect":
-                # Player disconnecting gracefully
-                logger.info(f"User {user_id} gracefully disconnected from game {game_id}")
+                # Player quitting the game - stop game for everyone
+                logger.info(f"⏹️ User {user_id} is quitting game {game_id}")
+                manager.disconnect(game_id, user_id)
+                await handle_game_disconnect(game_id, user_id)
                 break
     
     except WebSocketDisconnect:
         manager.disconnect(game_id, user_id)
-        # Notify other players
-        await manager.broadcast(game_id, {
-            "type": "player-disconnected",
-            "user_id": user_id,
-            "timestamp": None
-        })
+        logger.info(f"🔌 WebSocket disconnected for user {user_id} in game {game_id}")
+        await handle_game_disconnect(game_id, user_id)
     
     except Exception as e:
         logger.error(f"WebSocket error for {user_id} in game {game_id}: {str(e)}")

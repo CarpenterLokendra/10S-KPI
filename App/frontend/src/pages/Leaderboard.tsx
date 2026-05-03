@@ -49,12 +49,19 @@ export default function Leaderboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bg-base to-bg-surface">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-amber-900/20 to-slate-900 overflow-hidden">
+      {/* Background animation */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-gradient-to-br from-amber-500/15 to-gold-500/5 rounded-2xl rotate-45 animate-pulse"></div>
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-gradient-to-tl from-yellow-500/15 to-amber-500/5 rounded-2xl -rotate-45 animate-pulse" style={{animationDelay: '1.5s'}}></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+      </div>
+
       {/* Header */}
-      <div className="bg-bg-surface border-b border-gray-700 px-6 py-4">
+      <div className="relative z-10 bg-bg-surface/80 backdrop-blur border-b border-gray-700 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gold-500">🏆 Leaderboard</h1>
+            <h1 className="text-4xl font-rajdhani font-bold bg-gradient-to-r from-gold-500 to-yellow-400 bg-clip-text text-transparent">🏆 Leaderboard</h1>
             <p className="text-text-secondary mt-1">Top players worldwide</p>
           </div>
           <Button variant="secondary" onClick={() => navigate('/lobbies')}>

@@ -6,8 +6,8 @@ Core logic for the 10S card game
 from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass
 from enum import Enum
-from game_constants import (
-    CardValue, CardSuit, CARD_POINTS, 
+from .game_constants import (
+    CardValue, CardSuit, CARD_POINTS,
     CONSECUTIVE_ROUNDS_FOR_CATCH, CATCH_10S_MULTIPLIER
 )
 

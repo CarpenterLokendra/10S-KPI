@@ -13,13 +13,14 @@ export default function LobbyBrowser() {
   const [joinCode, setJoinCode] = useState('')
   const [createForm, setCreateForm] = useState({
     maxPlayers: 4,
+    isPrivate: false,
   })
 
   const handleCreateLobby = () => {
     createLobby({
       max_players: createForm.maxPlayers,
       game_type: 'lobby',
-      is_private: false,
+      is_private: createForm.isPrivate,
     })
     setShowCreateForm(false)
   }
@@ -32,12 +33,19 @@ export default function LobbyBrowser() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-base text-text-primary px-4 py-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-blue-900 to-slate-900 text-text-primary px-4 py-8 overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-20 -left-20 w-72 h-72 bg-gradient-to-br from-blue-500/20 to-blue-500/5 rounded-2xl rotate-45 animate-pulse"></div>
+        <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-gradient-to-tl from-purple-500/20 to-purple-500/5 rounded-2xl -rotate-45 animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+      </div>
+
+      <div className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-heading-lg font-rajdhani mb-2">Available Lobbies</h1>
-          <p className="text-text-secondary">Join a game or create a new lobby</p>
+          <h1 className="text-5xl font-rajdhani font-bold mb-2 bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent">Available Lobbies</h1>
+          <p className="text-text-secondary text-lg">Join a game or create a new lobby</p>
         </div>
 
         {/* Quick Actions */}
@@ -76,14 +84,40 @@ export default function LobbyBrowser() {
                   <label className="block text-sm text-text-secondary mb-2">Max Players</label>
                   <select
                     value={createForm.maxPlayers}
-                    onChange={(e) => setCreateForm({ maxPlayers: parseInt(e.target.value) })}
+                    onChange={(e) => setCreateForm({ ...createForm, maxPlayers: parseInt(e.target.value) })}
                     className="w-full bg-bg-surface border border-gray-700 rounded px-3 py-2 text-text-primary"
                   >
-                    <option value={2}>2 Players</option>
                     <option value={3}>3 Players</option>
                     <option value={4}>4 Players</option>
                     <option value={5}>5 Players</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-text-secondary mb-2">Lobby Type</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="lobbyType"
+                        value="public"
+                        checked={!createForm.isPrivate}
+                        onChange={() => setCreateForm({ ...createForm, isPrivate: false })}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-text-primary">Public</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="lobbyType"
+                        value="private"
+                        checked={createForm.isPrivate}
+                        onChange={() => setCreateForm({ ...createForm, isPrivate: true })}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-text-primary">Private</span>
+                    </label>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button

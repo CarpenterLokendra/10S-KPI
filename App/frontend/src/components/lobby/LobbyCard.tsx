@@ -15,7 +15,10 @@ export default function LobbyCard({ lobby, onJoin, joining = false }: LobbyCardP
     <div className="card-base hover:border-gold-500 transition-colors">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-heading-sm font-rajdhani text-gold-500">{lobby.code}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-heading-sm font-rajdhani text-gold-500">{lobby.code}</h3>
+            {lobby.is_private && <span className="text-xs bg-purple-500 bg-opacity-20 text-purple-400 px-2 py-0.5 rounded">🔒 Private</span>}
+          </div>
           <p className="text-xs text-text-muted mt-1">Game Type: {lobby.game_type}</p>
         </div>
         <div className="text-right">

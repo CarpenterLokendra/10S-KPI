@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from loguru import logger
 
-from database import get_db
-from config import ENVIRONMENT, get_production_checklist
+from ..database import get_db
+from ..config import ENVIRONMENT, get_production_checklist
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 

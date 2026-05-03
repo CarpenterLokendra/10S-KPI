@@ -11,15 +11,16 @@ Endpoints:
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from loguru import logger
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from database import get_db
-from models import User
-from schemas import UserCreate, UserLogin, TokenResponse
-from security import hash_password, verify_password, create_access_token, verify_token, validate_phone_number, validate_password_strength
-from config import JWT_EXPIRATION_HOURS
+from ..database import get_db
+from ..models import User
+from ..schemas import UserCreate, UserLogin, TokenResponse, RefreshTokenRequest
+from ..security import hash_password, verify_password, create_access_token, verify_token, validate_phone_number, validate_password_strength
+from ..config import JWT_EXPIRATION_HOURS
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 limiter = Limiter(key_func=get_remote_address)
@@ -49,7 +50,7 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     - 400: Username already exists, email/phone already registered, or validation failed
     - 422: Invalid data format
     """
-    from models import User
+    from ..models import User
 
     # Validate that either email or phone is provided
     if not user_data.email and not user_data.phone_number:
@@ -75,8 +76,8 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
             detail=error_msg
         )
 
-    # Check if username already exists
-    existing_username = db.query(User).filter(User.username == user_data.username).first()
+    # Check if username already exists (case-insensitive)
+    existing_username = db.query(User).filter(func.lower(User.username) == func.lower(user_data.username)).first()
     if existing_username:
         logger.warning(f"Registration attempt with existing username: {user_data.username}")
         raise HTTPException(
@@ -84,9 +85,9 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="Username already registered"
         )
 
-    # Check if email already exists
+    # Check if email already exists (case-insensitive)
     if user_data.email:
-        existing_email = db.query(User).filter(User.email == user_data.email).first()
+        existing_email = db.query(User).filter(func.lower(User.email) == func.lower(user_data.email)).first()
         if existing_email:
             logger.warning(f"Registration attempt with existing email: {user_data.email}")
             raise HTTPException(
@@ -177,12 +178,12 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     - Login with email: `{"username": "john@example.com", "password": "SecurePass123!"}`
     - Login with phone: `{"username": "+1234567890", "password": "SecurePass123!"}`
     """
-    from models import User
+    from ..models import User
 
-    # Find user by username, email, or phone number
+    # Find user by username, email, or phone number (case-insensitive for username/email)
     user = db.query(User).filter(
-        (User.username == credentials.username) |
-        (User.email == credentials.username) |
+        (func.lower(User.username) == func.lower(credentials.username)) |
+        (func.lower(User.email) == func.lower(credentials.username)) |
         (User.phone_number == credentials.username)
     ).first()
 
@@ -224,12 +225,12 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
 # ============================================
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh_token(auth_token: str, db: Session = Depends(get_db)):
+async def refresh_token(request: RefreshTokenRequest, db: Session = Depends(get_db)):
     """
     Refresh an expired or expiring JWT token.
 
-    **Query Parameters**:
-    - `auth_token`: Current JWT token
+    **Request Body**:
+    - `token`: Current JWT token
 
     **Response**:
     - `access_token`: New JWT token
@@ -239,9 +240,9 @@ async def refresh_token(auth_token: str, db: Session = Depends(get_db)):
     **Errors**:
     - 401: Invalid or expired token
     """
-    from models import User
+    from ..models import User
 
-    user_id = verify_token(auth_token)
+    user_id = verify_token(request.token)
 
     if not user_id:
         logger.warning("Token refresh failed: invalid or expired token")

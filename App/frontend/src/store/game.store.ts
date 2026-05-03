@@ -15,6 +15,7 @@ const initialGameState: GameState & {
   isWebSocketConnected: boolean
   lobbyId: string | null
   isGameEnded: boolean
+  quitterUsername: string | null
 } = {
   gameId: null,
   lobbyId: null,
@@ -33,6 +34,7 @@ const initialGameState: GameState & {
   chatMessages: [],
   isWebSocketConnected: false,
   isGameEnded: false,
+  quitterUsername: null,
 }
 
 export interface GameStoreActions {
@@ -76,7 +78,7 @@ export interface GameStoreActions {
   setLobbyId: (lobbyId: string | null) => void
 
   // Game end
-  setGameEnded: (ended: boolean, lobbyId?: string) => void
+  setGameEnded: (ended: boolean, lobbyId?: string, quitterUsername?: string) => void
 
   // State
   setLastEventType: (eventType: string) => void
@@ -100,6 +102,7 @@ export const useGameStore = create<GameStore>((set) => ({
   },
 
   setPlayers: (players: PlayerState[]) => {
+    console.log('🔄 setPlayers called with:', players)
     set({ players })
   },
 
@@ -204,11 +207,12 @@ export const useGameStore = create<GameStore>((set) => ({
     set({ lastRoundWinner: winnerId })
   },
 
-  setGameEnded: (ended: boolean, lobbyId?: string) => {
+  setGameEnded: (ended: boolean, lobbyId?: string, quitterUsername?: string) => {
     set({
       status: ended ? ('completed' as GameStatus) : ('waiting' as GameStatus),
       isGameEnded: ended,
       lobbyId: lobbyId || undefined,
+      quitterUsername: quitterUsername || null,
     })
   },
 

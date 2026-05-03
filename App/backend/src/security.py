@@ -14,7 +14,7 @@ import hashlib
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from config import JWT_SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRATION_HOURS, BCRYPT_ROUNDS
+from .config import JWT_SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRATION_HOURS, BCRYPT_ROUNDS
 
 # ============================================
 # PASSWORD HASHING

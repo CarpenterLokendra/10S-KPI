@@ -4,10 +4,14 @@ import { SuitIcon } from '@/components/playing-card'
 interface TrumpIndicatorProps {
   suit: CardSuit | null
   className?: string
+  compact?: boolean
 }
 
-export default function TrumpIndicator({ suit, className = '' }: TrumpIndicatorProps) {
+export default function TrumpIndicator({ suit, className = '', compact = false }: TrumpIndicatorProps) {
   if (!suit) {
+    if (compact) {
+      return <p className="text-[10px] text-text-muted">Trump: —</p>
+    }
     return (
       <div className={`card-base text-center ${className}`}>
         <p className="text-text-muted text-sm">Waiting for trump...</p>
@@ -16,6 +20,17 @@ export default function TrumpIndicator({ suit, className = '' }: TrumpIndicatorP
   }
 
   const isRed = suit === 'hearts' || suit === 'diamonds'
+  const suitSymbol = { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' }[suit]
+
+  if (compact) {
+    return (
+      <div className={`flex items-center gap-1 text-xs ${isRed ? 'text-red-600' : 'text-slate-900'} ${className}`}>
+        <span className="text-text-secondary">Trump:</span>
+        <span className="text-lg">{suitSymbol}</span>
+      </div>
+    )
+  }
+
   const suitName = {
     hearts: 'Hearts',
     diamonds: 'Diamonds',
@@ -26,7 +41,7 @@ export default function TrumpIndicator({ suit, className = '' }: TrumpIndicatorP
   return (
     <div className={`card-base text-center ${className}`}>
       <p className="text-text-secondary text-xs mb-2">Trump Suit</p>
-      <div className={`flex items-center justify-center gap-2 ${isRed ? 'text-red-500' : 'text-text-primary'}`}>
+      <div className={`flex items-center justify-center gap-2 ${isRed ? 'text-red-600' : 'text-slate-900'}`}>
         <SuitIcon suit={suit} size={28} />
         <span className="font-semibold capitalize">{suitName}</span>
       </div>

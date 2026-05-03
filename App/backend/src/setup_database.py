@@ -6,8 +6,8 @@ Run this once after setting up the database.
 
 from loguru import logger
 from sqlalchemy import text, inspect
-from database import engine, Base
-import models  # Import all models to register them
+from .database import engine, Base
+from . import models  # Import all models to register them
 
 SCHEMA_NAME = "10s_schema"
 

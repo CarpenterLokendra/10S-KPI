@@ -14,11 +14,15 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
 from loguru import logger
 import uuid
+from collections import defaultdict
 
-from database import get_db
-from models import Lobby, LobbyPlayer, User, Game
-from security import verify_token
+from ..database import get_db
+from ..models import Lobby, LobbyPlayer, User, Game, GamePlayer
+from ..security import verify_token
 from datetime import datetime, timedelta
+
+# In-memory storage for lobby chat messages
+lobby_messages = defaultdict(list)
 
 router = APIRouter(prefix="/lobbies", tags=["lobbies"])
 
@@ -49,10 +53,10 @@ async def create_lobby(
     **Note**: Lobby status is automatically set to "waiting" when created.
     """
     # Validate max players
-    if max_players < 2 or max_players > 6:
+    if max_players < 3 or max_players > 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Max players must be between 2 and 6"
+            detail="Max players must be between 3 and 6"
         )
 
     # Get current user
@@ -65,17 +69,24 @@ async def create_lobby(
 
     try:
         lobby_code = str(uuid.uuid4())[:6].upper()
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
         lobby = Lobby(
             code=lobby_code,
             creator_id=user_id,
             max_players=max_players,
             current_players=1,
-            expires_at=datetime.utcnow() + timedelta(minutes=10)
+            expires_at=expires_at
         )
 
         db.add(lobby)
         db.commit()
         db.refresh(lobby)
+
+        # Ensure expires_at is set
+        if not lobby.expires_at:
+            lobby.expires_at = expires_at
+            db.commit()
+            db.refresh(lobby)
 
         # Add creator to lobby players
         lobby_player = LobbyPlayer(
@@ -94,7 +105,8 @@ async def create_lobby(
             "max_players": lobby.max_players,
             "current_players": lobby.current_players,
             "status": lobby.status.value,
-            "created_at": lobby.created_at
+            "created_at": lobby.created_at,
+            "expires_at": lobby.expires_at.isoformat() if lobby.expires_at else None
         }
     except Exception as e:
         db.rollback()
@@ -145,7 +157,11 @@ async def list_lobbies(
     if expired_lobbies:
         db.commit()
 
-    lobbies = db.query(Lobby).filter(Lobby.status == lobby_status).all()
+    # Filter by status and exclude private lobbies from public listing
+    lobbies = db.query(Lobby).filter(
+        Lobby.status == lobby_status,
+        Lobby.is_private == False
+    ).all()
 
     logger.info(f"📋 Retrieved {len(lobbies)} lobbies with status: {lobby_status}")
 
@@ -156,7 +172,8 @@ async def list_lobbies(
             "max_players": lobby.max_players,
             "current_players": lobby.current_players,
             "status": lobby.status.value,
-            "created_at": lobby.created_at
+            "created_at": lobby.created_at,
+            "is_private": lobby.is_private
         }
         for lobby in lobbies
     ]
@@ -207,6 +224,10 @@ async def get_lobby_details(code: str, db: Session = Depends(get_db)):
         for lp in lobby_players if lp.status.value == "active"
     ]
 
+    # Get game_id if game has started
+    game = db.query(Game).filter(Game.lobby_id == lobby.id).first()
+    game_id = game.id if game else None
+
     logger.info(f"📋 Retrieved lobby details: {code}")
 
     return {
@@ -216,8 +237,10 @@ async def get_lobby_details(code: str, db: Session = Depends(get_db)):
         "current_players": lobby.current_players,
         "status": lobby.status.value,
         "created_at": lobby.created_at,
-        "expires_at": lobby.expires_at,
+        "expires_at": lobby.expires_at.isoformat() if lobby.expires_at else None,
         "players": players,
+        "game_id": game_id,
+        "is_private": lobby.is_private,
         "can_join": lobby.current_players < lobby.max_players and lobby.status.value == "waiting",
         "can_start": lobby.current_players >= 2
     }
@@ -441,32 +464,229 @@ async def start_game_from_lobby(
             detail="Only lobby creator can start the game"
         )
 
-    if lobby.current_players < 2:
+    if lobby.current_players < 3:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="At least 2 players are required to start"
+            detail="At least 3 players are required to start"
         )
 
-    # Create game linked to this lobby
-    game = Game(
-        lobby_id=lobby.id,
-        creator_id=user_id,
-        num_players=lobby.current_players,
-        game_type="LOBBY"
-    )
-    db.add(game)
+    try:
+        # Create game linked to this lobby
+        game = Game(
+            id=str(uuid.uuid4()),
+            lobby_id=lobby.id,
+            creator_id=user_id,
+            num_players=lobby.current_players,
+            game_type="LOBBY"
+        )
+        db.add(game)
+        db.flush()  # Flush to get the game ID
 
-    # Update lobby status
-    lobby.status = "in_progress"
+        # Create GamePlayer records for all lobby members
+        lobby_members = db.query(LobbyPlayer).filter(LobbyPlayer.lobby_id == lobby.id).all()
+        logger.info(f"📋 Found {len(lobby_members)} lobby members")
 
+        for i, member in enumerate(lobby_members):
+            game_player = GamePlayer(
+                id=str(uuid.uuid4()),
+                game_id=game.id,
+                user_id=member.user_id,
+                player_position=i
+            )
+            db.add(game_player)
+            logger.info(f"   ✅ Added GamePlayer: user_id={member.user_id}, position={i}")
+
+        # Update lobby status
+        lobby.status = "in_progress"
+
+        db.commit()
+        db.refresh(game)
+
+        logger.info(f"🎮 Game {game.id} started from lobby: {code} with {len(lobby_members)} players")
+
+        return {
+            "message": "Game started successfully",
+            "game_id": game.id,
+            "lobby_id": lobby.id,
+            "status": "started"
+        }
+    except Exception as e:
+        db.rollback()
+        logger.error(f"❌ Failed to start game from lobby {code}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start game: {str(e)}"
+        )
+
+# ============================================
+# DELETE LOBBY
+# ============================================
+
+@router.delete("/{code}")
+async def delete_lobby(
+    code: str,
+    auth_token: str = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a lobby (creator only).
+
+    **Path Parameters**:
+    - `code`: Lobby code
+
+    **Query Parameters**:
+    - `auth_token`: User authentication token (JWT, must be creator)
+
+    **Response**:
+    - Confirmation message
+
+    **Errors**:
+    - 401: Unauthorized
+    - 403: Only creator can delete
+    - 404: Lobby not found
+    """
+    user_id = verify_token(auth_token)
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    lobby = db.query(Lobby).filter(Lobby.code == code).first()
+
+    if not lobby:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lobby not found"
+        )
+
+    if str(lobby.creator_id) != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only lobby creator can delete the lobby"
+        )
+
+    # Delete all lobby players first
+    db.query(LobbyPlayer).filter(LobbyPlayer.lobby_id == lobby.id).delete()
+
+    # Delete the lobby
+    db.delete(lobby)
     db.commit()
-    db.refresh(game)
 
-    logger.info(f"🎮 Game {game.id} started from lobby: {code}")
+    logger.info(f"✅ Lobby {code} deleted by {user_id}")
 
     return {
-        "message": "Game started successfully",
-        "game_id": game.id,
-        "lobby_id": lobby.id,
-        "status": "started"
+        "message": "Lobby deleted successfully",
+        "status": "deleted"
+    }
+
+# ============================================
+# LOBBY CHAT
+# ============================================
+
+@router.post("/{code}/chat")
+async def send_lobby_message(
+    code: str,
+    message: str,
+    auth_token: str = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Send a message in the lobby chat.
+
+    **Path Parameters**:
+    - `code`: Lobby code
+
+    **Query Parameters**:
+    - `message`: Message text
+    - `auth_token`: User authentication token (JWT)
+
+    **Response**:
+    - Message details
+
+    **Errors**:
+    - 401: Unauthorized
+    - 404: Lobby not found
+    """
+    user_id = verify_token(auth_token)
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    lobby = db.query(Lobby).filter(Lobby.code == code).first()
+
+    if not lobby:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lobby not found"
+        )
+
+    # Get user info
+    user = db.query(User).filter(User.id == user_id).first()
+    username = user.username if user else f"Player {user_id[:8]}"
+
+    # Create message object
+    msg_data = {
+        "id": str(uuid.uuid4()),
+        "message": message,
+        "user_id": user_id,
+        "username": username,
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+
+    # Store message in lobby chat
+    lobby_messages[code].append(msg_data)
+
+    # Keep only last 100 messages per lobby
+    if len(lobby_messages[code]) > 100:
+        lobby_messages[code] = lobby_messages[code][-100:]
+
+    logger.info(f"💬 Message in lobby {code} from {username}: {message[:50]}")
+
+    return msg_data
+
+@router.get("/{code}/chat")
+async def get_lobby_messages(
+    code: str,
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    """
+    Get chat messages from a lobby.
+
+    **Path Parameters**:
+    - `code`: Lobby code
+
+    **Query Parameters**:
+    - `limit`: Maximum number of messages to return (default: 50)
+
+    **Response**:
+    - Array of chat messages
+
+    **Errors**:
+    - 404: Lobby not found
+    """
+    lobby = db.query(Lobby).filter(Lobby.code == code).first()
+
+    if not lobby:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lobby not found"
+        )
+
+    # Get messages from in-memory storage
+    messages = lobby_messages.get(code, [])
+
+    # Return only the last `limit` messages
+    messages = messages[-limit:] if limit else messages
+
+    logger.info(f"📋 Retrieved {len(messages)} chat messages for lobby {code}")
+
+    return {
+        "messages": messages,
+        "count": len(messages)
     }

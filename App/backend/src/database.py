@@ -53,6 +53,20 @@ def init_db():
 
         Base.metadata.create_all(bind=engine)
         logger.info("✅ All database tables created successfully")
+
+        # Add expires_at column to lobbies if it doesn't exist
+        with engine.begin() as conn:
+            try:
+                conn.execute(text("""
+                    ALTER TABLE "10s_schema".lobbies
+                    ADD COLUMN expires_at TIMESTAMP NULL
+                    DEFAULT (CURRENT_TIMESTAMP + INTERVAL '10 minutes')
+                """))
+                logger.info("✅ Added expires_at column to lobbies table")
+            except Exception as e:
+                # Column might already exist, which is fine
+                if "already exists" not in str(e).lower() and "duplicate column" not in str(e).lower():
+                    logger.debug(f"Note: expires_at column check: {str(e)}")
     except Exception as e:
         logger.error(f"❌ Database initialization failed: {str(e)}")
         raise

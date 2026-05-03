@@ -24,6 +24,10 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
     setWebSocketConnected,
     setGameEnded,
     setLobbyId,
+    setPlayers,
+    setCurrentTurn,
+    setTrumpSuit,
+    setLedSuit,
   } = useGameStore()
 
   const { token } = useAuthStore()
@@ -47,6 +51,7 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
 
       wsRef.current.onmessage = (event) => {
         const message: WebSocketMessage = JSON.parse(event.data)
+        console.log('📨 WebSocket message received:', message.type, message)
         handleMessage(message)
       }
 
@@ -65,7 +70,7 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
       setWebSocketConnected(false)
       attemptReconnect()
     }
-  }, [gameId, userId, token, setGameId, setWebSocketConnected])
+  }, [gameId, userId, token, setGameId, setWebSocketConnected, setPlayers, setCurrentTurn, setTrumpSuit, setLedSuit])
 
   // Handle incoming messages
   const handleMessage = (message: WebSocketMessage) => {
@@ -101,7 +106,35 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
 
       case 'game-state':
         // Handle full game state updates
-        console.log('Game state update:', message)
+        console.log('🎮 GAME STATE UPDATE RECEIVED')
+        console.log('   Players:', message.players?.length || 0, 'players', message.players)
+        console.log('   Current turn:', message.current_turn)
+        console.log('   Trump:', message.trump_suit)
+        console.log('   Led:', message.led_suit)
+        if (message.players) {
+          console.log('✅ Calling setPlayers with:', message.players)
+          setPlayers(message.players)
+        }
+        if (message.current_turn) {
+          console.log('✅ Setting turn to:', message.current_turn)
+          setCurrentTurn(message.current_turn)
+        }
+        if (message.trump_suit) {
+          console.log('✅ Setting trump to:', message.trump_suit)
+          setTrumpSuit(message.trump_suit)
+        }
+        if (message.led_suit) {
+          console.log('✅ Setting led suit to:', message.led_suit)
+          setLedSuit(message.led_suit)
+        }
+        break
+
+      case 'game-cancelled':
+        console.log('🚫 Game cancelled by:', message.username)
+        if (message.lobby_id) {
+          setLobbyId(message.lobby_id)
+        }
+        setGameEnded(true, message.lobby_id, message.username)
         break
 
       case 'game-ended':
@@ -113,7 +146,7 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
         break
 
       default:
-        console.log('Unknown message type:', message.type)
+        console.log('⚠️ Unknown message type:', message.type, 'Full message:', message)
     }
   }
 
