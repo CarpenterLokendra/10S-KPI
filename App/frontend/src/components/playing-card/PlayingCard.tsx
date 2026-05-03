@@ -48,16 +48,22 @@ export default function PlayingCard({
       whileTap={isPlayable ? { scale: 0.98 } : {}}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className={`
-        relative rounded-xl select-none transition-all
+        relative select-none transition-all
         ${widthClass}
         ${heightClass}
         bg-white
         border-2 border-slate-300
         ${isPlayable ? 'cursor-pointer hover:shadow-lg' : 'cursor-default'}
         ${!isPlayable && !isInPile ? 'opacity-50' : ''}
-        ${isSelected ? 'ring-4 ring-gold-500 shadow-lg' : 'shadow-card'}
+        ${isSelected ? 'ring-4 ring-gold-500' : ''}
         ${className}
       `}
+      style={{
+        boxShadow: isSelected
+          ? '0 8px 24px rgba(0,0,0,0.3), 0 0 20px rgba(240,180,41,0.5)'
+          : '0 8px 24px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.2)',
+        borderRadius: '14px',
+      }}
     >
       <motion.div layoutId={layoutId} className="w-full h-full relative rounded-xl">
         {/* Top left corner */}

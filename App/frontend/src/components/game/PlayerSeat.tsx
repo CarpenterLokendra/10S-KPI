@@ -65,18 +65,25 @@ export default function PlayerSeat({
       animate={
         isCurrentTurn
           ? {
-              scale: [1, 1.05, 1],
-              boxShadow: ['0 0 0 0px rgba(59, 130, 246, 0.5)', '0 0 0 10px rgba(59, 130, 246, 0)'],
+              boxShadow: ['0 0 0px rgba(34,197,94,0)', '0 0 24px rgba(34,197,94,0.5)', '0 0 0px rgba(34,197,94,0)'],
             }
-          : {}
+          : { boxShadow: 'none' }
       }
       transition={{
-        duration: 1.5,
+        duration: 2,
         repeat: isCurrentTurn ? Infinity : 0,
       }}
     >
       {/* Player card */}
-      <div className="card-base text-center w-32">
+      <div
+        className="text-center w-32 rounded-2xl border border-white/[0.06]"
+        style={{
+          background: 'rgba(10,18,32,0.85)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          padding: '1rem',
+        }}
+      >
         {/* Avatar / Status */}
         <div className="mb-3">
           <div className="w-10 h-10 mx-auto rounded-full bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center text-text-primary font-bold">
