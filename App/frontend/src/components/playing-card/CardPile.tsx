@@ -79,6 +79,7 @@ export default function CardPile({
                   suit={card.suit}
                   value={card.value}
                   isPlayable={false}
+                  isInPile={true}
                   size={cardSize}
                   layoutId={`pile-${card.suit}-${card.value}-${index}`}
                 />

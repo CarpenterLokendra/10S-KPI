@@ -12,6 +12,7 @@ interface PlayingCardProps {
   layoutId?: string
   className?: string
   size?: 'sm' | 'md' | 'lg'
+  isInPile?: boolean
 }
 
 export default function PlayingCard({
@@ -23,6 +24,7 @@ export default function PlayingCard({
   layoutId,
   className = '',
   size = 'md',
+  isInPile = false,
 }: PlayingCardProps) {
   const sizeMap = {
     sm: { width: 72, height: 100, textSize: 'text-xs', iconSize: 14, cornerSize: 'text-[10px]' },
@@ -51,7 +53,8 @@ export default function PlayingCard({
         ${heightClass}
         bg-white
         border-2 border-slate-300
-        ${isPlayable ? 'cursor-pointer hover:shadow-lg' : 'cursor-default opacity-50'}
+        ${isPlayable ? 'cursor-pointer hover:shadow-lg' : 'cursor-default'}
+        ${!isPlayable && !isInPile ? 'opacity-50' : ''}
         ${isSelected ? 'ring-4 ring-gold-500 shadow-lg' : 'shadow-card'}
         ${className}
       `}
