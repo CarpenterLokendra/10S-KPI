@@ -15,6 +15,7 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectAttempts = useRef(0)
   const maxReconnectAttempts = 5
+  const playersRef = useRef<any[]>([])
 
   const {
     setGameId,
@@ -28,7 +29,14 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
     setCurrentTurn,
     setTrumpSuit,
     setLedSuit,
+    setHand,
+    players,
   } = useGameStore()
+
+  // Keep players ref up to date
+  useEffect(() => {
+    playersRef.current = players
+  }, [players])
 
   const { token } = useAuthStore()
 
@@ -87,14 +95,24 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
         break
 
       case 'chat-message':
+        console.log('💬 Received chat message:', message)
+        console.log('💬 Players in ref:', playersRef.current)
         if (message.user_id && message.message) {
+          // Look up the username from the players list
+          const player = playersRef.current.find((p: any) => p.id === message.user_id)
+          const username = player?.username || message.username || message.user_id
+          console.log('💬 Found player:', player, 'username:', username)
+
           addChatMessage({
             id: `${message.timestamp}-${message.user_id}`,
-            username: message.user_id,
+            username,
             message: message.message,
             timestamp: message.timestamp || new Date().toISOString(),
             isSystem: false,
           })
+          console.log('✅ Chat message added to store')
+        } else {
+          console.warn('⚠️ Chat message missing required fields:', { user_id: message.user_id, message: message.message })
         }
         break
 
@@ -111,6 +129,7 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
         console.log('   Current turn:', message.current_turn)
         console.log('   Trump:', message.trump_suit)
         console.log('   Led:', message.led_suit)
+        console.log('   Hand:', message.hand?.length || 0, 'cards')
         if (message.players) {
           console.log('✅ Calling setPlayers with:', message.players)
           setPlayers(message.players)
@@ -126,6 +145,10 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
         if (message.led_suit) {
           console.log('✅ Setting led suit to:', message.led_suit)
           setLedSuit(message.led_suit)
+        }
+        if (message.hand) {
+          console.log('✅ Setting hand with:', message.hand.length, 'cards')
+          setHand(message.hand)
         }
         break
 
@@ -153,6 +176,13 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
         console.log('Game ended, returning to lobby:', message.lobby_id)
         break
 
+      case 'hand-update':
+        console.log('🃏 Hand update received:', message.hand?.length || 0, 'cards')
+        if (message.hand) {
+          setHand(message.hand)
+        }
+        break
+
       default:
         console.log('⚠️ Unknown message type:', message.type, 'Full message:', message)
     }
@@ -174,10 +204,17 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
   // Send message to server
   const sendMessage = useCallback(
     (message: WebSocketMessage) => {
+      console.log('📤 sendMessage called with type:', message.type)
+      console.log('📤 WebSocket state:', {
+        exists: !!wsRef.current,
+        readyState: wsRef.current?.readyState,
+        isOpen: wsRef.current?.readyState === WebSocket.OPEN,
+      })
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        console.log('📤 Sending message via WebSocket:', message)
         wsRef.current.send(JSON.stringify(message))
       } else {
-        console.warn('WebSocket not connected, cannot send message:', message)
+        console.warn('❌ WebSocket not connected, cannot send message:', message, 'State:', wsRef.current?.readyState)
       }
     },
     []
@@ -211,9 +248,14 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
   const disconnect = useCallback(() => {
     if (wsRef.current) {
       sendMessage({ type: 'disconnect' })
-      wsRef.current.close()
-      wsRef.current = null
-      setWebSocketConnected(false)
+      // Give server time to process disconnect and broadcast to others before closing
+      setTimeout(() => {
+        if (wsRef.current) {
+          wsRef.current.close()
+          wsRef.current = null
+          setWebSocketConnected(false)
+        }
+      }, 100)
     }
   }, [sendMessage, setWebSocketConnected])
 

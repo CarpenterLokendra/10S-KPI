@@ -11,8 +11,8 @@ export function useLobbies(status: string = 'waiting') {
   return useQuery({
     queryKey: ['lobbies', status],
     queryFn: () => lobbyService.listLobbies(status),
-    refetchInterval: 10000, // Poll every 10 seconds
-    staleTime: 5000,
+    refetchInterval: 2000, // Poll every 2 seconds for real-time updates
+    staleTime: 0, // Always treat as stale to ensure fresh data
   })
 }
 
@@ -30,7 +30,8 @@ export function useLobby(code: string | null) {
       return lobbyService.getLobby(code)
     },
     enabled: !!code,
-    refetchInterval: 500, // Poll more frequently for game start detection
+    refetchInterval: 50, // Poll every 50ms for ultra-fast game start detection
+    refetchIntervalInBackground: true, // Keep polling even when tab is in background
     staleTime: 0, // Always treat as stale to ensure fresh data on each refetch
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes (was cacheTime)
   })
@@ -43,6 +44,20 @@ export function useLobby(code: string | null) {
       // Keep user on the page, they can navigate back when ready
     }
   }, [query.data?.status])
+
+  // Super aggressive explicit polling to ensure instant game start detection
+  useEffect(() => {
+    if (!code) return
+
+    // Poll very frequently for instant game start
+    const interval = setInterval(() => {
+      if (query.data?.status !== 'in_progress') {
+        query.refetch()
+      }
+    }, 50) // Poll every 50ms, but only if game hasn't started yet
+
+    return () => clearInterval(interval)
+  }, [code, query])
 
   // Detect game start and navigate all players (but not if they just quit the game)
   useEffect(() => {
@@ -82,6 +97,10 @@ export function useLobby(code: string | null) {
       if (!gameId) {
         console.log('🔄 Setting gameStartNotifiedRef to true')
         gameStartNotifiedRef.current = true
+
+        // Show immediate notification and start navigation
+        toast.success('🎮 Game starting!')
+
         // Store the lobby code in game store so we can return to it later
         console.log('💾 Storing lobby ID in game store:', code)
         setLobbyId(code)
@@ -89,14 +108,14 @@ export function useLobby(code: string | null) {
         console.log('🔓 Clearing lobby lock from sessionStorage')
         sessionStorage.removeItem('currentLobbyCode')
         console.log('🔓 Cleared lobby lock for auto-navigation')
-        // Small delay to ensure all data is propagated
+
+        // Minimal delay to ensure state is updated
         setTimeout(() => {
           console.log('🚀 NAVIGATE: Navigating to game:', query.data?.game_id)
-          toast.success('🎮 Game starting!')
           // Navigate to the game using the game_id from the lobby response
           navigate(`/game/${query.data.game_id}`)
           console.log('✅ Navigation complete')
-        }, 300)
+        }, 50)
       } else {
         console.log('⏭️ Already in a game - skipping navigation')
       }
@@ -113,15 +132,27 @@ export function useCreateLobby() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: LobbyCreate) => lobbyService.createLobby(data),
+    mutationFn: (data: LobbyCreate) => {
+      console.log('🎮 Creating lobby with data:', data)
+      return lobbyService.createLobby(data)
+    },
     onSuccess: (lobby) => {
+      console.log('✅ Lobby created successfully:', lobby)
       toast.success(`Lobby created! Code: ${lobby.code}`)
       queryClient.invalidateQueries({ queryKey: ['lobbies'] })
       navigate(`/lobbies/${lobby.code}`)
     },
     onError: (error: any) => {
-      const message = error.response?.data?.detail || 'Failed to create lobby'
-      toast.error(message)
+      console.error('❌ Failed to create lobby:', error)
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        code: error.code,
+      })
+      const message = error.response?.data?.detail || error.message || 'Failed to create lobby'
+      toast.error(`Error: ${message}`)
     },
   })
 }

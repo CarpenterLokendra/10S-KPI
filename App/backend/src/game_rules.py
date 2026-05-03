@@ -317,27 +317,35 @@ def remove_cards_from_deck(deck: List[Card], cards_to_remove: List[Card]) -> Lis
 def get_deck_for_player_count(num_players: int) -> List[Card]:
     """
     Get the appropriate deck based on number of players
-    
-    3 players: Remove 2 random cards (51 total)
+
+    3 players: Remove 1 random 2 (51 total)
     4 players: Use full deck (52 total)
-    5 players: Remove 2 of clubs (50 total)
+    5 players: Remove 2 random 2s (50 total)
     """
-    
+    import random
+
     deck = create_deck()
-    
+
     if num_players == 3:
-        # Remove 2 random cards (implementation will pick random)
-        return deck[2:]  # Placeholder, actual should be random
-    
+        # Remove 1 random 2
+        twos = [c for c in deck if c.value == CardValue.TWO]
+        random.shuffle(twos)
+        if twos:
+            deck.remove(twos[0])
+        return deck
+
     elif num_players == 4:
         # Use full deck
         return deck
-    
+
     elif num_players == 5:
-        # Remove 2 of clubs (if it exists)
-        deck = [card for card in deck if not (card.value == CardValue.TWO and card.suit == CardSuit.CLUBS)]
+        # Remove 2 random 2s
+        twos = [c for c in deck if c.value == CardValue.TWO]
+        random.shuffle(twos)
+        for i in range(min(2, len(twos))):
+            deck.remove(twos[i])
         return deck
-    
+
     else:
         raise ValueError(f"Invalid number of players: {num_players}")
 

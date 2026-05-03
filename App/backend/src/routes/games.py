@@ -267,6 +267,7 @@ async def get_game_details(
 @router.post("/{game_id}/play")
 async def play_card(
     game_id: str,
+    card_data: dict,
     auth_token: str = None,
     db: Session = Depends(get_db)
 ):
@@ -280,7 +281,7 @@ async def play_card(
     - `token`: User authentication token
 
     **Request Body**:
-    - `card`: Card object {"suit": "hearts", "rank": "10"}
+    - `card`: Card object {"suit": "hearts", "value": "10"}
 
     **Response**:
     - Updated game state
@@ -290,6 +291,8 @@ async def play_card(
     - 404: Game not found
     - 400: Invalid card play
     """
+    from .game_rules import GameRules, Card, PlayerHand, CardSuit, CardValue
+
     user_id = verify_token(auth_token)
 
     if not user_id:
@@ -306,12 +309,60 @@ async def play_card(
             detail="Game not found"
         )
 
-    logger.info(f"🃏 Card played in game {game_id}")
+    try:
+        # Get player's hand from game state
+        game_state = game.game_state or {}
+        player_hands = game_state.get('player_hands', {})
+        current_player_hand = player_hands.get(user_id, [])
 
-    return {
-        "message": "Card played successfully",
-        "game_state": "updated"
-    }
+        # Convert to Card objects
+        player_cards = [
+            Card(value=CardValue[c['value']], suit=CardSuit[c['suit'].upper()])
+            for c in current_player_hand
+        ]
+        player_hand = PlayerHand(user_id, player_cards)
+
+        # Create card to play
+        card_to_play = Card(
+            value=CardValue[card_data['value']],
+            suit=CardSuit[card_data['suit'].upper()]
+        )
+
+        # Get current round info
+        current_round = game_state.get('current_round', {})
+        led_suit = CardSuit[current_round.get('led_suit', 'HEARTS')]
+        trump_suit = CardSuit[current_round.get('trump_suit')] if current_round.get('trump_suit') else None
+
+        # Validate the move
+        if not GameRules.is_valid_move(player_hand, led_suit, trump_suit, card_to_play):
+            if player_hand.has_suit(led_suit):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"You must play a card of the led suit ({led_suit.value})"
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid card play"
+                )
+
+        logger.info(f"✅ Valid card played in game {game_id}: {card_to_play}")
+
+        return {
+            "message": "Card played successfully",
+            "game_state": "updated"
+        }
+    except KeyError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid card format: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"Error playing card: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to process card play"
+        )
 
 # ============================================
 # END GAME

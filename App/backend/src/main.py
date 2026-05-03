@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from loguru import logger
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from sqlalchemy.orm.attributes import flag_modified
 from datetime import datetime
 
 # Setup logging (must be imported before any logging calls)
@@ -343,6 +344,20 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
             if game:
                 logger.info(f"   Game status: {game.status}, Num players: {game.num_players}")
 
+                # Check if game has ended - if so, redirect player to lobby
+                if game.status == "ENDED":
+                    logger.warning(f"⚠️ Game {game_id} has ended. Sending game-cancelled to player {user_id}")
+                    await websocket.send_json({
+                        "type": "game-cancelled",
+                        "username": "Game ended",
+                        "lobby_id": game.lobby_id,
+                        "timestamp": datetime.utcnow().isoformat()
+                    })
+                    manager.disconnect(game_id, user_id)
+                    logger.info(f"✅ Game-cancelled sent to {user_id}")
+                    # Return early to close the connection
+                    return
+
                 # Get all players in this game
                 game_players_db = db.query(models.GamePlayer).filter(
                     models.GamePlayer.game_id == game_id
@@ -370,14 +385,24 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
                         game_players.append(player_obj)
                         logger.info(f"      Added: {player_obj['username']}")
 
+                # Fetch this player's hand from database
+                my_game_player = db.query(models.GamePlayer).filter_by(game_id=game_id, user_id=user_id).first()
+                my_hand = my_game_player.hand or [] if my_game_player else []
+
+                # Get current turn from game_state
+                game_state = game.game_state or {}
+                current_turn = game_state.get("current_turn")
+
                 # Send initial game state to the newly connected player
                 logger.info(f"✅ Sending game-state message with {len(game_players)} players to {user_id}")
+                logger.info(f"✅ Player hand: {len(my_hand)} cards, current_turn: {current_turn}")
                 await websocket.send_json({
                     "type": "game-state",
                     "players": game_players,
-                    "current_turn": None,
+                    "current_turn": current_turn,
                     "trump_suit": game.current_trump_suit,
-                    "led_suit": game.current_led_suit
+                    "led_suit": game.current_led_suit,
+                    "hand": my_hand
                 })
                 logger.info(f"✅ Game state sent successfully")
             else:
@@ -396,13 +421,37 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
             if message_type == "play-card":
                 logger.info(f"♠️ Card played by {user_id}")
 
+                card_data = data.get("card")
+                played_suit = card_data.get("suit") if card_data else None
+
                 # Broadcast card play to all players
                 await manager.broadcast(game_id, {
                     "type": "play-notification",
                     "user_id": user_id,
-                    "card": data.get("card"),
+                    "card": card_data,
                     "timestamp": data.get("timestamp")
                 })
+
+                # Remove played card from player's hand
+                try:
+                    db_temp = SessionLocal()
+                    gp = db_temp.query(models.GamePlayer).filter(
+                        models.GamePlayer.game_id == game_id,
+                        models.GamePlayer.user_id == user_id
+                    ).first()
+                    if gp and gp.hand:
+                        # Find and remove the card
+                        for i, card in enumerate(gp.hand):
+                            if card["suit"] == card_data.get("suit") and card["value"] == card_data.get("value"):
+                                gp.hand.pop(i)
+                                # Mark the JSON field as modified so SQLAlchemy detects the change
+                                flag_modified(gp, "hand")
+                                db_temp.commit()
+                                logger.info(f"   ✅ Removed {card_data['value']} of {card_data['suit']} from {user_id}'s hand, {len(gp.hand)} cards remaining")
+                                break
+                    db_temp.close()
+                except Exception as e:
+                    logger.error(f"❌ Error removing card from hand: {str(e)}", exc_info=True)
 
                 # Update turn to next player
                 try:
@@ -410,6 +459,16 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
                     game = db.query(models.Game).filter(models.Game.id == game_id).first()
 
                     if game:
+                        # Set led_suit if this is the first card (no led_suit yet)
+                        if not game.current_led_suit and played_suit:
+                            game.current_led_suit = played_suit
+                            logger.info(f"📍 Led suit set to {played_suit}")
+
+                        # Set trump_suit if player plays a card that's not the led_suit
+                        if game.current_led_suit and played_suit and played_suit != game.current_led_suit and not game.current_trump_suit:
+                            game.current_trump_suit = played_suit
+                            logger.info(f"🎯 Trump suit set to {played_suit}")
+
                         # Get all players in order
                         game_players_db = db.query(models.GamePlayer).filter(
                             models.GamePlayer.game_id == game_id
@@ -420,12 +479,74 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
                             current_pos = next((gp.player_position for gp in game_players_db if gp.user_id == user_id), None)
 
                             if current_pos is not None:
-                                # Calculate next player (rotate to first if at end)
-                                next_pos = (current_pos + 1) % len(game_players_db)
-                                next_player_id = game_players_db[next_pos].user_id
+                                # Track cards played this round
+                                game_state = game.game_state or {}
+                                cards_played_this_round = game_state.get("cards_played_this_round", [])
+                                cards_played_this_round.append({"user_id": user_id, "suit": played_suit})
+                                game_state["cards_played_this_round"] = cards_played_this_round
 
-                                # Update game state
-                                game.current_turn = next_player_id
+                                num_players = len(game_players_db)
+                                round_complete = len(cards_played_this_round) >= num_players
+
+                                if round_complete:
+                                    logger.info(f"✅ Round complete! {num_players} cards played")
+
+                                    # Check if trump was just decided this round and this is the first round after trump
+                                    trump_just_decided = game.current_trump_suit and not game_state.get("trump_decided_and_dealt", False)
+
+                                    if trump_just_decided:
+                                        logger.info(f"🎯 Trump decided! Distributing all remaining cards equally to all players...")
+
+                                        # Distribute ALL remaining cards equally
+                                        from ..game_rules import Card
+                                        remaining_deck = game_state.get("deck", [])
+
+                                        # Convert dict cards back to Card objects for dealing
+                                        deck_cards = [Card(suit=c["suit"], value=c["value"]) for c in remaining_deck]
+
+                                        cards_per_player = len(deck_cards) // num_players
+                                        remainder = len(deck_cards) % num_players
+
+                                        logger.info(f"📊 Distributing {len(deck_cards)} cards: {cards_per_player} cards each, {remainder} remainder")
+
+                                        deck_index = 0
+                                        for i, player in enumerate(game_players_db):
+                                            player.hand = player.hand or []
+                                            # Give extra cards to first players if there's a remainder
+                                            extra_card = 1 if i < remainder else 0
+                                            cards_to_deal = cards_per_player + extra_card
+
+                                            for _ in range(cards_to_deal):
+                                                if deck_index < len(deck_cards):
+                                                    card = deck_cards[deck_index]
+                                                    player.hand.append({
+                                                        "suit": card.suit.value,
+                                                        "value": card.value
+                                                    })
+                                                    deck_index += 1
+
+                                            # Mark the hand as modified so SQLAlchemy detects the JSON change
+                                            flag_modified(player, "hand")
+                                            logger.info(f"   ✅ Dealt {cards_to_deal} cards to player {player.user_id} (now {len(player.hand)} cards)")
+
+                                        # Mark that trump has been decided and all remaining cards distributed
+                                        game_state["trump_decided_and_dealt"] = True
+                                        game_state["deck"] = []  # No more cards in deck
+                                        logger.info(f"✅ All cards distributed! Deck is now empty")
+                                    else:
+                                        logger.info(f"ℹ️ Round complete but trump not yet decided, no card distribution")
+
+                                    game_state["cards_played_this_round"] = []
+
+                                    # Calculate next player for new round
+                                    next_pos = (current_pos + 1) % num_players
+                                else:
+                                    # Normal turn rotation
+                                    next_pos = (current_pos + 1) % num_players
+
+                                next_player_id = game_players_db[next_pos].user_id
+                                game_state["current_turn"] = next_player_id
+                                game.game_state = game_state
                                 db.commit()
 
                                 logger.info(f"🔄 Turn switched to player {next_player_id}")
@@ -440,7 +561,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
                                             "username": user_obj.username,
                                             "position": gp.player_position,
                                             "status": "active",
-                                            "handSize": 0,
+                                            "handSize": len(gp.hand) if gp.hand else 0,
                                             "score": 0,
                                             "caughtTens": [],
                                             "isYourTurn": user_obj.id == next_player_id,
@@ -454,24 +575,43 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str, user_id: str):
                                     "trump_suit": game.current_trump_suit,
                                     "led_suit": game.current_led_suit
                                 })
+
+                                # If cards were distributed, send each player their updated hand
+                                if round_complete:
+                                    logger.info(f"📤 Sending updated hands to all players after round completion")
+                                    for gp in game_players_db:
+                                        if gp.user_id in manager.active_connections.get(game_id, {}):
+                                            try:
+                                                await manager.active_connections[game_id][gp.user_id].send_json({
+                                                    "type": "hand-update",
+                                                    "hand": gp.hand or []
+                                                })
+                                                logger.info(f"   ✅ Sent hand update to {gp.user_id}")
+                                            except Exception as e:
+                                                logger.error(f"   ❌ Failed to send hand update to {gp.user_id}: {str(e)}")
                     db.close()
                 except Exception as e:
                     logger.error(f"❌ Error updating turn: {str(e)}", exc_info=True)
             
             elif message_type == "chat-message":
                 # Broadcast chat message
+                logger.info(f"💬 [CHAT] User {user_id} sent: {data.get('message')}")
+                logger.info(f"💬 [CHAT] Broadcasting to {len(manager.active_connections.get(game_id, []))} players in game {game_id}")
                 await manager.broadcast(game_id, {
                     "type": "chat-message",
                     "user_id": user_id,
                     "message": data.get("message"),
                     "timestamp": data.get("timestamp")
                 })
+                logger.info(f"✅ [CHAT] Message broadcasted")
             
             elif message_type == "disconnect":
                 # Player quitting the game - stop game for everyone
                 logger.info(f"⏹️ User {user_id} is quitting game {game_id}")
-                manager.disconnect(game_id, user_id)
+                # Broadcast game cancelled BEFORE disconnecting so other players receive it
                 await handle_game_disconnect(game_id, user_id)
+                # Now remove from active connections
+                manager.disconnect(game_id, user_id)
                 break
     
     except WebSocketDisconnect:

@@ -15,11 +15,13 @@ from sqlalchemy.orm import Session
 from loguru import logger
 import uuid
 from collections import defaultdict
+import random
 
 from ..database import get_db
 from ..models import Lobby, LobbyPlayer, User, Game, GamePlayer
 from ..security import verify_token
 from datetime import datetime, timedelta, timezone
+from ..game_rules import get_deck_for_player_count, deal_cards
 
 # In-memory storage for lobby chat messages
 lobby_messages = defaultdict(list)
@@ -487,6 +489,7 @@ async def start_game_from_lobby(
         lobby_members = db.query(LobbyPlayer).filter(LobbyPlayer.lobby_id == lobby.id).all()
         logger.info(f"📋 Found {len(lobby_members)} lobby members")
 
+        game_players_list = []
         for i, member in enumerate(lobby_members):
             game_player = GamePlayer(
                 id=str(uuid.uuid4()),
@@ -495,7 +498,31 @@ async def start_game_from_lobby(
                 player_position=i
             )
             db.add(game_player)
+            game_players_list.append(game_player)
             logger.info(f"   ✅ Added GamePlayer: user_id={member.user_id}, position={i}")
+
+        # Deal cards
+        deck = get_deck_for_player_count(lobby.current_players)
+        random.shuffle(deck)
+        logger.info(f"🎴 Created and shuffled deck with {len(deck)} cards for {lobby.current_players} players")
+
+        hands = deal_cards(deck, lobby.current_players, 5)  # 5 cards per player
+        dealt_card_count = lobby.current_players * 5
+        logger.info(f"🎴 Dealt {dealt_card_count} cards ({5} per player)")
+
+        # Save hands to GamePlayer records
+        for gp in game_players_list:
+            if gp.player_position in hands:
+                gp.hand = [{"suit": c.suit.value, "value": c.value} for c in hands[gp.player_position]]
+                logger.info(f"   ✅ Dealt {len(hands[gp.player_position])} cards to player at position {gp.player_position}")
+
+        # Store remaining deck and first turn in game_state
+        remaining_deck = deck[dealt_card_count:]
+        game.game_state = {
+            "deck": [{"suit": c.suit.value, "value": c.value} for c in remaining_deck],
+            "current_turn": lobby_members[0].user_id
+        }
+        logger.info(f"🎴 Saved {len(remaining_deck)} cards to deck, first turn: {lobby_members[0].user_id}")
 
         # Update lobby status
         lobby.status = "in_progress"

@@ -51,10 +51,6 @@ export default function PlayerSeat({
         {caughtTens.length > 0 && (
           <span className="text-[9px] text-gold-500 font-semibold">10s: {caughtTens.length}</span>
         )}
-        {/* Turn indicator */}
-        {isCurrentTurn && (
-          <span className="text-[9px] text-blue-400 font-semibold animate-pulse">YOUR TURN</span>
-        )}
       </motion.div>
     )
   }
@@ -117,16 +113,6 @@ export default function PlayerSeat({
           </motion.div>
         )}
 
-        {/* Turn indicator */}
-        {isCurrentTurn && (
-          <motion.div
-            className="mt-2 text-xs font-semibold text-blue-400 bg-blue-500 bg-opacity-20 px-2 py-1 rounded"
-            animate={{ opacity: [1, 0.5, 1] }}
-            transition={{ duration: 0.8, repeat: Infinity }}
-          >
-            Your Turn
-          </motion.div>
-        )}
       </div>
     </motion.div>
   )

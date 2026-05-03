@@ -44,6 +44,9 @@ export default function CardPile({
           {displayCards.map((card, index) => {
             const offset = layout === 'cascade' ? index * 14 : 0
             const rotationVariation = layout === 'cascade' ? (index - 2) * 7 : 0
+            // Center the card position accounting for cascade offset
+            const centerOffsetX = offset - (displayCards.length > 1 ? ((displayCards.length - 1) * 14) / 2 : 0)
+            const centerOffsetY = offset - (displayCards.length > 1 ? ((displayCards.length - 1) * 14) / 2 : 0)
 
             return (
               <motion.div
@@ -58,8 +61,8 @@ export default function CardPile({
                   opacity: 1,
                   scale: 1,
                   rotate: rotationVariation,
-                  y: offset,
-                  x: offset,
+                  y: centerOffsetY,
+                  x: centerOffsetX,
                 }}
                 exit={{
                   opacity: 0,
@@ -74,6 +77,12 @@ export default function CardPile({
                   duration: 0.3,
                 }}
                 className="absolute"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  marginTop: '-50px',
+                  marginLeft: '-45px',
+                }}
               >
                 <PlayingCard
                   suit={card.suit}

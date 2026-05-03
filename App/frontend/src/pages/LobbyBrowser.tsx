@@ -17,11 +17,14 @@ export default function LobbyBrowser() {
   })
 
   const handleCreateLobby = () => {
-    createLobby({
+    console.log('🎯 Create button clicked')
+    const data = {
       max_players: createForm.maxPlayers,
       game_type: 'lobby',
       is_private: createForm.isPrivate,
-    })
+    }
+    console.log('📝 Creating lobby with data:', data)
+    createLobby(data)
     setShowCreateForm(false)
   }
 
@@ -121,7 +124,7 @@ export default function LobbyBrowser() {
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    flex="1"
+                    className="flex-1"
                     variant="primary"
                     onClick={handleCreateLobby}
                     loading={isCreating}
@@ -129,7 +132,7 @@ export default function LobbyBrowser() {
                     Create
                   </Button>
                   <Button
-                    flex="1"
+                    className="flex-1"
                     variant="secondary"
                     onClick={() => setShowCreateForm(false)}
                     disabled={isCreating}

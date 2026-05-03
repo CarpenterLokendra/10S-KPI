@@ -11,6 +11,7 @@ interface CardHandProps {
   className?: string
   cardSize?: 'sm' | 'md' | 'lg'
   position?: 'bottom' | 'top' | 'left' | 'right'
+  scrollable?: boolean
 }
 
 export default function CardHand({
@@ -21,9 +22,13 @@ export default function CardHand({
   className = '',
   cardSize = 'md',
   position = 'bottom',
+  scrollable = false,
 }: CardHandProps) {
   const cardCount = cards.length
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+
+  // Use scrollable layout when enabled and more than 7 cards
+  const isScrollableMode = scrollable && cardCount > 7
 
   const sizeConfig = useMemo(() => {
     switch (cardSize) {
@@ -40,14 +45,21 @@ export default function CardHand({
     const N = cardCount
     if (N === 0) return { containerWidth: 0, containerHeight: 0, positions: [] }
 
-    // Stacked cards in curved fan arrangement - wider, more natural look
-    const totalSpreadDegrees = 70 // Wider spread for natural fan (was 50°)
-    const totalSpreadRadians = (totalSpreadDegrees * Math.PI) / 180
-    const radius = 320 // Larger arc radius (was 280)
+    // Adjust arc based on card size - tighter arc for mobile (sm)
+    let totalSpreadDegrees = 70
+    let radius = 320
+    let stackOffsetX = 12
+    let stackOffsetY = 3
 
-    // Stacking offsets - natural card overlap
-    const stackOffsetX = 12 // Natural card overlap (was 0.5px)
-    const stackOffsetY = 3 // Natural card overlap (was 0.2px)
+    if (cardSize === 'sm') {
+      // Tighter arc for mobile to keep cards on screen
+      totalSpreadDegrees = 45 // Much tighter spread
+      radius = 200 // Smaller radius for tighter arc
+      stackOffsetX = 20 // More overlap
+      stackOffsetY = 2
+    }
+
+    const totalSpreadRadians = (totalSpreadDegrees * Math.PI) / 180
 
     // Calculate positions on arc with stacking
     const centerIndex = (N - 1) / 2
@@ -106,6 +118,59 @@ export default function CardHand({
     right: 'flex flex-col justify-center items-end pr-4',
   }[position]
 
+  // Scrollable layout for mobile with >7 cards
+  if (isScrollableMode) {
+    return (
+      <div className="overflow-x-auto w-full" style={{ touchAction: 'pan-x' }}>
+        <div style={{
+          display: 'flex',
+          gap: 0,
+          paddingBottom: 8,
+          paddingLeft: 8,
+          paddingRight: 8,
+          minWidth: 'min-content',
+        }}>
+          <AnimatePresence mode="popLayout">
+            {cards.map((card, index) => {
+              const isPlayable = playableIndices.includes(index)
+              const isSelected = selectedIndex === index
+
+              return (
+                <motion.div
+                  key={`${card.suit}-${card.value}-${index}`}
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  onClick={() => isPlayable && onCardClick?.(card, index)}
+                  style={{
+                    marginLeft: index === 0 ? 0 : -32,
+                    zIndex: isSelected ? 200 : 10 + index,
+                    position: 'relative',
+                    flexShrink: 0,
+                    cursor: isPlayable ? 'pointer' : 'default',
+                  }}>
+                  <PlayingCard
+                    suit={card.suit}
+                    value={card.value}
+                    isPlayable={isPlayable}
+                    isSelected={isSelected}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      isPlayable && onCardClick?.(card, index)
+                    }}
+                    size={cardSize}
+                  />
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
+        </div>
+      </div>
+    )
+  }
+
+  // Fan layout (original, for <= 7 cards or when scrollable is not enabled)
   return (
     <div className={`${containerClass} ${className}`}>
       <div

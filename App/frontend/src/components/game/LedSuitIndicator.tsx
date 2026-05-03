@@ -41,7 +41,7 @@ export default function LedSuitIndicator({ suit, className = '', compact = false
   return (
     <div className={`card-base text-center border-2 border-blue-500 ${className}`}>
       <p className="text-text-secondary text-xs mb-2">Led Suit</p>
-      <div className={`flex items-center justify-center gap-2 ${isRed ? 'text-red-600' : 'text-slate-900'}`}>
+      <div className={`flex items-center justify-center gap-2 ${isRed ? 'text-red-600' : 'text-gray-100'}`}>
         <SuitIcon suit={suit} size={28} />
         <span className="font-semibold capitalize">{suitName}</span>
       </div>
