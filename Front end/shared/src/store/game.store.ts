@@ -23,6 +23,7 @@ const initialGameState: GameState & {
   turnStartedAt: string | null
   phase2StartedAt: string | null
   turnTimeoutSeconds: number
+  dealingAnimationShown: boolean
 } = {
   gameId: null,
   lobbyId: null,
@@ -49,6 +50,10 @@ const initialGameState: GameState & {
   turnStartedAt: null,
   phase2StartedAt: null,
   turnTimeoutSeconds: 60,
+  dealingAnimationShown: false,
+  showTimeoutModal: false,
+  timedOutPlayerId: null,
+  isGameAbandoned: false,
 }
 
 export interface GameStoreActions {
@@ -94,6 +99,14 @@ export interface GameStoreActions {
   addChatMessage: (message: ChatMessage) => void
   clearChatMessages: () => void
 
+  // Animations
+  setDealingAnimationShown: (shown: boolean) => void
+
+  // Timeout and Replacement
+  setShowTimeoutModal: (show: boolean) => void
+  setTimedOutPlayerId: (playerId: string | null) => void
+  setIsGameAbandoned: (abandoned: boolean) => void
+
   // WebSocket
   setWebSocketConnected: (connected: boolean) => void
   setGameId: (gameId: string) => void
@@ -118,6 +131,10 @@ export type GameStore = (GameState & {
   turnStartedAt: string | null
   phase2StartedAt: string | null
   turnTimeoutSeconds: number
+  dealingAnimationShown: boolean
+  showTimeoutModal: boolean
+  timedOutPlayerId: string | null
+  isGameAbandoned: boolean
 }) & GameStoreActions
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -294,6 +311,22 @@ export const useGameStore = create<GameStore>((set) => ({
 
   clearChatMessages: () => {
     set({ chatMessages: [] })
+  },
+
+  setDealingAnimationShown: (shown: boolean) => {
+    set({ dealingAnimationShown: shown })
+  },
+
+  setShowTimeoutModal: (show: boolean) => {
+    set({ showTimeoutModal: show })
+  },
+
+  setTimedOutPlayerId: (playerId: string | null) => {
+    set({ timedOutPlayerId: playerId })
+  },
+
+  setIsGameAbandoned: (abandoned: boolean) => {
+    set({ isGameAbandoned: abandoned })
   },
 
   setWebSocketConnected: (connected: boolean) => {

@@ -17,6 +17,7 @@ export interface UserResponse {
   updated_at?: string
   last_login?: string
   auth_method: AuthMethod
+  hasCompletedOnboarding?: boolean
 }
 
 export interface TokenResponse {

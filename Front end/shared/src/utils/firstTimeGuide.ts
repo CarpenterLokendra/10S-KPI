@@ -1,7 +1,7 @@
-const GLOBAL_KEY = '10s_coach_shown'
+const getGuideKey = (userId: string): string => `10s_coach_shown_${userId}`
 
-export const hasSeenGuide = (): boolean =>
-  localStorage.getItem(GLOBAL_KEY) === 'true'
+export const hasSeenGuide = (userId: string): boolean =>
+  localStorage.getItem(getGuideKey(userId)) === 'true'
 
-export const markGuideSeen = (): void =>
-  localStorage.setItem(GLOBAL_KEY, 'true')
+export const markGuideSeen = (userId: string): void =>
+  localStorage.setItem(getGuideKey(userId), 'true')
