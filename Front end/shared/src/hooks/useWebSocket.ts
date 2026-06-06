@@ -150,17 +150,29 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
             if (gameData.played_cards !== undefined) {
               console.log('✅ Restoring', gameData.played_cards.length, 'played cards')
               const store = useGameStore.getState()
-              // Clear existing played cards first
-              store.clearPlayedCards()
+              // Only clear if this is the initial game setup (round 1)
+              // During ongoing gameplay, don't clear to preserve pile across round transitions
+              const isInitialGameSetup = !gameData.current_round || gameData.current_round === 1
+              if (isInitialGameSetup) {
+                console.log('🆕 Initial game setup - clearing played cards for fresh start')
+                store.clearPlayedCards()
+              } else {
+                console.log('⚠️ Mid-game reconnect (round', gameData.current_round, ') - preserving existing pile')
+              }
               // Add all played cards from server
               gameData.played_cards.forEach((cardPlay: any) => {
                 if (cardPlay.suit && cardPlay.value) {
-                  store.addPlayedCard({
-                    playedBy: cardPlay.user_id,
-                    suit: cardPlay.suit,
-                    value: cardPlay.value,
-                    timestamp: new Date().toISOString(),
-                  })
+                  const exists = store.playedCards.some(
+                    c => c.suit === cardPlay.suit && c.value === cardPlay.value && c.playedBy === cardPlay.user_id
+                  )
+                  if (!exists) {
+                    store.addPlayedCard({
+                      playedBy: cardPlay.user_id,
+                      suit: cardPlay.suit,
+                      value: cardPlay.value,
+                      timestamp: new Date().toISOString(),
+                    })
+                  }
                 }
               })
             }
@@ -288,6 +300,12 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
         break
 
       case 'game-state':
+        console.log('📊 GAME-STATE RECEIVED:', {
+          played_cards_count: message.played_cards?.length || 0,
+          played_cards: message.played_cards,
+          current_round: message.current_round,
+          current_turn: message.current_turn,
+        })
         // CRITICAL FIX: Don't process game-state updates if game has already ended
         // This prevents the dealing animation from restarting when a player quits/disconnects
         if (isGameEndedRef.current) {
@@ -320,9 +338,6 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
           console.log('✅ Setting trump to:', message.trump_suit)
           setTrumpSuit(message.trump_suit)
         }
-        // CRITICAL: Save initial state BEFORE updating prevLedSuitRef for played_cards sync logic
-        const wasInitialConnect = prevLedSuitRef.current === null
-
         if (message.led_suit !== undefined) {
           console.log('✅ Setting led suit to:', message.led_suit)
           setLedSuit(message.led_suit)
@@ -338,17 +353,29 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
           console.log('✅ Setting hand with:', message.hand.length, 'cards')
           setHand(message.hand)
         }
-        // Only sync played_cards from game-state on initial connect (for page refresh recovery)
-        // Otherwise, rely on real-time play-notifications for card updates
-        // Note: Pile persists across rounds until 10s are caught
+        // This handles both initial connect (page refresh recovery) and ongoing gameplay (round transitions)
+        // The pile persists across rounds until 10s are caught
         if (message.played_cards !== undefined && Array.isArray(message.played_cards)) {
+          const store = useGameStore.getState()
+          // CRITICAL: Detect true initial connect vs WebSocket reconnection during ongoing game
+          // Only clear pile if BOTH conditions are true:
+          // 1. prevLedSuitRef is null (first time seeing led_suit reference)
+          // 2. currentRound is 1 (actually in Round 1, not a reconnection during Round 2+)
+          const wasInitialConnect = prevLedSuitRef.current === null && store.currentRound === 1
+
           if (wasInitialConnect) {
-            // Initial connect: Apply played_cards for page refresh recovery
-            console.log('📥 INITIAL CONNECT: Syncing', message.played_cards.length, 'played cards for recovery')
-            const store = useGameStore.getState()
+            console.log('📥 INITIAL CONNECT (Round 1): Syncing', message.played_cards.length, 'played cards for recovery')
             store.clearPlayedCards()
-            message.played_cards.forEach((cardPlay: any) => {
-              if (cardPlay.suit && cardPlay.value) {
+          } else {
+            console.log('🔄 GAME STATE SYNC (Round', store.currentRound, '): Syncing', message.played_cards.length, 'played cards - PRESERVING PILE')
+          }
+          // Rebuild pile from server data, avoiding duplicates
+          message.played_cards.forEach((cardPlay: any) => {
+            if (cardPlay.suit && cardPlay.value) {
+              const exists = store.playedCards.some(
+                c => c.suit === cardPlay.suit && c.value === cardPlay.value && c.playedBy === cardPlay.user_id
+              )
+              if (!exists) {
                 store.addPlayedCard({
                   playedBy: cardPlay.user_id,
                   suit: cardPlay.suit,
@@ -356,11 +383,8 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
                   timestamp: new Date().toISOString(),
                 })
               }
-            })
-          } else {
-            // During normal gameplay: let play-notifications handle card additions
-            console.log('⏭️  NORMAL PLAY: Skipping played_cards sync (play-notifications handle real-time updates)')
-          }
+            }
+          })
         }
         break
 
@@ -484,6 +508,15 @@ export function useWebSocket(gameId: string | null, userId: string | null) {
         console.log('🃏 Triggering card distribution animation for trump cards')
         soundService.shuffle()
         setDistributingCards(true)
+        break
+
+      case 'round-starting':
+        console.log('🎴 Round starting - triggering transition animation:', message.next_round)
+        setDistributingCards(true)
+        // Dismiss animation after 1.5 seconds
+        setTimeout(() => {
+          setDistributingCards(false)
+        }, 1500)
         break
 
       case 'hand-update':

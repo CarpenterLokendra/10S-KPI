@@ -255,7 +255,7 @@ export const useGameStore = create<GameStore>((set) => ({
       currentRound: roundNumber,
       ledSuit,
       trumpSuit: null,
-      playedCards: [],
+      // DO NOT clear playedCards - pile persists across rounds until 10s are caught
     })
   },
 
