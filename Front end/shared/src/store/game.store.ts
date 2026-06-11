@@ -24,6 +24,7 @@ const initialGameState: GameState & {
   phase2StartedAt: string | null
   turnTimeoutSeconds: number
   dealingAnimationShown: boolean
+  gameType: 'bot' | 'human' | null
 } = {
   gameId: null,
   lobbyId: null,
@@ -51,6 +52,7 @@ const initialGameState: GameState & {
   phase2StartedAt: null,
   turnTimeoutSeconds: 60,
   dealingAnimationShown: false,
+  gameType: null,
   showTimeoutModal: false,
   timedOutPlayerId: null,
   isGameAbandoned: false,
@@ -89,6 +91,7 @@ export interface GameStoreActions {
   setRoundWinner: (username: string | null) => void
   setDistributingCards: (distributing: boolean) => void
   setTensCaughtPlayer: (playerName: string | null) => void
+  setGameType: (type: 'bot' | 'human' | null) => void
 
   // Turn timing
   setTurnStartedAt: (timestamp: string | null) => void
@@ -132,6 +135,7 @@ export type GameStore = (GameState & {
   phase2StartedAt: string | null
   turnTimeoutSeconds: number
   dealingAnimationShown: boolean
+  gameType: 'bot' | 'human' | null
   showTimeoutModal: boolean
   timedOutPlayerId: string | null
   isGameAbandoned: boolean
@@ -276,6 +280,11 @@ export const useGameStore = create<GameStore>((set) => ({
   setTensCaughtPlayer: (playerName: string | null) => {
     console.log('🎉 Setting tens caught player:', playerName)
     set({ tensCaughtPlayer: playerName })
+  },
+
+  setGameType: (type: 'bot' | 'human' | null) => {
+    console.log('🎮 Setting game type:', type)
+    set({ gameType: type })
   },
 
   setTurnStartedAt: (timestamp: string | null) => {
