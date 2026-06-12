@@ -1,6 +1,0 @@
-export type * from './api'
-export type * from './auth'
-export type * from './game'
-export type * from './leaderboard'
-export type * from './lobby'
-export type * from './websocket'
