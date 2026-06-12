@@ -9,8 +9,15 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
-import { lobbyService } from '../shared/services';
-import type { Lobby } from '../shared/types';
+import { lobbyService } from '../services/lobby.service';
+
+interface Lobby {
+  id: string;
+  code: string;
+  name: string;
+  current_players: number;
+  max_players: number;
+}
 
 interface LobbyScreenProps {
   onGameStart: (gameId: string) => void;

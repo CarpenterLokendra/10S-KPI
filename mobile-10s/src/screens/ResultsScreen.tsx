@@ -7,7 +7,18 @@ import {
   SafeAreaView,
   FlatList,
 } from 'react-native';
-import type { Game } from '../shared/types';
+interface Game {
+  id: string;
+  players: Array<{
+    user_id: string;
+    final_score: number;
+    hand?: any[];
+    caught_10s?: any[];
+    user: {
+      username: string;
+    };
+  }>;
+}
 
 interface ResultsScreenProps {
   game: Game;

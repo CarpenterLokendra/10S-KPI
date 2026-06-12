@@ -8,9 +8,32 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
-import { useGameStore } from '../shared/store';
-import { gameService } from '../shared/services';
-import type { Card, PlayerState } from '../shared/types';
+import { gameService } from '../services/game.service';
+
+interface Card {
+  id: string;
+  rank: string;
+  suit: string;
+}
+
+interface Player {
+  user_id: string;
+  hand?: Card[];
+  final_score: number;
+  caught_10s?: Card[];
+  is_current_player: boolean;
+  user: {
+    username: string;
+  };
+}
+
+interface GameState {
+  id: string;
+  players: Player[];
+  current_round: number;
+  current_trump_suit?: string;
+  current_player_id: string;
+}
 
 interface GameScreenProps {
   gameId: string;
@@ -18,14 +41,15 @@ interface GameScreenProps {
 }
 
 export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd }) => {
-  const gameState = useGameStore((state) => state.gameState);
+  const [gameState, setGameState] = useState<GameState | null>(null);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const loadGame = async () => {
       try {
-        await gameService.getGame(gameId);
+        const game = await gameService.getGame(gameId);
+        setGameState(game);
       } catch (err) {
         console.error('Failed to load game:', err);
       }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { authService } from '../shared/services';
+import { authService } from '../services/auth.service';
 
 interface AuthScreenProps {
   onLoginSuccess: () => void;

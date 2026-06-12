@@ -4,9 +4,11 @@ import { AuthScreen } from './src/screens/AuthScreen';
 import { LobbyScreen } from './src/screens/LobbyScreen';
 import { GameScreen } from './src/screens/GameScreen';
 import { ResultsScreen } from './src/screens/ResultsScreen';
-import { authService } from './src/shared/services';
+import { authService } from './src/services/auth.service';
 
 type AppState = 'loading' | 'auth' | 'lobby' | 'game' | 'results';
+
+import apiClient from './src/services/api';
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>('loading');
@@ -42,7 +44,7 @@ export default function App() {
   const handleGameEnd = async () => {
     if (gameId) {
       try {
-        const response = await authService.api.get(`/games/${gameId}`);
+        const response = await apiClient.get(`/games/${gameId}`);
         setCurrentGame(response.data);
         setAppState('results');
       } catch (err) {
