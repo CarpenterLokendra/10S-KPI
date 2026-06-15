@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -33,6 +33,7 @@ export const FeatureModal: React.FC<FeatureModalProps> = ({
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
+  const { width, height } = useWindowDimensions();
 
   const getFeatureContent = (): {
     title: string;
@@ -101,18 +102,23 @@ export const FeatureModal: React.FC<FeatureModalProps> = ({
   if (!content) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent={false}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <SafeAreaView
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View
         style={[
-          styles.container,
-          { backgroundColor: isDark ? '#1a1a1a' : '#ffffff' },
+          styles.overlay,
+          { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)' },
         ]}
       >
+        <View
+          style={[
+            styles.container,
+            {
+              backgroundColor: isDark ? '#1a1f2e' : '#fff',
+              width: width - 20,
+              height: height - 60,
+            },
+          ]}
+        >
         {/* Header */}
         <View
           style={[
@@ -216,14 +222,28 @@ export const FeatureModal: React.FC<FeatureModalProps> = ({
             </Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
+      </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  overlay: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 30,
+  },
+  container: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
   },
   header: {
     flexDirection: 'row',

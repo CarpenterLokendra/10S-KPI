@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -60,6 +60,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [isLogin, setIsLogin] = useState(!isRegisterMode);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Sync local state with prop when isRegisterMode changes
+  useEffect(() => {
+    setIsLogin(!isRegisterMode);
+    // Clear form data when switching between modes
+    setFormData({ username: '', email: '', password: '', confirmPassword: '' });
+    setErrors({});
+    setPasswordStrength({ minLength: false, hasUppercase: false, hasLowercase: false, hasNumber: false, hasSpecial: false });
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  }, [isRegisterMode]);
 
   const validatePasswordStrength = (password: string): PasswordStrength => {
     const strength: PasswordStrength = {

@@ -5,10 +5,11 @@ import {
   TouchableOpacity,
   Modal,
   StyleSheet,
-  FlatList,
+  ScrollView,
   useWindowDimensions,
 } from 'react-native';
 import { useThemeStore } from '../store/theme.store';
+import { useTranslation } from '../hooks/useTranslation';
 
 export interface GuideStep {
   title: string;
@@ -16,28 +17,47 @@ export interface GuideStep {
   icon?: string;
 }
 
+export interface GuideTab {
+  id: string;
+  label: string;
+  sections: GuideSection[];
+}
+
+export interface GuideSection {
+  title: string;
+  content?: string;
+  bullets?: string[];
+  color?: string;
+}
+
 interface GuideModalProps {
   visible: boolean;
   title: string;
-  steps: GuideStep[];
+  tabs?: GuideTab[];
+  steps?: GuideStep[];
   onClose: () => void;
 }
 
 export const GuideModal: React.FC<GuideModalProps> = ({
   visible,
   title,
+  tabs,
   steps,
   onClose,
 }) => {
+  const [currentTab, setCurrentTab] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const { mode } = useThemeStore();
+  const { t } = useTranslation();
   const isDark = mode === 'dark';
   const { width, height } = useWindowDimensions();
 
-  const currentGuide = steps[currentStep];
+  // Support both tab-based and step-based layouts
+  const isTabbed = !!tabs && tabs.length > 0;
+  const isStepped = !!steps && steps.length > 0;
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
+    if (isStepped && currentStep < steps!.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       onClose();
@@ -45,7 +65,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
   };
 
   const handlePrev = () => {
-    if (currentStep > 0) {
+    if (isStepped && currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
@@ -63,7 +83,8 @@ export const GuideModal: React.FC<GuideModalProps> = ({
             styles.container,
             {
               backgroundColor: isDark ? '#1a1f2e' : '#fff',
-              width: Math.min(width - 40, 500),
+              width: width - 20,
+              height: height - 60,
             },
           ]}
         >
@@ -97,91 +118,230 @@ export const GuideModal: React.FC<GuideModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Content */}
-          <View style={styles.content}>
-            {currentGuide.icon && (
-              <Text style={styles.icon}>{currentGuide.icon}</Text>
-            )}
-            <Text
+          {/* Tabs Navigation */}
+          {isTabbed && (
+            <View
               style={[
-                styles.stepTitle,
-                { color: isDark ? '#fff' : '#333' },
+                styles.tabsContainer,
+                { borderBottomColor: isDark ? '#333' : '#ddd' },
               ]}
             >
-              {currentGuide.title}
-            </Text>
-            <Text
-              style={[
-                styles.stepDescription,
-                { color: isDark ? '#ccc' : '#666' },
-              ]}
-            >
-              {currentGuide.description}
-            </Text>
-          </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.tabsScroll}
+              >
+                {tabs!.map((tab, index) => (
+                  <TouchableOpacity
+                    key={tab.id}
+                    onPress={() => setCurrentTab(index)}
+                    style={[
+                      styles.tab,
+                      currentTab === index && styles.tabActive,
+                      {
+                        borderBottomColor:
+                          currentTab === index ? '#f0b429' : 'transparent',
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.tabLabel,
+                        {
+                          color:
+                            currentTab === index
+                              ? isDark
+                                ? '#f0b429'
+                                : '#f0b429'
+                              : isDark
+                              ? '#aaa'
+                              : '#666',
+                          fontWeight: currentTab === index ? '700' : '500',
+                        },
+                      ]}
+                    >
+                      {tab.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
-          {/* Progress Indicator */}
-          <View style={styles.progress}>
-            <View style={styles.progressDots}>
-              {steps.map((_, index) => (
+          {/* Content - Tabbed */}
+          {isTabbed && (
+            <ScrollView
+              style={styles.tabContent}
+              contentContainerStyle={styles.tabContentInner}
+              showsVerticalScrollIndicator={false}
+            >
+              {tabs![currentTab].sections.map((section, idx) => (
                 <View
-                  key={index}
+                  key={idx}
                   style={[
-                    styles.dot,
-                    {
-                      backgroundColor:
-                        currentStep === index ? '#f0b429' : isDark ? '#444' : '#ddd',
+                    styles.section,
+                    section.color && {
+                      borderLeftColor: section.color,
+                      borderLeftWidth: 4,
+                      paddingLeft: 12,
                     },
                   ]}
-                />
+                >
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      { color: isDark ? '#fff' : '#333' },
+                    ]}
+                  >
+                    {section.title}
+                  </Text>
+                  {section.content && (
+                    <Text
+                      style={[
+                        styles.sectionContent,
+                        { color: isDark ? '#ccc' : '#666' },
+                      ]}
+                    >
+                      {section.content}
+                    </Text>
+                  )}
+                  {section.bullets && section.bullets.length > 0 && (
+                    <View style={styles.bulletsList}>
+                      {section.bullets.map((bullet, bulletIdx) => (
+                        <View key={bulletIdx} style={styles.bulletItem}>
+                          <Text
+                            style={[
+                              styles.bulletDot,
+                              { color: isDark ? '#f0b429' : '#f0b429' },
+                            ]}
+                          >
+                            •
+                          </Text>
+                          <Text
+                            style={[
+                              styles.bulletText,
+                              { color: isDark ? '#ccc' : '#666' },
+                            ]}
+                          >
+                            {bullet}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
               ))}
-            </View>
-            <Text style={[styles.stepCount, { color: isDark ? '#aaa' : '#666' }]}>
-              {currentStep + 1} / {steps.length}
-            </Text>
-          </View>
+            </ScrollView>
+          )}
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={[
-                styles.button,
-                currentStep === 0 && styles.buttonDisabled,
-                {
-                  backgroundColor: isDark ? '#333' : '#f0f0f0',
-                  opacity: currentStep === 0 ? 0.5 : 1,
-                },
-              ]}
-              onPress={handlePrev}
-              disabled={currentStep === 0}
-            >
+          {/* Content - Step Based */}
+          {isStepped && !isTabbed && (
+            <View style={styles.content}>
+              {steps![currentStep].icon && (
+                <Text style={styles.icon}>{steps![currentStep].icon}</Text>
+              )}
               <Text
                 style={[
-                  styles.buttonText,
+                  styles.stepTitle,
                   { color: isDark ? '#fff' : '#333' },
                 ]}
               >
-                Previous
+                {steps![currentStep].title}
               </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.button,
-                styles.buttonPrimary,
-                { backgroundColor: '#f0b429' },
-              ]}
-              onPress={handleNext}
-            >
               <Text
                 style={[
-                  styles.buttonText,
-                  { color: '#000', fontWeight: '700' },
+                  styles.stepDescription,
+                  { color: isDark ? '#ccc' : '#666' },
                 ]}
               >
-                {currentStep === steps.length - 1 ? 'Got it!' : 'Next'}
+                {steps![currentStep].description}
               </Text>
-            </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Progress Indicator - Step Based */}
+          {isStepped && !isTabbed && (
+            <View style={styles.progress}>
+              <View style={styles.progressDots}>
+                {steps!.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      {
+                        backgroundColor:
+                          currentStep === index ? '#f0b429' : isDark ? '#444' : '#ddd',
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
+              <Text style={[styles.stepCount, { color: isDark ? '#aaa' : '#666' }]}>
+                {currentStep + 1} / {steps!.length}
+              </Text>
+            </View>
+          )}
+
+          {/* Footer */}
+          <View
+            style={[
+              styles.footer,
+              { borderTopColor: isDark ? '#333' : '#ddd' },
+            ]}
+          >
+            {isStepped && (
+              <>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    currentStep === 0 && styles.buttonDisabled,
+                    {
+                      backgroundColor: isDark ? '#333' : '#f0f0f0',
+                      opacity: currentStep === 0 ? 0.5 : 1,
+                    },
+                  ]}
+                  onPress={handlePrev}
+                  disabled={currentStep === 0}
+                >
+                  <Text
+                    style={[
+                      styles.buttonText,
+                      { color: isDark ? '#fff' : '#333' },
+                    ]}
+                  >
+                    Previous
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.buttonPrimary,
+                    { backgroundColor: '#f0b429' },
+                  ]}
+                  onPress={handleNext}
+                >
+                  <Text
+                    style={[
+                      styles.buttonText,
+                      { color: '#000', fontWeight: '700' },
+                    ]}
+                  >
+                    {currentStep === steps!.length - 1 ? 'Got it!' : 'Next'}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+            {isTabbed && (
+              <TouchableOpacity
+                style={[styles.button, styles.buttonFull, { backgroundColor: '#f0b429' }]}
+                onPress={onClose}
+              >
+                <Text style={[styles.buttonText, { color: '#000', fontWeight: '700' }]}>
+                  {t('guide.gotIt') || 'Got it!'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
@@ -194,7 +354,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 30,
   },
   container: {
     borderRadius: 16,
@@ -220,6 +381,66 @@ const styles = StyleSheet.create({
   closeButton: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  tabsContainer: {
+    borderBottomWidth: 1,
+    paddingHorizontal: 0,
+  },
+  tabsScroll: {
+    paddingHorizontal: 0,
+  },
+  tab: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 3,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  tabActive: {
+    borderBottomWidth: 3,
+  },
+  tabLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  tabContent: {
+    flex: 1,
+    minHeight: 200,
+  },
+  tabContentInner: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  sectionContent: {
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  bulletsList: {
+    gap: 6,
+  },
+  bulletItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  bulletDot: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  bulletText: {
+    fontSize: 13,
+    lineHeight: 20,
+    flex: 1,
   },
   content: {
     paddingHorizontal: 20,
@@ -265,7 +486,6 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
   },
   button: {
     flex: 1,
@@ -274,6 +494,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  buttonFull: {
+    flex: 1,
   },
   buttonDisabled: {
     opacity: 0.5,
