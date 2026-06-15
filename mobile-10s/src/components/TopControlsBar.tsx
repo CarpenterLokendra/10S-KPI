@@ -57,21 +57,15 @@ export const TopControlsBar: React.FC = () => {
           style={[
             styles.button,
             {
-              backgroundColor: 'transparent',
-              borderColor: colors.secondaryButtonBorder,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#6125c9',
+              borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#6125c9',
             },
           ]}
           onPress={() => setMode(isDark ? 'light' : 'dark')}
         >
           <View style={styles.themeButtonContent}>
-            <MaterialCommunityIcons
-              name={isDark ? 'white-balance-sunny' : 'moon-waning-crescent'}
-              size={16}
-              color={colors.secondaryButtonText}
-              style={[styles.themeIcon, { transform: [{ rotate: '-30deg' }] }]}
-            />
-            <Text style={[styles.buttonText, { color: colors.secondaryButtonText }]}>
-              {isDark ? 'Light' : 'Dark'}
+            <Text style={[styles.buttonText, { color: '#ffffff' }]}>
+              {isDark ? '☀️ Light' : '🌙 Dark'}
             </Text>
           </View>
         </TouchableOpacity>
@@ -160,7 +154,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   themeButtonContent: {
     flexDirection: 'row',

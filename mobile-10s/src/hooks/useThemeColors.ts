@@ -16,8 +16,8 @@ export const useThemeColors = () => {
     primaryButtonText: isDark ? '#000000' : '#ffffff',
     // Secondary button colors
     secondaryButtonBg: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(97,37,201,0.1)',
-    secondaryButtonBorder: isDark ? 'rgba(240,180,41,0.3)' : 'rgba(97,37,201,0.3)',
-    secondaryButtonText: isDark ? '#f0b429' : '#6125c9',
+    secondaryButtonBorder: isDark ? 'rgba(245,158,11,0.3)' : 'rgba(97,37,201,0.3)',
+    secondaryButtonText: isDark ? '#f59e0b' : '#6125c9',
     // Active filter/toggle button
     activeFilterBg: isDark ? '#f0b429' : '#6125c9',
     activeFilterText: isDark ? '#000000' : '#ffffff',

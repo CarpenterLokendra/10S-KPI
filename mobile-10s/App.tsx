@@ -113,6 +113,7 @@ export default function App() {
         <AuthScreen
           onLoginSuccess={handleLoginSuccess}
           onBackPress={() => setAppState('landing')}
+          onNavigateToRegister={() => setAppState('register')}
         />
       );
     }
@@ -123,6 +124,7 @@ export default function App() {
           onLoginSuccess={handleLoginSuccess}
           onBackPress={() => setAppState('landing')}
           isRegisterMode={true}
+          onNavigateToLogin={() => setAppState('auth')}
         />
       );
     }

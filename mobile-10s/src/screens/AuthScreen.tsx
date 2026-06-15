@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { authService } from '../services/auth.service';
 import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
@@ -11,6 +12,8 @@ interface AuthScreenProps {
   onLoginSuccess: () => void;
   onBackPress?: () => void;
   isRegisterMode?: boolean;
+  onNavigateToRegister?: () => void;
+  onNavigateToLogin?: () => void;
 }
 
 interface FormData {
@@ -28,7 +31,13 @@ interface PasswordStrength {
   hasSpecial: boolean;
 }
 
-export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPress, isRegisterMode = false }) => {
+export const AuthScreen: React.FC<AuthScreenProps> = ({
+  onLoginSuccess,
+  onBackPress,
+  isRegisterMode = false,
+  onNavigateToRegister,
+  onNavigateToLogin,
+}) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
   const isDark = colors.isDark;
@@ -49,6 +58,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPr
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(!isRegisterMode);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const validatePasswordStrength = (password: string): PasswordStrength => {
     const strength: PasswordStrength = {
@@ -143,27 +154,55 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPr
   };
 
   const handleToggleMode = () => {
-    setFormData({ username: '', email: '', password: '', confirmPassword: '' });
-    setErrors({});
-    setPasswordStrength({ minLength: false, hasUppercase: false, hasLowercase: false, hasNumber: false, hasSpecial: false });
-    setIsLogin(!isLogin);
+    // Always call the navigation callback if available
+    if (isLogin) {
+      onNavigateToRegister?.();
+    } else {
+      onNavigateToLogin?.();
+    }
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
       <View style={styles.headerBar}>
         <TouchableOpacity
-          style={[styles.homeButton, { backgroundColor: colors.primaryButtonBg }]}
+          style={[
+            styles.homeButton,
+            {
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#6125c9',
+              borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#6125c9',
+            },
+          ]}
           onPress={onBackPress}
         >
-          <Text style={[styles.homeButtonText, { color: colors.primaryButtonText }]}>🏠 Home</Text>
+          <Text style={[styles.homeButtonText, { color: '#ffffff' }]}>🏠 Home</Text>
         </TouchableOpacity>
         <TopControlsBar />
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.contentContainer}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
+        <View style={[
+          styles.cardContainer,
+          {
+            backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : '#ffffff',
+            borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : 'rgba(97, 37, 201, 0.3)',
+          }
+        ]}>
+          <View style={styles.contentContainer}>
+          <Text style={[
+            styles.title,
+            {
+              color: isDark ? '#f59e0b' : '#6125c9',
+            }
+          ]}>
             {isLogin ? 'Login' : 'Create Account'}
+          </Text>
+          <Text style={[
+            styles.subtitle,
+            {
+              color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
+            }
+          ]}>
+            {isLogin ? 'Welcome back! Continue playing.' : 'Create your account to start playing'}
           </Text>
 
           {/* Username Field */}
@@ -173,9 +212,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPr
               style={[
                 styles.input,
                 {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.15)',
                   color: isDark ? '#fff' : '#000',
-                  borderColor: errors.username ? '#FF3B30' : (isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.4)'),
+                  borderColor: errors.username ? '#FF3B30' : (isDark ? 'rgba(100,100,100,0.5)' : '#6125c9'),
                 },
               ]}
               placeholder={isLogin ? "Enter your username" : "Choose a username"}
@@ -195,9 +234,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPr
                 style={[
                   styles.input,
                   {
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.15)',
                     color: isDark ? '#fff' : '#000',
-                    borderColor: errors.email ? '#FF3B30' : (isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.4)'),
+                    borderColor: errors.email ? '#FF3B30' : (isDark ? 'rgba(100,100,100,0.5)' : '#6125c9'),
                   },
                 ]}
                 placeholder="Enter your email"
@@ -214,22 +253,35 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPr
           {/* Password Field */}
           <View style={styles.fieldContainer}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
-                  color: isDark ? '#fff' : '#000',
-                  borderColor: errors.password ? '#FF3B30' : (isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.4)'),
-                },
-              ]}
-              placeholder={isLogin ? "Enter your password" : "Create a strong password"}
-              placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
-              secureTextEntry
-              value={formData.password}
-              onChangeText={(text) => handleChange('password', text)}
-              editable={!isLoading}
-            />
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.passwordInput,
+                  {
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.15)',
+                    color: isDark ? '#fff' : '#000',
+                    borderColor: errors.password ? '#FF3B30' : (isDark ? 'rgba(100,100,100,0.5)' : '#6125c9'),
+                  },
+                ]}
+                placeholder={isLogin ? "Enter your password" : "Create a strong password"}
+                placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
+                secureTextEntry={!showPassword}
+                value={formData.password}
+                onChangeText={(text) => handleChange('password', text)}
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <MaterialCommunityIcons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color={isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'}
+                />
+              </TouchableOpacity>
+            </View>
             {errors.password && <Text style={styles.fieldError}>{errors.password}</Text>}
 
             {/* Password Strength Indicator - Register Only */}
@@ -248,22 +300,35 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPr
           {!isLogin && (
             <View style={styles.fieldContainer}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>Confirm Password</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
-                    color: isDark ? '#fff' : '#000',
-                    borderColor: errors.confirmPassword ? '#FF3B30' : (isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.4)'),
-                  },
-                ]}
-                placeholder="Confirm your password"
-                placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
-                secureTextEntry
-                value={formData.confirmPassword}
-                onChangeText={(text) => handleChange('confirmPassword', text)}
-                editable={!isLoading}
-              />
+              <View style={styles.passwordInputContainer}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.passwordInput,
+                    {
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.15)',
+                      color: isDark ? '#fff' : '#000',
+                      borderColor: errors.confirmPassword ? '#FF3B30' : (isDark ? 'rgba(100,100,100,0.5)' : '#6125c9'),
+                    },
+                  ]}
+                  placeholder="Confirm your password"
+                  placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
+                  secureTextEntry={!showConfirmPassword}
+                  value={formData.confirmPassword}
+                  onChangeText={(text) => handleChange('confirmPassword', text)}
+                  editable={!isLoading}
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  <MaterialCommunityIcons
+                    name={showConfirmPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color={isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'}
+                  />
+                </TouchableOpacity>
+              </View>
               {errors.confirmPassword && <Text style={styles.fieldError}>{errors.confirmPassword}</Text>}
             </View>
           )}
@@ -282,11 +347,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPr
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleToggleMode} disabled={isLoading}>
-            <Text style={[styles.toggleText, { color: colors.secondaryButtonText }]}>
-              {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Login'}
+          <View style={styles.toggleContainer}>
+            <Text style={[styles.toggleText, { color: colors.textPrimary }]}>
+              {isLogin ? "Don't have an account? " : 'Already have an account? '}
             </Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={handleToggleMode} disabled={isLoading}>
+              <Text style={[styles.toggleLink, { color: colors.secondaryButtonText }]}>
+                {isLogin ? 'Sign Up' : 'Login'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -301,25 +372,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 24,
   },
+  cardContainer: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    padding: 24,
+    marginVertical: 20,
+  },
   contentContainer: {
-    paddingVertical: 20,
+    paddingVertical: 0,
   },
   title: {
     fontSize: 36,
     fontWeight: '700',
-    marginBottom: 40,
+    marginBottom: 8,
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 24,
   },
   fieldContainer: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   input: {
     borderRadius: 12,
@@ -327,26 +407,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1.5,
   },
+  passwordInputContainer: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  passwordInput: {
+    flex: 1,
+    paddingRight: 48,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 16,
+    padding: 8,
+  },
   fieldError: {
     color: '#FF3B30',
-    marginTop: 6,
+    marginTop: 4,
     fontSize: 12,
     fontWeight: '600',
   },
   strengthContainer: {
-    marginTop: 12,
-    gap: 8,
+    marginTop: 8,
+    gap: 6,
   },
   button: {
     padding: 16,
     borderRadius: 12,
-    marginTop: 24,
+    marginTop: 16,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -355,11 +446,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  toggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+  },
   toggleText: {
-    textAlign: 'center',
-    marginTop: 24,
+    marginTop: 0,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
+  },
+  toggleLink: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   headerBar: {
     flexDirection: 'row',
@@ -369,13 +469,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   homeButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     alignItems: 'center',
+    borderWidth: 1.5,
   },
   homeButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
