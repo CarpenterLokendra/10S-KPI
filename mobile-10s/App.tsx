@@ -122,6 +122,7 @@ export default function App() {
         <AuthScreen
           onLoginSuccess={handleLoginSuccess}
           onBackPress={() => setAppState('landing')}
+          isRegisterMode={true}
         />
       );
     }

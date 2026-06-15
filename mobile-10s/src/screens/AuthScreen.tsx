@@ -10,6 +10,7 @@ import { StrengthIndicator } from '../components/StrengthIndicator';
 interface AuthScreenProps {
   onLoginSuccess: () => void;
   onBackPress?: () => void;
+  isRegisterMode?: boolean;
 }
 
 interface FormData {
@@ -27,7 +28,7 @@ interface PasswordStrength {
   hasSpecial: boolean;
 }
 
-export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPress }) => {
+export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPress, isRegisterMode = false }) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
   const isDark = colors.isDark;
@@ -47,7 +48,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPr
     hasSpecial: false,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(!isRegisterMode);
 
   const validatePasswordStrength = (password: string): PasswordStrength => {
     const strength: PasswordStrength = {
