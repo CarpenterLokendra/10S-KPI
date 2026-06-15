@@ -1,134 +1,380 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { authService } from '../services/auth.service';
+import { useThemeStore } from '../store/theme.store';
+import { useThemeColors } from '../hooks/useThemeColors';
+import { TopControlsBar } from '../components/TopControlsBar';
+import { StrengthIndicator } from '../components/StrengthIndicator';
 
 interface AuthScreenProps {
   onLoginSuccess: () => void;
+  onBackPress?: () => void;
 }
 
-export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+interface FormData {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+interface PasswordStrength {
+  minLength: boolean;
+  hasUppercase: boolean;
+  hasLowercase: boolean;
+  hasNumber: boolean;
+  hasSpecial: boolean;
+}
+
+export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, onBackPress }) => {
+  const { mode } = useThemeStore();
+  const colors = useThemeColors();
+  const isDark = colors.isDark;
+
+  const [formData, setFormData] = useState<FormData>({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({
+    minLength: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSpecial: false,
+  });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [isLogin, setIsLogin] = useState(true);
 
+  const validatePasswordStrength = (password: string): PasswordStrength => {
+    const strength: PasswordStrength = {
+      minLength: password.length >= 8,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecial: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password),
+    };
+    setPasswordStrength(strength);
+    return strength;
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'Username must be at least 3 characters';
+    } else if (formData.username.length > 10) {
+      newErrors.username = 'Username must be maximum 10 characters';
+    }
+
+    if (!isLogin) {
+      if (!formData.email.trim()) {
+        newErrors.email = 'Email is required';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        newErrors.email = 'Please enter a valid email';
+      }
+
+      if (!formData.password) {
+        newErrors.password = 'Password is required';
+      } else {
+        const strength = validatePasswordStrength(formData.password);
+        if (!Object.values(strength).every(Boolean)) {
+          newErrors.password = 'Password does not meet strength requirements';
+        }
+      }
+
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm your password';
+      } else if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
+    } else {
+      if (!formData.password) {
+        newErrors.password = 'Password is required';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (name: keyof FormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'password') {
+      validatePasswordStrength(value);
+    }
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+  };
+
   const handleAuth = async () => {
-    if (!username || !password) {
-      setError('Please fill in all fields');
+    if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
-    setError('');
 
     try {
       if (isLogin) {
-        await authService.login(username, password);
+        await authService.login(formData.username, formData.password);
       } else {
-        await authService.register(username, password);
+        await authService.register(formData.username, formData.email, formData.password);
       }
       onLoginSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed');
+      const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+      if (isLogin) {
+        setErrors({ username: errorMessage });
+      } else {
+        setErrors({ email: errorMessage });
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleToggleMode = () => {
+    setFormData({ username: '', email: '', password: '', confirmPassword: '' });
+    setErrors({});
+    setPasswordStrength({ minLength: false, hasUppercase: false, hasLowercase: false, hasNumber: false, hasSpecial: false });
+    setIsLogin(!isLogin);
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>10S Card Game</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Username"
-        value={username}
-        onChangeText={setUsername}
-        editable={!isLoading}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        editable={!isLoading}
-      />
-
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      <TouchableOpacity
-        style={[styles.button, isLoading && styles.buttonDisabled]}
-        onPress={handleAuth}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>
-            {isLogin ? 'Login' : 'Register'}
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          style={[styles.homeButton, { backgroundColor: colors.primaryButtonBg }]}
+          onPress={onBackPress}
+        >
+          <Text style={[styles.homeButtonText, { color: colors.primaryButtonText }]}>🏠 Home</Text>
+        </TouchableOpacity>
+        <TopControlsBar />
+      </View>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.contentContainer}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {isLogin ? 'Login' : 'Create Account'}
           </Text>
-        )}
-      </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => setIsLogin(!isLogin)} disabled={isLoading}>
-        <Text style={styles.toggleText}>
-          {isLogin ? "Don't have an account? Register" : 'Already have an account? Login'}
-        </Text>
-      </TouchableOpacity>
-    </View>
+          {/* Username Field */}
+          <View style={styles.fieldContainer}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Username</Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
+                  color: isDark ? '#fff' : '#000',
+                  borderColor: errors.username ? '#FF3B30' : (isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.4)'),
+                },
+              ]}
+              placeholder={isLogin ? "Enter your username" : "Choose a username"}
+              placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
+              value={formData.username}
+              onChangeText={(text) => handleChange('username', text)}
+              editable={!isLoading}
+            />
+            {errors.username && <Text style={styles.fieldError}>{errors.username}</Text>}
+          </View>
+
+          {/* Email Field - Register Only */}
+          {!isLogin && (
+            <View style={styles.fieldContainer}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
+                    color: isDark ? '#fff' : '#000',
+                    borderColor: errors.email ? '#FF3B30' : (isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.4)'),
+                  },
+                ]}
+                placeholder="Enter your email"
+                placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
+                value={formData.email}
+                onChangeText={(text) => handleChange('email', text)}
+                keyboardType="email-address"
+                editable={!isLoading}
+              />
+              {errors.email && <Text style={styles.fieldError}>{errors.email}</Text>}
+            </View>
+          )}
+
+          {/* Password Field */}
+          <View style={styles.fieldContainer}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
+                  color: isDark ? '#fff' : '#000',
+                  borderColor: errors.password ? '#FF3B30' : (isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.4)'),
+                },
+              ]}
+              placeholder={isLogin ? "Enter your password" : "Create a strong password"}
+              placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
+              secureTextEntry
+              value={formData.password}
+              onChangeText={(text) => handleChange('password', text)}
+              editable={!isLoading}
+            />
+            {errors.password && <Text style={styles.fieldError}>{errors.password}</Text>}
+
+            {/* Password Strength Indicator - Register Only */}
+            {!isLogin && formData.password && (
+              <View style={styles.strengthContainer}>
+                <StrengthIndicator met={passwordStrength.minLength} text="At least 8 characters" />
+                <StrengthIndicator met={passwordStrength.hasUppercase} text="One uppercase letter" />
+                <StrengthIndicator met={passwordStrength.hasLowercase} text="One lowercase letter" />
+                <StrengthIndicator met={passwordStrength.hasNumber} text="One number" />
+                <StrengthIndicator met={passwordStrength.hasSpecial} text="One special character" />
+              </View>
+            )}
+          </View>
+
+          {/* Confirm Password Field - Register Only */}
+          {!isLogin && (
+            <View style={styles.fieldContainer}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Confirm Password</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
+                    color: isDark ? '#fff' : '#000',
+                    borderColor: errors.confirmPassword ? '#FF3B30' : (isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.4)'),
+                  },
+                ]}
+                placeholder="Confirm your password"
+                placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
+                secureTextEntry
+                value={formData.confirmPassword}
+                onChangeText={(text) => handleChange('confirmPassword', text)}
+                editable={!isLoading}
+              />
+              {errors.confirmPassword && <Text style={styles.fieldError}>{errors.confirmPassword}</Text>}
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={[styles.button, isLoading && styles.buttonDisabled, { backgroundColor: colors.primaryButtonBg }]}
+            onPress={handleAuth}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={colors.primaryButtonText} />
+            ) : (
+              <Text style={[styles.buttonText, { color: colors.primaryButtonText }]}>
+                {isLogin ? 'Login' : 'Register'}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleToggleMode} disabled={isLoading}>
+            <Text style={[styles.toggleText, { color: colors.secondaryButtonText }]}>
+              {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Login'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    backgroundColor: '#f5f5f5',
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+  },
+  contentContainer: {
+    paddingVertical: 20,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 36,
+    fontWeight: '700',
     marginBottom: 40,
     textAlign: 'center',
-    color: '#333',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  fieldContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
   },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    borderWidth: 1.5,
+  },
+  fieldError: {
+    color: '#FF3B30',
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  strengthContainer: {
+    marginTop: 12,
+    gap: 8,
   },
   button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 20,
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 24,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  error: {
-    color: '#FF3B30',
-    marginTop: 10,
-    textAlign: 'center',
+    fontWeight: '700',
   },
   toggleText: {
-    color: '#007AFF',
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 24,
     fontSize: 14,
+    fontWeight: '600',
+  },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  homeButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  homeButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

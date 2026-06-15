@@ -1,18 +1,19 @@
 {
   "expo": {
-    "name": "mobile-10s",
-    "slug": "mobile-10s",
+    "name": "Catch The Ten",
+    "slug": "catch-the-ten",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lokendra.mobile10s"
     },
     "android": {
       "package": "com.lokendra.mobile10s",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -27,6 +28,22 @@
         "projectId": "d632c376-b56d-4470-8324-e848004a2d7b"
       }
     },
-    "owner": "lokendra2026"
+    "owner": "lokendra2026",
+    "splash": {
+      "image": "./assets/splash-screen.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0118"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-screen.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#0a0118"
+        }
+      ]
+    ]
   }
 }

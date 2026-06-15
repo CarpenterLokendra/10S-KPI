@@ -10,8 +10,8 @@ export const authService = {
     return { token, user };
   },
 
-  async register(username: string, password: string) {
-    const response = await apiClient.post('/auth/register', { username, password });
+  async register(username: string, email: string, password: string) {
+    const response = await apiClient.post('/auth/register', { username, email, password });
     const { token, user } = response.data;
     await AsyncStorage.setItem('auth_token', token);
     await AsyncStorage.setItem('user_id', user.id);

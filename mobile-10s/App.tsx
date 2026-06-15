@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { AuthScreen } from './src/screens/AuthScreen';
+import { LandingScreen } from './src/screens/LandingScreen';
 import { LobbyScreen } from './src/screens/LobbyScreen';
 import { GameScreen } from './src/screens/GameScreen';
 import { ResultsScreen } from './src/screens/ResultsScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
+import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
+import { QuickMatchWaitingScreen } from './src/screens/QuickMatchWaitingScreen';
 import { authService } from './src/services/auth.service';
+import { useThemeStore } from './src/store/theme.store';
+import { AnimatedBackground } from './src/components/AnimatedBackground';
 
-type AppState = 'loading' | 'auth' | 'lobby' | 'game' | 'results';
+type AppState = 'loading' | 'landing' | 'auth' | 'register' | 'lobby' | 'quickmatch-wait' | 'game' | 'results' | 'leaderboard' | 'profile' | 'settings';
 
 import apiClient from './src/services/api';
 
@@ -14,9 +21,14 @@ export default function App() {
   const [appState, setAppState] = useState<AppState>('loading');
   const [gameId, setGameId] = useState<string | null>(null);
   const [currentGame, setCurrentGame] = useState<any>(null);
+  const { loadSettings } = useThemeStore();
 
   useEffect(() => {
-    checkAuthStatus();
+    const initApp = async () => {
+      await loadSettings();
+      checkAuthStatus();
+    };
+    initApp();
   }, []);
 
   const checkAuthStatus = async () => {
@@ -25,10 +37,10 @@ export default function App() {
       if (token) {
         setAppState('lobby');
       } else {
-        setAppState('auth');
+        setAppState('landing');
       }
     } catch {
-      setAppState('auth');
+      setAppState('landing');
     }
   };
 
@@ -77,39 +89,113 @@ export default function App() {
     }
   };
 
-  if (appState === 'loading') {
+  const screenContent = (() => {
+    if (appState === 'loading') {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#f0b429" />
+        </View>
+      );
+    }
+
+    if (appState === 'landing') {
+      return (
+        <LandingScreen
+          onLoginPress={() => setAppState('auth')}
+          onSignUpPress={() => setAppState('register')}
+          onLeaderboardPress={() => setAppState('leaderboard')}
+        />
+      );
+    }
+
+    if (appState === 'auth') {
+      return (
+        <AuthScreen
+          onLoginSuccess={handleLoginSuccess}
+          onBackPress={() => setAppState('landing')}
+        />
+      );
+    }
+
+    if (appState === 'register') {
+      return (
+        <AuthScreen
+          onLoginSuccess={handleLoginSuccess}
+          onBackPress={() => setAppState('landing')}
+        />
+      );
+    }
+
+    if (appState === 'lobby') {
+      return (
+        <LobbyScreen
+          onGameStart={handleGameStart}
+          onLogout={handleLogout}
+          onLeaderboardPress={() => setAppState('leaderboard')}
+          onProfilePress={() => setAppState('profile')}
+          onSettingsPress={() => setAppState('settings')}
+          onQuickMatchPress={() => setAppState('quickmatch-wait')}
+        />
+      );
+    }
+
+    if (appState === 'leaderboard') {
+      return (
+        <LeaderboardScreen
+          onBackPress={() => setAppState('lobby')}
+        />
+      );
+    }
+
+    if (appState === 'profile') {
+      return (
+        <ProfileScreen
+          onBackPress={() => setAppState('lobby')}
+        />
+      );
+    }
+
+    if (appState === 'settings') {
+      return (
+        <SettingsScreen
+          onBackPress={() => setAppState('lobby')}
+          onLogout={handleLogout}
+        />
+      );
+    }
+
+    if (appState === 'quickmatch-wait') {
+      return (
+        <QuickMatchWaitingScreen
+          onCancel={() => setAppState('lobby')}
+          onGameFound={(gId) => {
+            setGameId(gId);
+            setAppState('game');
+          }}
+        />
+      );
+    }
+
+    if (appState === 'game' && gameId) {
+      return <GameScreen gameId={gameId} onGameEnd={handleGameEnd} />;
+    }
+
+    if (appState === 'results' && currentGame) {
+      return (
+        <ResultsScreen
+          game={currentGame}
+          onPlayAgain={handlePlayAgain}
+          onBackToLobby={handleBackToLobby}
+        />
+      );
+    }
+
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#f0b429" />
       </View>
     );
-  }
+  })();
 
-  if (appState === 'auth') {
-    return <AuthScreen onLoginSuccess={handleLoginSuccess} />;
-  }
-
-  if (appState === 'lobby') {
-    return <LobbyScreen onGameStart={handleGameStart} onLogout={handleLogout} />;
-  }
-
-  if (appState === 'game' && gameId) {
-    return <GameScreen gameId={gameId} onGameEnd={handleGameEnd} />;
-  }
-
-  if (appState === 'results' && currentGame) {
-    return (
-      <ResultsScreen
-        game={currentGame}
-        onPlayAgain={handlePlayAgain}
-        onBackToLobby={handleBackToLobby}
-      />
-    );
-  }
-
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="large" color="#007AFF" />
-    </View>
-  );
+  return <AnimatedBackground>{screenContent}</AnimatedBackground>;
 }

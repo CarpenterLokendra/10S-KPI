@@ -7,9 +7,12 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { lobbyService } from '../services/lobby.service';
+import { useThemeStore } from '../store/theme.store';
+import { useThemeColors } from '../hooks/useThemeColors';
+import { TopControlsBar } from '../components/TopControlsBar';
 
 interface Lobby {
   id: string;
@@ -22,9 +25,23 @@ interface Lobby {
 interface LobbyScreenProps {
   onGameStart: (gameId: string) => void;
   onLogout: () => void;
+  onLeaderboardPress?: () => void;
+  onProfilePress?: () => void;
+  onSettingsPress?: () => void;
+  onQuickMatchPress?: () => void;
 }
 
-export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onGameStart, onLogout }) => {
+export const LobbyScreen: React.FC<LobbyScreenProps> = ({
+  onGameStart,
+  onLogout,
+  onLeaderboardPress,
+  onProfilePress,
+  onSettingsPress,
+  onQuickMatchPress
+}) => {
+  const { mode } = useThemeStore();
+  const colors = useThemeColors();
+  const isDark = colors.isDark;
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [gameCode, setGameCode] = useState('');
@@ -80,39 +97,75 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onGameStart, onLogout 
 
   const renderLobbyItem = ({ item }: { item: Lobby }) => (
     <TouchableOpacity
-      style={styles.lobbyCard}
+      style={[
+        styles.lobbyCard,
+        {
+          backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.2)',
+          borderColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
+        },
+      ]}
       onPress={() => handleJoinLobby(item.id)}
       disabled={isLoading}
     >
-      <Text style={styles.lobbyName}>{item.name}</Text>
-      <Text style={styles.lobbyInfo}>
+      <Text style={[styles.lobbyName, { color: colors.textPrimary }]}>{item.name}</Text>
+      <Text style={[styles.lobbyInfo, { color: colors.textSecondary }]}>
         Players: {item.current_players}/{item.max_players}
       </Text>
-      <Text style={styles.lobbyCode}>Code: {item.code}</Text>
+      <Text style={[styles.lobbyCode, { color: colors.textMuted }]}>
+        Code: {item.code}
+      </Text>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Game Lobbies</Text>
-        <TouchableOpacity onPress={onLogout}>
-          <Text style={styles.logoutBtn}>Logout</Text>
-        </TouchableOpacity>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
+      <TopControlsBar />
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)',
+            borderBottomColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
+          },
+        ]}
+      >
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Browse Lobbies</Text>
+        <View style={styles.headerButtons}>
+          {onLeaderboardPress && (
+            <TouchableOpacity onPress={onLeaderboardPress} style={styles.headerIcon}>
+              <Text style={styles.headerIconText}>🏆</Text>
+            </TouchableOpacity>
+          )}
+          {onProfilePress && (
+            <TouchableOpacity onPress={onProfilePress} style={styles.headerIcon}>
+              <Text style={styles.headerIconText}>👤</Text>
+            </TouchableOpacity>
+          )}
+          {onSettingsPress && (
+            <TouchableOpacity onPress={onSettingsPress} style={styles.headerIcon}>
+              <Text style={styles.headerIconText}>⚙️</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={onLogout} style={styles.headerIcon}>
+            <Text style={[styles.logoutBtn, { color: colors.secondaryButtonText }]}>
+              Logout
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {!showCreateForm ? (
         <>
           <TouchableOpacity
-            style={styles.createButton}
+            style={[styles.createButton, { backgroundColor: colors.primaryButtonBg }]}
             onPress={() => setShowCreateForm(true)}
             disabled={isLoading}
           >
-            <Text style={styles.createButtonText}>+ Create New Game</Text>
+            <Text style={[styles.createButtonText, { color: colors.primaryButtonText }]}>+ Create New Game</Text>
           </TouchableOpacity>
 
           {isLoading && !showCreateForm ? (
-            <ActivityIndicator size="large" color="#007AFF" style={styles.loader} />
+            <ActivityIndicator size="large" color="#f0b429" style={styles.loader} />
           ) : (
             <FlatList
               data={lobbies}
@@ -120,7 +173,9 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onGameStart, onLogout 
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContent}
               ListEmptyComponent={
-                <Text style={styles.emptyText}>No lobbies available</Text>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                  No lobbies available
+                </Text>
               }
             />
           )}
@@ -128,31 +183,45 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onGameStart, onLogout 
       ) : (
         <View style={styles.formContainer}>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
+                color: isDark ? '#fff' : '#000',
+                borderColor: isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.4)',
+              },
+            ]}
             placeholder="Game Name"
+            placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
             value={lobbyName}
             onChangeText={setLobbyName}
             editable={!isLoading}
           />
 
           <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
+            style={[styles.button, isLoading && styles.buttonDisabled, { backgroundColor: colors.primaryButtonBg }]}
             onPress={handleCreateLobby}
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.primaryButtonText} />
             ) : (
-              <Text style={styles.buttonText}>Create Game</Text>
+              <Text style={[styles.buttonText, { color: colors.primaryButtonText }]}>Create Game</Text>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.cancelButton}
+            style={[
+              styles.cancelButton,
+              {
+                backgroundColor: colors.secondaryButtonBg,
+                borderColor: colors.secondaryButtonBorder,
+              },
+            ]}
             onPress={() => setShowCreateForm(false)}
             disabled={isLoading}
           >
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={[styles.cancelText, { color: colors.secondaryButtonText }]}>Cancel</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -163,70 +232,80 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onGameStart, onLogout 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 28,
+    fontWeight: '700',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  headerIcon: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  headerIconText: {
+    fontSize: 16,
   },
   logoutBtn: {
-    color: '#007AFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   createButton: {
-    backgroundColor: '#007AFF',
-    margin: 15,
-    padding: 15,
-    borderRadius: 8,
+    margin: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
   createButtonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   listContent: {
-    padding: 15,
+    padding: 16,
   },
   lobbyCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 10,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   lobbyName: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
+    fontWeight: '700',
+    marginBottom: 8,
   },
   lobbyInfo: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
+    marginBottom: 6,
   },
   lobbyCode: {
     fontSize: 12,
-    color: '#999',
     fontFamily: 'monospace',
   },
   emptyText: {
     textAlign: 'center',
-    color: '#999',
     fontSize: 16,
     marginTop: 40,
   },
@@ -234,36 +313,38 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 15,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     marginBottom: 15,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    borderWidth: 1.5,
   },
   button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   cancelButton: {
-    padding: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
   },
   cancelText: {
-    color: '#007AFF',
     fontSize: 16,
+    fontWeight: '600',
   },
   loader: {
     marginTop: 40,
