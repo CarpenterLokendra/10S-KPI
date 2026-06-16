@@ -14,9 +14,10 @@ const WEB_URL = 'http://192.168.29.254:5173/landing';
 
 interface DownloadAppScreenProps {
   onClose: () => void;
+  onHomePress?: () => void;
 }
 
-export const DownloadAppScreen: React.FC<DownloadAppScreenProps> = ({ onClose }) => {
+export const DownloadAppScreen: React.FC<DownloadAppScreenProps> = ({ onClose, onHomePress }) => {
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
@@ -32,15 +33,21 @@ export const DownloadAppScreen: React.FC<DownloadAppScreenProps> = ({ onClose })
       onRequestClose={onClose}
     >
       <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }]}>
-        <TopControlsBar />
-
-        {/* Close Button */}
-        <TouchableOpacity
-          onPress={onClose}
-          style={[styles.closeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
-        >
-          <Text style={[styles.closeButtonText, { color: colors.secondaryButtonText }]}>✕</Text>
-        </TouchableOpacity>
+        <View style={styles.headerBar}>
+          <TouchableOpacity
+            style={[
+              styles.homeButton,
+              {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#6125c9',
+                borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#6125c9',
+              },
+            ]}
+            onPress={onHomePress || onClose}
+          >
+            <Text style={[styles.homeButtonText, { color: '#ffffff' }]}>🏠 Home</Text>
+          </TouchableOpacity>
+          <TopControlsBar />
+        </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Title */}
@@ -152,20 +159,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  closeButton: {
-    position: 'absolute',
-    top: 60,
-    right: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
+  headerBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    zIndex: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  closeButtonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  homeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1.5,
+  },
+  homeButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   scrollContent: {
     paddingHorizontal: 16,

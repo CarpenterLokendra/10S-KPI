@@ -25,6 +25,12 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
   const [activeFeatureModal, setActiveFeatureModal] = useState<'fast-paced' | 'multiplayer' | null>(null);
   const [showGuide, setShowGuide] = useState(false);
 
+  const handleFeaturePress = (feature: 'fast-paced' | 'multiplayer') => {
+    console.log('Feature pressed:', feature);
+    setActiveFeatureModal(feature);
+    console.log('State updated to:', feature);
+  };
+
   const guideTabs = [
     {
       id: 'rules',
@@ -238,14 +244,14 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
             title={t('landing.fastMatches')}
             description={t('landing.fastMatchesDesc')}
             gradientColors={isDark ? ['#5b21b6', '#7c3aed'] : ['#7c3aed', '#a855f7']}
-            onPress={() => setActiveFeatureModal('fast-paced')}
+            onPress={() => handleFeaturePress('fast-paced')}
           />
           <FeatureCard
             icon="🏆"
             title={t('landing.competeRank')}
             description={t('landing.competeRankDesc')}
             gradientColors={isDark ? ['#0f766e', '#0e7490'] : ['#0d9488', '#0891b2']}
-            onPress={() => setActiveFeatureModal('multiplayer')}
+            onPress={() => handleFeaturePress('multiplayer')}
           />
           <FeatureCard
             icon="📖"
@@ -316,7 +322,10 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
 
       {/* Download App Modal */}
       {showDownloadApp && (
-        <DownloadAppScreen onClose={() => setShowDownloadApp(false)} />
+        <DownloadAppScreen
+          onClose={() => setShowDownloadApp(false)}
+          onHomePress={() => setShowDownloadApp(false)}
+        />
       )}
     </SafeAreaView>
   );
