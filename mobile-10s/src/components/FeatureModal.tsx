@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   useWindowDimensions,
+  Dimensions,
 } from 'react-native';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
@@ -98,131 +99,191 @@ export const FeatureModal: React.FC<FeatureModalProps> = ({
   };
 
   const content = getFeatureContent();
+  const screenHeight = Dimensions.get('window').height;
+  const screenWidth = Dimensions.get('window').width;
 
-  if (!content) return null;
+  if (!visible || !content) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={true}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      {/* Overlay background */}
       <View
-        style={[
-          styles.overlay,
-          { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)' },
-        ]}
+        style={{
+          ...StyleSheet.absoluteFillObject,
+          backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)',
+        }}
+        onTouchEnd={onClose}
+      />
+
+      {/* Centered container */}
+      <View
+        style={{
+          ...StyleSheet.absoluteFillObject,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: 20,
+          paddingVertical: 40,
+        }}
       >
         <View
-          style={[
-            styles.container,
-            {
-              backgroundColor: isDark ? '#1a1f2e' : '#fff',
-              width: width - 20,
-              height: height - 60,
-            },
-          ]}
+          style={{
+            width: '100%',
+            maxWidth: 500,
+            height: screenHeight * 0.8,
+            backgroundColor: isDark ? '#1a1f2e' : '#fff',
+            borderRadius: 16,
+            overflow: 'hidden',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.3,
+            shadowRadius: 16,
+            elevation: 10,
+            flexDirection: 'column',
+          }}
+          onTouchEnd={(e) => e.stopPropagation()}
         >
-        {/* Header */}
-        <View
-          style={[
-            styles.header,
-            {
+          {/* Header */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 20,
+              paddingVertical: 16,
+              borderBottomWidth: 1,
               borderBottomColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-            },
-          ]}
-        >
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {content.title}
-          </Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={[styles.closeButtonText, { color: colors.textPrimary }]}>✕</Text>
-          </TouchableOpacity>
-        </View>
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: '700',
+                flex: 1,
+                color: colors.textPrimary,
+              }}
+            >
+              {content.title}
+            </Text>
+            <TouchableOpacity
+              onPress={onClose}
+              style={{
+                width: 40,
+                height: 40,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: colors.textPrimary }}>
+                ✕
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* Content */}
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {content.boxes.map((box, index) => (
-            <View
-              key={index}
-              style={[
-                styles.featureBox,
-                {
+          {/* Content */}
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingVertical: 20,
+              gap: 16,
+            }}
+            showsVerticalScrollIndicator={false}
+          >
+            {content.boxes.map((box, index) => (
+              <View
+                key={index}
+                style={{
+                  borderLeftWidth: 4,
                   borderLeftColor: box.borderColor,
+                  borderRadius: 12,
+                  padding: 16,
                   backgroundColor: isDark
                     ? 'rgba(255,255,255,0.05)'
                     : 'rgba(0,0,0,0.02)',
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.featureTitle,
-                  { color: box.borderColor },
-                ]}
+                }}
               >
-                {box.title}
-              </Text>
-              <Text
-                style={[
-                  styles.featureDescription,
-                  { color: colors.textSecondary },
-                ]}
-              >
-                {box.description}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '700',
+                    marginBottom: 8,
+                    color: box.borderColor,
+                  }}
+                >
+                  {box.title}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    lineHeight: 20,
+                    color: colors.textSecondary,
+                  }}
+                >
+                  {box.description}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
 
-        {/* Footer */}
-        <View
-          style={[
-            styles.footer,
-            {
+          {/* Footer */}
+          <View
+            style={{
+              borderTopWidth: 1,
               borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-            },
-          ]}
-        >
-          {feature === 'multiplayer' && onViewLeaderboards && (
+              paddingHorizontal: 16,
+              paddingVertical: 16,
+              gap: 12,
+            }}
+          >
+            {feature === 'multiplayer' && onViewLeaderboards && (
+              <TouchableOpacity
+                onPress={onViewLeaderboards}
+                style={{
+                  paddingVertical: 14,
+                  paddingHorizontal: 20,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  backgroundColor: isDark ? '#f0b429' : '#6125c9',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '700',
+                    color: isDark ? '#000' : '#fff',
+                  }}
+                >
+                  {t('multiplayer.viewLeaderboards') || 'View Leaderboards'}
+                </Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
-              onPress={onViewLeaderboards}
-              style={[
-                styles.button,
-                { backgroundColor: colors.primaryButtonBg },
-              ]}
+              onPress={onClose}
+              style={{
+                paddingVertical: 14,
+                paddingHorizontal: 20,
+                borderRadius: 12,
+                alignItems: 'center',
+                backgroundColor: isDark ? '#f0b429' : '#6125c9',
+              }}
             >
               <Text
-                style={[
-                  styles.buttonText,
-                  { color: colors.primaryButtonText },
-                ]}
+                style={{
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: isDark ? '#000' : '#fff',
+                }}
               >
-                {t('multiplayer.viewLeaderboards') || 'View Leaderboards'}
+                {t('button.close') || 'Close'}
               </Text>
             </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            onPress={onClose}
-            style={[
-              styles.button,
-              {
-                backgroundColor: isDark
-                  ? 'rgba(255,255,255,0.1)'
-                  : 'rgba(0,0,0,0.05)',
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.buttonText,
-                { color: colors.textPrimary },
-              ]}
-            >
-              {t('button.close') || 'Close'}
-            </Text>
-          </TouchableOpacity>
+          </View>
         </View>
-      </View>
       </View>
     </Modal>
   );
@@ -237,6 +298,7 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
   },
   container: {
+    flexDirection: 'column',
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -244,6 +306,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 10,
+    maxHeight: '90%',
   },
   header: {
     flexDirection: 'row',
