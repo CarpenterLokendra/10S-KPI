@@ -44,49 +44,48 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
 
   const currentLanguage = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
+  // Dynamic guide tabs using translation keys
   const guideTabs = [
     {
       id: 'rules',
-      label: 'Rules',
+      label: t('guide.rules') || 'Rules',
       sections: [
         {
-          title: 'Objective',
-          content: 'Catch as many 10s as possible to win the game. The player with the highest score at the end wins.',
+          title: t('rules.whatIsDehla.title') || '🎯 What is Catch the Ten?',
+          content: t('rules.whatIsDehla.content') || 'Catch the Ten is a traditional card game...',
           color: '#f0b429',
         },
         {
-          title: 'Card Values',
-          bullets: ['10 = 10 points', 'Ace = 1 point', 'Other cards = 0 points'],
+          title: t('rules.cardPoints.title') || '💰 Card Points',
+          content: `10 = 100pts, A = 14pts, K = 13pts, Q = 12pts, J = 11pts`,
           color: '#8b5cf6',
         },
         {
-          title: 'Winning',
-          content: 'Score points by capturing tricks containing 10s. Play strategically to maximize your catches.',
+          title: t('rules.howToWin.title') || '🥇 How to Win',
+          content: t('rules.howToWin.content') || 'The game ends when all four 10s have been caught...',
           color: '#06b6d4',
         },
       ],
     },
     {
       id: 'howToPlay',
-      label: 'How to Play',
+      label: t('guide.howToPlay') || 'How to Play',
       sections: [
         {
-          title: 'Game Flow',
+          title: t('rules.howGameStarts.title') || '🃏 How the Game Starts',
           bullets: [
-            'Players take turns playing cards',
-            'The highest card of the led suit wins the trick',
-            'Tricks containing 10s give bonus points',
-            'Game ends when all cards are played',
+            t('rules.howGameStarts.bullet1') || 'Everyone gets 5 cards to begin.',
+            t('rules.howGameStarts.bullet2') || 'The rest of the deck is held back.',
+            t('rules.howGameStarts.bullet3') || 'A random player is chosen to go first.',
           ],
           color: '#f0b429',
         },
         {
-          title: 'Strategy Tips',
+          title: t('rules.howRoundWorks.title') || '🔄 How a Round Works',
           bullets: [
-            'Pay attention to which 10s have been played',
-            'Try to win tricks with 10s',
-            'Block opponents from capturing 10s',
-            'Plan ahead for remaining cards',
+            t('rules.howRoundWorks.bullet1') || 'The first player plays any card.',
+            t('rules.howRoundWorks.bullet2') || 'All other players take turns.',
+            t('rules.howRoundWorks.bullet3') || 'Must-follow rule...',
           ],
           color: '#ec4899',
         },
@@ -199,7 +198,7 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
               onPress={() => setShowLanguageMenu(true)}
             >
               <Text style={[styles.landingButtonText, { color: isDark ? '#ffffff' : '#000000' }]}>
-                {currentLanguage.flag} {currentLanguage.nativeName}
+                {currentLanguage.nativeName}
               </Text>
             </TouchableOpacity>
 
@@ -252,7 +251,7 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
             ]}
           >
             <Text style={[styles.menuTitle, { color: colors.headingAccent }]}>
-              {t('settings.selectLanguage')}
+              {t('language.selectLanguage')}
             </Text>
 
             {LANGUAGES.map((lang) => (
@@ -359,16 +358,18 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   landingButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    minWidth: 100,
   },
   landingButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
+    textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,

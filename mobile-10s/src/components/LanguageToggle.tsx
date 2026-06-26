@@ -21,7 +21,7 @@ export const LanguageToggle: React.FC = () => {
     <View style={styles.container}>
       <Text style={[styles.label, { color: isDark ? '#fff' : '#333' }]}>Language</Text>
       <View style={styles.buttonGroup}>
-        {LANGUAGES.map(({ code, name }) => (
+        {LANGUAGES.map(({ code, name, nativeName }) => (
           <TouchableOpacity
             key={code}
             style={[

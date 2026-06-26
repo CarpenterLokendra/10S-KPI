@@ -275,7 +275,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
               <Text style={styles.platformArrow}>→</Text>
             </View>
             <Text style={[styles.platformLabel, { color: '#000000' }]}>
-              Play Anywhere, Anytime.
+              {t('landing.playAnywhere')}
             </Text>
             <View style={styles.platformBadges}>
               <View style={styles.platformBadgeItem}>
