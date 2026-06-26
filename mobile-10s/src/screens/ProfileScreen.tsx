@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
+import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 
 interface UserProfile {
@@ -19,11 +20,15 @@ interface UserProfile {
 
 interface ProfileScreenProps {
   onBackPress: () => void;
+  onNavigate?: (screen: string) => void;
+  onLogout?: () => void;
+  onHomePress?: () => void;
 }
 
-export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBackPress }) => {
+export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBackPress, onNavigate, onLogout, onHomePress }) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
+  const { t } = useTranslation();
   const isDark = colors.isDark;
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,22 +73,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBackPress }) => 
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar />
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)',
-            borderBottomColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
-          },
-        ]}
-      >
-        <TouchableOpacity onPress={onBackPress}>
-          <Text style={[styles.backButton, { color: colors.secondaryButtonText }]}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Profile</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <TopControlsBar
+        isAuthenticated={true}
+        title={t('page.profile')}
+        onBackPress={onBackPress}
+        onNavigate={onNavigate}
+        onLogout={onLogout}
+        onHomePress={onHomePress}
+      />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Avatar & Name Section */}
@@ -262,22 +259,6 @@ const AchievementBadge: React.FC<AchievementBadgeProps> = ({ emoji, title, isDar
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
   },
   scrollContent: {
     paddingHorizontal: 16,

@@ -9,9 +9,10 @@ import { TopControlsBar } from '../components/TopControlsBar';
 interface QuickMatchWaitingScreenProps {
   onCancel: () => void;
   onGameFound?: (gameId: string) => void;
+  onHomePress?: () => void;
 }
 
-export const QuickMatchWaitingScreen: React.FC<QuickMatchWaitingScreenProps> = ({ onCancel, onGameFound }) => {
+export const QuickMatchWaitingScreen: React.FC<QuickMatchWaitingScreenProps> = ({ onCancel, onGameFound, onHomePress }) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
@@ -66,18 +67,10 @@ export const QuickMatchWaitingScreen: React.FC<QuickMatchWaitingScreenProps> = (
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar />
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)',
-            borderBottomColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
-          },
-        ]}
-      >
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Finding Match</Text>
-      </View>
+      <TopControlsBar
+        title={t('page.quickMatch')}
+        onHomePress={onHomePress}
+      />
 
       <View style={styles.content}>
         {/* Animated Loading Circle */}
@@ -177,16 +170,6 @@ export const QuickMatchWaitingScreen: React.FC<QuickMatchWaitingScreenProps> = (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
   },
   content: {
     flex: 1,

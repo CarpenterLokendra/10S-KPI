@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
+import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 
 interface LeaderboardPlayer {
@@ -16,11 +17,15 @@ interface LeaderboardPlayer {
 
 interface LeaderboardScreenProps {
   onBackPress: () => void;
+  onNavigate?: (screen: string) => void;
+  onLogout?: () => void;
+  onHomePress?: () => void;
 }
 
-export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBackPress }) => {
+export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBackPress, onNavigate, onLogout, onHomePress }) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
+  const { t } = useTranslation();
   const isDark = colors.isDark;
   const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -91,22 +96,14 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBackPres
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar />
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)',
-            borderBottomColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
-          },
-        ]}
-      >
-        <TouchableOpacity onPress={onBackPress}>
-          <Text style={[styles.backButton, { color: colors.secondaryButtonText }]}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Leaderboard</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <TopControlsBar
+        isAuthenticated={true}
+        title={t('page.leaderboard')}
+        onBackPress={onBackPress}
+        onNavigate={onNavigate}
+        onLogout={onLogout}
+        onHomePress={onHomePress}
+      />
 
       {/* Filter Buttons */}
       <View style={styles.filterContainer}>
@@ -185,22 +182,6 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBackPres
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
   },
   filterContainer: {
     flexDirection: 'row',

@@ -13,6 +13,7 @@ import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { PlayerSeats } from '../components/PlayerSeats';
 import { TopControlsBar } from '../components/TopControlsBar';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface Card {
   id: string;
@@ -42,11 +43,13 @@ interface GameState {
 interface GameScreenProps {
   gameId: string;
   onGameEnd: () => void;
+  onHomePress?: () => void;
 }
 
-export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd }) => {
+export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHomePress }) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
+  const { t } = useTranslation();
   const isDark = colors.isDark;
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
@@ -106,7 +109,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd }) => 
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar />
+      <TopControlsBar
+        title="Catch The Ten"
+        onHomePress={onHomePress}
+      />
       <View
         style={[
           styles.header,

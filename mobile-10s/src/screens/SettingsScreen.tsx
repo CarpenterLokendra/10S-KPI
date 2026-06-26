@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
+import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { DarkModeToggle } from '../components/DarkModeToggle';
 import { SoundToggle } from '../components/SoundToggle';
@@ -12,31 +13,26 @@ import { ThemeToggle } from '../components/ThemeToggle';
 interface SettingsScreenProps {
   onBackPress: () => void;
   onLogout: () => void;
+  onNavigate?: (screen: string) => void;
+  onHomePress?: () => void;
 }
 
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBackPress, onLogout }) => {
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBackPress, onLogout, onNavigate, onHomePress }) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
+  const { t } = useTranslation();
   const isDark = colors.isDark;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar />
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)',
-            borderBottomColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
-          },
-        ]}
-      >
-        <TouchableOpacity onPress={onBackPress}>
-          <Text style={[styles.backButton, { color: colors.secondaryButtonText }]}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Settings</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <TopControlsBar
+        isAuthenticated={true}
+        title={t('settings.title')}
+        onBackPress={onBackPress}
+        onNavigate={onNavigate}
+        onLogout={onLogout}
+        onHomePress={onHomePress}
+      />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Appearance Section */}
@@ -149,22 +145,6 @@ const Section: React.FC<SectionProps> = ({ title, isDark, children }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
   },
   scrollContent: {
     paddingHorizontal: 20,

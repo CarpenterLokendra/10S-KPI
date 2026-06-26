@@ -7,6 +7,7 @@ import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { StrengthIndicator } from '../components/StrengthIndicator';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface AuthScreenProps {
   onLoginSuccess: () => void;
@@ -14,6 +15,7 @@ interface AuthScreenProps {
   isRegisterMode?: boolean;
   onNavigateToRegister?: () => void;
   onNavigateToLogin?: () => void;
+  onHomePress?: () => void;
 }
 
 interface FormData {
@@ -37,9 +39,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   isRegisterMode = false,
   onNavigateToRegister,
   onNavigateToLogin,
+  onHomePress,
 }) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
+  const { t } = useTranslation();
   const isDark = colors.isDark;
 
   const [formData, setFormData] = useState<FormData>({
@@ -89,10 +93,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
     if (!formData.username.trim()) {
       newErrors.username = 'Username is required';
-    } else if (formData.username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
-    } else if (formData.username.length > 10) {
-      newErrors.username = 'Username must be maximum 10 characters';
+    } else if (!isLogin) {
+      // Only apply length restrictions during registration
+      if (formData.username.length < 3) {
+        newErrors.username = 'Username must be at least 3 characters';
+      } else if (formData.username.length > 10) {
+        newErrors.username = 'Username must be maximum 10 characters';
+      }
     }
 
     if (!isLogin) {
@@ -175,21 +182,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <View style={styles.headerBar}>
-        <TouchableOpacity
-          style={[
-            styles.homeButton,
-            {
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#6125c9',
-              borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#6125c9',
-            },
-          ]}
-          onPress={onBackPress}
-        >
-          <Text style={[styles.homeButtonText, { color: '#ffffff' }]}>🏠 Home</Text>
-        </TouchableOpacity>
-        <TopControlsBar />
-      </View>
+      <TopControlsBar
+        onHomePress={onHomePress}
+      />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={[
           styles.cardContainer,
@@ -471,23 +466,5 @@ const styles = StyleSheet.create({
   toggleLink: {
     fontSize: 14,
     fontWeight: '700',
-  },
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  homeButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1.5,
-  },
-  homeButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
   },
 });

@@ -14,9 +14,10 @@ interface LandingScreenProps {
   onLoginPress: () => void;
   onSignUpPress: () => void;
   onLeaderboardPress?: () => void;
+  onNavigate?: (screen: string) => void;
 }
 
-export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSignUpPress, onLeaderboardPress }) => {
+export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSignUpPress, onLeaderboardPress, onNavigate }) => {
   const { mode } = useThemeStore();
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -169,7 +170,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar />
+      <TopControlsBar onNavigate={onNavigate} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
@@ -240,11 +241,11 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
         {/* Feature Cards */}
         <View style={styles.featuresContainer}>
           <FeatureCard
-            icon="⚡"
-            title={t('landing.fastMatches')}
-            description={t('landing.fastMatchesDesc')}
+            icon="📖"
+            title={t('landing.howToPlay')}
+            description={t('landing.howToPlayDesc')}
             gradientColors={isDark ? ['#5b21b6', '#7c3aed'] : ['#7c3aed', '#a855f7']}
-            onPress={() => handleFeaturePress('fast-paced')}
+            onPress={() => setShowGuide(true)}
           />
           <FeatureCard
             icon="🏆"
@@ -254,11 +255,11 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
             onPress={() => handleFeaturePress('multiplayer')}
           />
           <FeatureCard
-            icon="📖"
-            title={t('landing.howToPlay')}
-            description={t('landing.howToPlayDesc')}
+            icon="⚡"
+            title={t('landing.fastMatches')}
+            description={t('landing.fastMatchesDesc')}
             gradientColors={isDark ? ['#b45309', '#d97706'] : ['#d97706', '#f59e0b']}
-            onPress={() => setShowGuide(true)}
+            onPress={() => handleFeaturePress('fast-paced')}
           />
         </View>
 

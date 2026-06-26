@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { lobbyService } from '../services/lobby.service';
 import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
+import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 
 interface Lobby {
@@ -29,6 +30,8 @@ interface LobbyScreenProps {
   onProfilePress?: () => void;
   onSettingsPress?: () => void;
   onQuickMatchPress?: () => void;
+  onNavigate?: (screen: string) => void;
+  onHomePress?: () => void;
 }
 
 export const LobbyScreen: React.FC<LobbyScreenProps> = ({
@@ -37,10 +40,13 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   onLeaderboardPress,
   onProfilePress,
   onSettingsPress,
-  onQuickMatchPress
+  onQuickMatchPress,
+  onNavigate,
+  onHomePress,
 }) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
+  const { t } = useTranslation();
   const isDark = colors.isDark;
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -119,40 +125,13 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar />
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)',
-            borderBottomColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
-          },
-        ]}
-      >
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Browse Lobbies</Text>
-        <View style={styles.headerButtons}>
-          {onLeaderboardPress && (
-            <TouchableOpacity onPress={onLeaderboardPress} style={styles.headerIcon}>
-              <Text style={styles.headerIconText}>🏆</Text>
-            </TouchableOpacity>
-          )}
-          {onProfilePress && (
-            <TouchableOpacity onPress={onProfilePress} style={styles.headerIcon}>
-              <Text style={styles.headerIconText}>👤</Text>
-            </TouchableOpacity>
-          )}
-          {onSettingsPress && (
-            <TouchableOpacity onPress={onSettingsPress} style={styles.headerIcon}>
-              <Text style={styles.headerIconText}>⚙️</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity onPress={onLogout} style={styles.headerIcon}>
-            <Text style={[styles.logoutBtn, { color: colors.secondaryButtonText }]}>
-              Logout
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <TopControlsBar
+        isAuthenticated={true}
+        title={t('page.lobby')}
+        onNavigate={onNavigate}
+        onLogout={onLogout}
+        onHomePress={onHomePress}
+      />
 
       {!showCreateForm ? (
         <>
@@ -232,34 +211,6 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-  headerIcon: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  headerIconText: {
-    fontSize: 16,
-  },
-  logoutBtn: {
-    fontSize: 13,
-    fontWeight: '600',
   },
   createButton: {
     margin: 16,

@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
+import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 interface Game {
   id: string;
@@ -27,33 +28,28 @@ interface ResultsScreenProps {
   game: Game;
   onPlayAgain: () => void;
   onBackToLobby: () => void;
+  onHomePress?: () => void;
 }
 
 export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   game,
   onPlayAgain,
   onBackToLobby,
+  onHomePress,
 }) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
+  const { t } = useTranslation();
   const isDark = colors.isDark;
   const sortedPlayers = [...game.players].sort((a, b) => b.final_score - a.final_score);
   const winner = sortedPlayers[0];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar />
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)',
-            borderBottomColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
-          },
-        ]}
-      >
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Game Over!</Text>
-      </View>
+      <TopControlsBar
+        title={t('page.results')}
+        onHomePress={onHomePress}
+      />
 
       <View style={[styles.winnerSection, { backgroundColor: '#f0b429' }]}>
         <Text style={[styles.winnerLabel, { color: '#000' }]}>🏆 Winner 🏆</Text>
@@ -126,15 +122,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
   },
   winnerSection: {
     paddingVertical: 24,

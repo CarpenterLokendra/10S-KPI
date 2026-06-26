@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { LandingScreen } from './src/screens/LandingScreen';
 import { LobbyScreen } from './src/screens/LobbyScreen';
@@ -26,7 +27,7 @@ export default function App() {
   useEffect(() => {
     const initApp = async () => {
       await loadSettings();
-      checkAuthStatus();
+      await checkAuthStatus();
     };
     initApp();
   }, []);
@@ -89,6 +90,16 @@ export default function App() {
     }
   };
 
+  const handleNavigate = (screen: string) => {
+    setAppState(screen as AppState);
+  };
+
+  const handleHome = () => {
+    setGameId(null);
+    setCurrentGame(null);
+    setAppState('landing');
+  };
+
   const screenContent = (() => {
     if (appState === 'loading') {
       return (
@@ -104,6 +115,7 @@ export default function App() {
           onLoginPress={() => setAppState('auth')}
           onSignUpPress={() => setAppState('register')}
           onLeaderboardPress={() => setAppState('leaderboard')}
+          onNavigate={handleNavigate}
         />
       );
     }
@@ -114,6 +126,7 @@ export default function App() {
           onLoginSuccess={handleLoginSuccess}
           onBackPress={() => setAppState('landing')}
           onNavigateToRegister={() => setAppState('register')}
+          onHomePress={handleHome}
         />
       );
     }
@@ -125,6 +138,7 @@ export default function App() {
           onBackPress={() => setAppState('landing')}
           isRegisterMode={true}
           onNavigateToLogin={() => setAppState('auth')}
+          onHomePress={handleHome}
         />
       );
     }
@@ -138,6 +152,8 @@ export default function App() {
           onProfilePress={() => setAppState('profile')}
           onSettingsPress={() => setAppState('settings')}
           onQuickMatchPress={() => setAppState('quickmatch-wait')}
+          onNavigate={handleNavigate}
+          onHomePress={handleHome}
         />
       );
     }
@@ -146,6 +162,9 @@ export default function App() {
       return (
         <LeaderboardScreen
           onBackPress={() => setAppState('lobby')}
+          onNavigate={handleNavigate}
+          onLogout={handleLogout}
+          onHomePress={handleHome}
         />
       );
     }
@@ -154,6 +173,9 @@ export default function App() {
       return (
         <ProfileScreen
           onBackPress={() => setAppState('lobby')}
+          onNavigate={handleNavigate}
+          onLogout={handleLogout}
+          onHomePress={handleHome}
         />
       );
     }
@@ -163,6 +185,8 @@ export default function App() {
         <SettingsScreen
           onBackPress={() => setAppState('lobby')}
           onLogout={handleLogout}
+          onNavigate={handleNavigate}
+          onHomePress={handleHome}
         />
       );
     }
@@ -175,12 +199,13 @@ export default function App() {
             setGameId(gId);
             setAppState('game');
           }}
+          onHomePress={handleHome}
         />
       );
     }
 
     if (appState === 'game' && gameId) {
-      return <GameScreen gameId={gameId} onGameEnd={handleGameEnd} />;
+      return <GameScreen gameId={gameId} onGameEnd={handleGameEnd} onHomePress={handleHome} />;
     }
 
     if (appState === 'results' && currentGame) {
@@ -189,6 +214,7 @@ export default function App() {
           game={currentGame}
           onPlayAgain={handlePlayAgain}
           onBackToLobby={handleBackToLobby}
+          onHomePress={handleHome}
         />
       );
     }
@@ -200,5 +226,9 @@ export default function App() {
     );
   })();
 
-  return <AnimatedBackground>{screenContent}</AnimatedBackground>;
+  return (
+    <SafeAreaProvider>
+      <AnimatedBackground>{screenContent}</AnimatedBackground>
+    </SafeAreaProvider>
+  );
 }
