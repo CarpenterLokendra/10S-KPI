@@ -83,6 +83,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
             styles.container,
             {
               backgroundColor: isDark ? '#1a1f2e' : '#fff',
+              borderColor: isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.2)',
               width: width - 20,
               height: height - 60,
             },
@@ -359,6 +360,7 @@ const styles = StyleSheet.create({
   },
   container: {
     borderRadius: 16,
+    borderWidth: 1,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },

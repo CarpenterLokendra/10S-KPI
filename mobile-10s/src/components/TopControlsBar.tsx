@@ -223,7 +223,7 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
 
       <GuideModal
         visible={showGuide}
-        title="How to Play"
+        title={t('guide.title')}
         tabs={guideTabs}
         onClose={() => setShowGuide(false)}
       />
@@ -246,7 +246,7 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
               styles.languageMenu,
               {
                 backgroundColor: isDark ? '#1a1f2e' : '#fff',
-                borderColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
+                borderColor: isDark ? 'rgba(240,180,41,0.4)' : 'rgba(240,180,41,0.3)',
               },
             ]}
           >
