@@ -137,6 +137,8 @@ export const FeatureModal: React.FC<FeatureModalProps> = ({
             height: screenHeight * 0.8,
             backgroundColor: isDark ? '#1a1f2e' : '#fff',
             borderRadius: 16,
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.2)',
             overflow: 'hidden',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 8 },
