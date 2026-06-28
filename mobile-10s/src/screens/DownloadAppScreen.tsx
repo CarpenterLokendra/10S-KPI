@@ -33,30 +33,16 @@ export const DownloadAppScreen: React.FC<DownloadAppScreenProps> = ({ onClose, o
       onRequestClose={onClose}
     >
       <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }]}>
-        <View style={styles.headerBar}>
-          <TouchableOpacity
-            style={[
-              styles.homeButton,
-              {
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#6125c9',
-                borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#6125c9',
-              },
-            ]}
-            onPress={onHomePress || onClose}
-          >
-            <Text style={[styles.homeButtonText, { color: '#ffffff' }]}>🏠 Home</Text>
-          </TouchableOpacity>
-          <TopControlsBar />
-        </View>
+        <TopControlsBar onHomePress={onHomePress || onClose} />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Title */}
           <View style={styles.titleSection}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Download the App
+              {t('download.title')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Scan the QR code to get Catch The Ten on your phone
+              {t('download.subtitle')}
             </Text>
           </View>
 
@@ -146,7 +132,7 @@ export const DownloadAppScreen: React.FC<DownloadAppScreenProps> = ({ onClose, o
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-              Download Catch The Ten and play with friends worldwide!
+              {t('download.footer')}
             </Text>
           </View>
         </ScrollView>
@@ -158,24 +144,6 @@ export const DownloadAppScreen: React.FC<DownloadAppScreenProps> = ({ onClose, o
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  homeButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1.5,
-  },
-  homeButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
   },
   scrollContent: {
     paddingHorizontal: 16,

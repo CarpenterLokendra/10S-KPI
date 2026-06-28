@@ -115,7 +115,7 @@ export default function App() {
           onLoginPress={() => setAppState('auth')}
           onSignUpPress={() => setAppState('register')}
           onLeaderboardPress={() => setAppState('leaderboard')}
-          onNavigate={handleNavigate}
+          onHomePress={handleHome}
         />
       );
     }

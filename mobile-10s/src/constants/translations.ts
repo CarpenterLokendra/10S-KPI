@@ -286,6 +286,9 @@ export const translations = {
     'controls.horizontal': 'Horizontal swipe for hand',
     'controls.arrowKeys': 'Arrow keys to navigate',
     'controls.enterKey': 'Press Enter to play',
+    'download.title': 'Download the App',
+    'download.subtitle': 'Scan the QR code to get Catch The Ten on your phone',
+    'download.footer': 'Download Catch The Ten and play with friends worldwide!',
   },
   hi: {
     'landing.title': 'दहला पकड़ो',
@@ -569,6 +572,9 @@ export const translations = {
     'controls.horizontal': 'क्षैतिज स्वाइप करें',
     'controls.arrowKeys': 'तीर कुंजी',
     'controls.enterKey': 'Enter दबाएं',
+    'download.title': 'ऐप डाउनलोड करें',
+    'download.subtitle': 'अपने फोन पर Catch The Ten प्राप्त करने के लिए QR कोड स्कैन करें',
+    'download.footer': 'Catch The Ten डाउनलोड करें और दुनिया भर में दोस्तों के साथ खेलें!',
   },
   bn: {
     'landing.title': 'ধরো দশটি',
@@ -784,6 +790,9 @@ export const translations = {
     'page.quickMatch': 'ম্যাচ খুঁজছি',
     'page.login': 'লগইন করুন',
     'page.register': 'অ্যাকাউন্ট তৈরি করুন',
+    'download.title': 'অ্যাপ ডাউনলোড করুন',
+    'download.subtitle': 'আপনার ফোনে Catch The Ten পেতে QR কোড স্ক্যান করুন',
+    'download.footer': 'Catch The Ten ডাউনলোড করুন এবং বিশ্বব্যাপী বন্ধুদের সাথে খেলুন!',
   },
   ta: {
     'landing.title': 'பத்து பிடி',
@@ -999,6 +1008,9 @@ export const translations = {
     'page.quickMatch': 'போட்டியை தேடுகிறேன்',
     'page.login': 'உள்நுழைக',
     'page.register': 'கணக்கு உருவாக்க',
+    'download.title': 'பயன்பாட்டை பதிவிறக்கவும்',
+    'download.subtitle': 'உங்கள் ஃபோனில் Catch The Ten பெற QR குறியீட்டை ஸ்கேன் செய்யவும்',
+    'download.footer': 'Catch The Ten ஐ பதிவிறக்கவும் மற்றும் உலக நண்பர்களுடன் விளையாடவும்!',
   },
   te: {
     'landing.title': 'పది పట్టు',
@@ -1198,6 +1210,9 @@ export const translations = {
     'page.quickMatch': 'మ్యాచ్‌ను వెతికిస్తుంది',
     'page.login': 'లాగిన్ చేయండి',
     'page.register': 'ఖాతా సృష్టించండి',
+    'download.title': 'అ్యాప్‌ను డౌన్‌లోడ్ చేయండి',
+    'download.subtitle': 'మీ ఫోన్‌లో Catch The Tenని పొందడానికి QR కోడ్‌ను స్కాన్ చేయండి',
+    'download.footer': 'Catch The Tenని డౌన్‌లోడ్ చేసి ప్రపంచ వ్యాప్త స్నేహితులతో ఆడండి!',
   },
   ml: {
     'landing.title': 'പത്ത് പിടിക്കുക',
@@ -1413,6 +1428,9 @@ export const translations = {
     'page.quickMatch': 'മത്സരം തിരയുന്നു',
     'page.login': 'ലോഗിൻ ചെയ്യുക',
     'page.register': 'അക്കൌണ്ട് സൃഷ്ടിക്കുക',
+    'download.title': 'অ্যাപ ডાউনলোড করুন',
+    'download.subtitle': 'നിങ്ങളുടെ ഫോണിൽ Catch The Ten ലഭിക്കാൻ QR കോഡ് സ്കാൻ ചെയ്യുക',
+    'download.footer': 'Catch The Ten ഡൗൺലോഡ് ചെയ്ത് ലോകമെമ്പാടുള്ള സുഹൃത്തുക്കളുമായി കളിക്കുക!',
   },
   kn: {
     'landing.title': 'ಹತ್ತನ್ನು ಹಿಡಿಯಿರಿ',
@@ -1612,6 +1630,9 @@ export const translations = {
     'page.quickMatch': 'ಮ್ಯಾಚ್ ಹುಡುಕುತ್ತಿದೆ',
     'page.login': 'ಲಾಗಿನ್ ಮಾಡಿ',
     'page.register': 'ಖಾತೆ ರಚಿಸಿ',
+    'download.title': 'ಅ್ಯಾಪ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ',
+    'download.subtitle': 'ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲಿ Catch The Ten ಪಡೆಯಲು QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ',
+    'download.footer': 'Catch The Ten ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ ಮತ್ತು ವಿಶ್ವವ್ಯಾಪಿ ಸ್ನೇಹಿತರೊಂದಿಗೆ ಆಡಿ!',
   },
   bho: {
     'landing.title': 'दहला पकड़ो',
@@ -1827,5 +1848,8 @@ export const translations = {
     'page.quickMatch': 'मैच खोज रहे हैं',
     'page.login': 'लॉग इन',
     'page.register': 'खाता बनाएं',
+    'download.title': 'ऐप डाउनलोड करीं',
+    'download.subtitle': 'अपने फोन पर Catch The Ten पाए के लिये QR कोड स्कैन करीं',
+    'download.footer': 'Catch The Ten डाउनलोड करीं और दुनिया भर के दोस्तों के साथ खेलीं!',
   },
 } as const;

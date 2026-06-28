@@ -14,10 +14,10 @@ interface LandingScreenProps {
   onLoginPress: () => void;
   onSignUpPress: () => void;
   onLeaderboardPress?: () => void;
-  onNavigate?: (screen: string) => void;
+  onHomePress?: () => void;
 }
 
-export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSignUpPress, onLeaderboardPress, onNavigate }) => {
+export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSignUpPress, onLeaderboardPress, onHomePress }) => {
   const { mode } = useThemeStore();
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -170,7 +170,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar onNavigate={onNavigate} />
+      <TopControlsBar onHomePress={onHomePress} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
