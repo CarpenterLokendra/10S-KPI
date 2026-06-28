@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   TextInput,
@@ -14,6 +14,7 @@ import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
+import { CoachModal } from '../components/CoachModal';
 
 interface Lobby {
   id: string;
@@ -53,6 +54,10 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   const [gameCode, setGameCode] = useState('');
   const [lobbyName, setLobbyName] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showCoach, setShowCoach] = useState(false);
+
+  const createButtonRef = useRef<View>(null);
+  const lobbiesListRef = useRef<View>(null);
 
   useEffect(() => {
     loadLobbies();
@@ -68,6 +73,51 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
       console.error('Failed to load lobbies:', err);
     }
   };
+
+  const coachSteps = [
+    {
+      title: '☰ Menu — Language & Theme',
+      description: "Tap this button to open the menu. Inside you'll find:\n• 🌐 Language selector\n• 🌙/☀️ Light / Dark mode toggle\n• 👤 Profile, Settings, Leaderboard",
+      referenceElement: undefined,
+      side: 'bottom' as const,
+      align: 'start' as const,
+    },
+    {
+      title: '? Help Button',
+      description: 'Tap this button to start a guided tour of the current page. It will highlight and explain each feature.',
+      referenceElement: undefined,
+      side: 'bottom' as const,
+      align: 'start' as const,
+    },
+    {
+      title: '← Back Button',
+      description: 'Tap this button to go back to the landing page. You will leave the lobby and return to the main menu.',
+      referenceElement: undefined,
+      side: 'bottom' as const,
+      align: 'start' as const,
+    },
+    {
+      title: '🔑 Join by Code',
+      description: 'Got a code from a friend? Enter the 6-character lobby code here to join their game directly.',
+      referenceElement: undefined,
+      side: 'bottom' as const,
+      align: 'start' as const,
+    },
+    {
+      title: '➕ Create a Lobby',
+      description: 'Start your own game here. Give it a name and choose how many players (3–5). You become the host.',
+      referenceElement: createButtonRef,
+      side: 'bottom' as const,
+      align: 'start' as const,
+    },
+    {
+      title: '🎮 Available Games',
+      description: 'All open public lobbies are listed here. Tap any card to join instantly.',
+      referenceElement: lobbiesListRef,
+      side: 'top' as const,
+      align: 'center' as const,
+    },
+  ];
 
   const handleCreateLobby = async () => {
     if (!lobbyName) {
@@ -131,11 +181,14 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         onNavigate={onNavigate}
         onLogout={onLogout}
         onHomePress={onHomePress}
+        page="lobby"
+        onCoachPress={() => setShowCoach(true)}
       />
 
       {!showCreateForm ? (
         <>
           <TouchableOpacity
+            ref={createButtonRef}
             style={[styles.createButton, { backgroundColor: colors.primaryButtonBg }]}
             onPress={() => setShowCreateForm(true)}
             disabled={isLoading}
@@ -147,6 +200,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             <ActivityIndicator size="large" color="#f0b429" style={styles.loader} />
           ) : (
             <FlatList
+              ref={lobbiesListRef}
               data={lobbies}
               renderItem={renderLobbyItem}
               keyExtractor={(item) => item.id}
@@ -204,6 +258,12 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
           </TouchableOpacity>
         </View>
       )}
+
+      <CoachModal
+        visible={showCoach}
+        steps={coachSteps}
+        onClose={() => setShowCoach(false)}
+      />
     </SafeAreaView>
   );
 };

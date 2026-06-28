@@ -5,7 +5,10 @@ import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { useThemeStore, type Language } from '../store/theme.store';
 import { HamburgerMenu } from './HamburgerMenu';
-import { GuideModal } from './GuideModal';
+import { GuideModal, type GuideStep } from './GuideModal';
+import { getGuideSteps } from '../services/guideTranslations';
+
+type PageType = 'lobby' | 'game-lobby' | 'game-table' | 'generic';
 
 interface TopControlsBarProps {
   onNavigate?: (screen: string) => void;
@@ -14,6 +17,8 @@ interface TopControlsBarProps {
   title?: string;
   onBackPress?: () => void;
   onHomePress?: () => void;
+  page?: PageType;
+  onCoachPress?: () => void;
 }
 
 export const TopControlsBar: React.FC<TopControlsBarProps> = ({
@@ -23,6 +28,8 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
   title,
   onBackPress,
   onHomePress,
+  page = 'generic',
+  onCoachPress,
 }) => {
   const colors = useThemeColors();
   const { t } = useTranslation();
@@ -44,8 +51,133 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
 
   const currentLanguage = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
-  // Dynamic guide tabs using translation keys
-  const guideTabs = [
+  // Generate step-based coach content for page-specific pages
+  const getCoachSteps = (): GuideStep[] | null => {
+    const g = getGuideSteps(language);
+    if (page === 'lobby') {
+      return [
+        { icon: '☰', title: g.menuBtn.title, description: g.menuBtn.description },
+        { icon: '❓', title: g.helpBtn.title, description: g.helpBtn.description },
+        { icon: '🏠', title: g.backBtn.title, description: g.backBtn.description },
+        { icon: '🔑', title: g.joinCode.title, description: g.joinCode.description },
+        { icon: '➕', title: g.createCard.title, description: g.createCard.description },
+        { icon: '🎮', title: g.lobbyList.title, description: g.lobbyList.description },
+      ];
+    }
+    if (page === 'game-lobby') {
+      return [
+        { icon: '☰', title: g.menuBtn.title, description: g.menuBtn.description },
+        { icon: '❓', title: g.helpBtn.title, description: g.helpBtn.description },
+        { icon: '📋', title: g.lobbyCode.title, description: g.lobbyCode.description },
+        { icon: '👥', title: g.playerSlots.title, description: g.playerSlots.description },
+        { icon: '🕹️', title: g.actionButtons.title, description: g.actionButtons.description },
+        { icon: '💬', title: g.chat.title, description: g.chat.description },
+      ];
+    }
+    if (page === 'game-table') {
+      return [
+        { icon: '☰', title: g.menuBtn.title, description: g.menuBtn.description },
+        { icon: '📊', title: g.topBar.title, description: g.topBar.description },
+        { icon: '▶️', title: g.turnIndicator.title, description: g.turnIndicator.description },
+        { icon: '🃏', title: g.trumpLed.title, description: g.trumpLed.description },
+        { icon: '✋', title: g.playerHand.title, description: g.playerHand.description },
+      ];
+    }
+    return null;
+  };
+
+  // Generate guide content based on page type
+  const getGuideTabs = () => {
+    if (page === 'lobby') {
+      return [
+        {
+          id: 'lobby',
+          label: t('coach.lobby.title') || 'Browse Lobbies',
+          sections: [
+            {
+              title: t('coach.lobby.joinCode.title') || '🔑 Join by Code',
+              content: t('coach.lobby.joinCode.desc') || 'Got a code from a friend?',
+              color: '#3b82f6',
+            },
+            {
+              title: t('coach.lobby.createLobby.title') || '➕ Create a Lobby',
+              content: t('coach.lobby.createLobby.desc') || 'Start your own game',
+              color: '#06b7db',
+            },
+            {
+              title: t('coach.lobby.lobbyList.title') || '🎮 Available Games',
+              content: t('coach.lobby.lobbyList.desc') || 'All open lobbies are listed',
+              color: '#6366f1',
+            },
+          ],
+        },
+      ];
+    }
+
+    if (page === 'game-lobby') {
+      return [
+        {
+          id: 'gameLobby',
+          label: t('coach.gameLobby.title') || 'Game Lobby',
+          sections: [
+            {
+              title: t('coach.gameLobby.lobbyCode.title') || '📋 Your Lobby Code',
+              content: t('coach.gameLobby.lobbyCode.desc') || 'This code is your lobby invite',
+              color: '#3b82f6',
+            },
+            {
+              title: t('coach.gameLobby.playerSlots.title') || '👥 Player Slots',
+              content: t('coach.gameLobby.playerSlots.desc') || 'Green = ready, Yellow = not ready',
+              color: '#06b7db',
+            },
+            {
+              title: t('coach.gameLobby.actionButtons.title') || '🎮 Action Buttons',
+              content: t('coach.gameLobby.actionButtons.desc') || 'Start, Leave, Delete options',
+              color: '#6366f1',
+            },
+            {
+              title: t('coach.gameLobby.chat.title') || '💬 Chat',
+              content: t('coach.gameLobby.chat.desc') || 'Chat with other players',
+              color: '#a78bfa',
+            },
+          ],
+        },
+      ];
+    }
+
+    if (page === 'game-table') {
+      return [
+        {
+          id: 'gameTable',
+          label: t('coach.game.title') || 'Game Table',
+          sections: [
+            {
+              title: t('coach.game.turnIndicator.title') || '▶ Turn Indicator',
+              content: t('coach.game.turnIndicator.desc') || 'Shows whose turn it is',
+              color: '#3b82f6',
+            },
+            {
+              title: t('coach.game.trumpLed.title') || '🃏 Trump & Led Suit',
+              content: t('coach.game.trumpLed.desc') || 'Trump beats all, Led suit must follow',
+              color: '#06b7db',
+            },
+            {
+              title: t('coach.game.playerHand.title') || '✋ Your Hand',
+              content: t('coach.game.playerHand.desc') || 'Your cards — tap to play',
+              color: '#6366f1',
+            },
+            {
+              title: t('coach.game.score.title') || '💯 Scoring',
+              content: t('coach.game.score.desc') || 'Tens are worth 100 points',
+              color: '#a78bfa',
+            },
+          ],
+        },
+      ];
+    }
+
+    // Default game rules tabs
+    return [
     {
       id: 'rules',
       label: t('guide.rules') || 'Rules',
@@ -91,7 +223,10 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
         },
       ],
     },
-  ];
+    ];
+  };
+
+  const guideTabs = getGuideTabs();
 
   return (
     <>
@@ -141,7 +276,13 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
                   borderColor: isDark ? 'rgba(240,180,41,0.3)' : '#6125c9',
                 },
               ]}
-              onPress={() => setShowGuide(true)}
+              onPress={() => {
+                if (page === 'lobby' && onCoachPress) {
+                  onCoachPress();
+                } else {
+                  setShowGuide(true);
+                }
+              }}
             >
               <Text style={[styles.guideButtonText, { color: isDark ? '#fbbf24' : '#6125c9' }]}>?</Text>
             </TouchableOpacity>
@@ -223,12 +364,18 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
         )}
       </View>
 
-      <GuideModal
-        visible={showGuide}
-        title={t('guide.title')}
-        tabs={guideTabs}
-        onClose={() => setShowGuide(false)}
-      />
+      {(() => {
+        const coachSteps = getCoachSteps();
+        return (
+          <GuideModal
+            visible={showGuide}
+            title={coachSteps ? 'Page Guide' : (t('guide.title') || 'How to Play')}
+            steps={coachSteps ?? undefined}
+            tabs={coachSteps ? undefined : guideTabs}
+            onClose={() => setShowGuide(false)}
+          />
+        );
+      })()}
 
       {/* Language Menu Modal */}
       <Modal

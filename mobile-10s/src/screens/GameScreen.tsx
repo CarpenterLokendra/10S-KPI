@@ -112,6 +112,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       <TopControlsBar
         title="Catch The Ten"
         onHomePress={onHomePress}
+        isAuthenticated={true}
+        page="game-table"
       />
       <View
         style={[

@@ -200,7 +200,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               color: isDark ? '#f59e0b' : '#6125c9',
             }
           ]}>
-            {isLogin ? 'Login' : 'Create Account'}
+            {isLogin ? t('auth.login') : t('auth.signup')}
           </Text>
           <Text style={[
             styles.subtitle,
@@ -213,7 +213,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
           {/* Username Field */}
           <View style={styles.fieldContainer}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Username</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('auth.username') || 'Username'}</Text>
             <TextInput
               style={[
                 styles.input,
@@ -235,7 +235,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           {/* Email Field - Register Only */}
           {!isLogin && (
             <View style={styles.fieldContainer}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('auth.email') || 'Email'}</Text>
               <TextInput
                 style={[
                   styles.input,
@@ -258,7 +258,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
           {/* Password Field */}
           <View style={styles.fieldContainer}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('auth.password') || 'Password'}</Text>
             <View style={styles.passwordInputContainer}>
               <TextInput
                 style={[
@@ -305,7 +305,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           {/* Confirm Password Field - Register Only */}
           {!isLogin && (
             <View style={styles.fieldContainer}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Confirm Password</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('auth.confirmPassword') || 'Confirm Password'}</Text>
               <View style={styles.passwordInputContainer}>
                 <TextInput
                   style={[
@@ -348,18 +348,18 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <ActivityIndicator color={colors.primaryButtonText} />
             ) : (
               <Text style={[styles.buttonText, { color: colors.primaryButtonText }]}>
-                {isLogin ? 'Login' : 'Register'}
+                {isLogin ? (t('auth.login') || 'Login') : (t('auth.signup') || 'Register')}
               </Text>
             )}
           </TouchableOpacity>
 
           <View style={styles.toggleContainer}>
             <Text style={[styles.toggleText, { color: colors.textPrimary }]}>
-              {isLogin ? "Don't have an account? " : 'Already have an account? '}
+              {isLogin ? (t('auth.noAccount') || "Don't have an account? ") : (t('auth.haveAccount') || 'Already have an account? ')}
             </Text>
             <TouchableOpacity onPress={handleToggleMode} disabled={isLoading}>
               <Text style={[styles.toggleLink, { color: colors.secondaryButtonText }]}>
-                {isLogin ? 'Sign Up' : 'Login'}
+                {isLogin ? (t('auth.signup') || 'Sign Up') : (t('auth.login') || 'Login')}
               </Text>
             </TouchableOpacity>
           </View>

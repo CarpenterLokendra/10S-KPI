@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -69,6 +69,10 @@ export const GuideModal: React.FC<GuideModalProps> = ({
       setCurrentStep(currentStep - 1);
     }
   };
+
+  useEffect(() => {
+    if (visible) setCurrentStep(0);
+  }, [visible]);
 
   return (
     <Modal visible={visible} transparent animationType="fade">
@@ -237,7 +241,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
 
           {/* Content - Step Based */}
           {isStepped && !isTabbed && (
-            <View style={styles.content}>
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
               {steps![currentStep].icon && (
                 <Text style={styles.icon}>{steps![currentStep].icon}</Text>
               )}
@@ -257,7 +261,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
               >
                 {steps![currentStep].description}
               </Text>
-            </View>
+            </ScrollView>
           )}
 
           {/* Progress Indicator - Step Based */}

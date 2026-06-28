@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Image } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeStore } from '../store/theme.store';
@@ -32,6 +32,34 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   const [languageExpanded, setLanguageExpanded] = useState(false);
   const containerRef = useRef<View>(null);
   const [menuPos, setMenuPos] = useState({ top: 80, left: 12 });
+  const [dynamicMenuWidth, setDynamicMenuWidth] = useState(240);
+
+  // Calculate dynamic menu width based on longest text in current language
+  useEffect(() => {
+    const menuItemTexts = [
+      isAuthenticated ? (t('nav.profile') || 'Profile') : null,
+      t('nav.leaderboard') || 'Leaderboard',
+      isAuthenticated ? (t('nav.settings') || 'Settings') : null,
+      t('nav.howToPlay') || 'How to Play',
+      t('settings.theme') || 'Theme',
+      t('settings.language') || 'Language',
+    ].filter(Boolean) as string[];
+
+    // Find longest text
+    const longestText = menuItemTexts.reduce((longest, current) =>
+      current.length > longest.length ? current : longest
+    );
+
+    // Estimate width based on character count
+    // Each character is approximately 8px at font size 14, plus extras
+    // Add: icon (20px) + gap (12px) + padding left (12px) + padding right (12px) = 56px
+    // Plus some extra for toggle/language label = 20px
+    const estimatedWidth = Math.ceil(longestText.length * 8.5 + 76);
+
+    // Set reasonable bounds: min 200, max 320
+    const finalWidth = Math.max(200, Math.min(estimatedWidth, 320));
+    setDynamicMenuWidth(finalWidth);
+  }, [language, isAuthenticated, t]);
 
   const languages = [
     { code: 'en', name: 'English', nativeName: 'English', emoji: '🇬🇧' },
@@ -74,11 +102,21 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         style={styles.hamburgerButton}
       >
         {isOpen ? (
-          <MaterialCommunityIcons
-            name="chevron-up"
-            size={24}
-            color={accentColor}
-          />
+          <View
+            style={[
+              styles.arrowBox,
+              {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(97, 37, 201, 0.1)',
+                borderColor: accentColor,
+              },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="chevron-up"
+              size={20}
+              color={accentColor}
+            />
+          </View>
         ) : (
           <>
             <View style={[styles.hamburgerLine, { backgroundColor: isDark ? '#ffffff' : '#000000' }]} />
@@ -109,6 +147,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
               {
                 top: menuPos.top,
                 left: menuPos.left,
+                width: dynamicMenuWidth,
                 backgroundColor: isDark
                   ? 'rgba(10, 10, 20, 0.95)'
                   : 'rgba(255, 255, 255, 0.98)',
@@ -506,6 +545,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
   },
+  arrowBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   hamburgerLine: {
     width: 22,
     height: 2.5,
@@ -513,7 +560,6 @@ const styles = StyleSheet.create({
   },
   menuPanel: {
     position: 'absolute',
-    width: 240,
     zIndex: 201,
     borderRadius: 12,
     borderWidth: 2,

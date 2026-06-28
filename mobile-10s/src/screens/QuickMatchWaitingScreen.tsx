@@ -70,6 +70,8 @@ export const QuickMatchWaitingScreen: React.FC<QuickMatchWaitingScreenProps> = (
       <TopControlsBar
         title={t('page.quickMatch')}
         onHomePress={onHomePress}
+        isAuthenticated={true}
+        page="game-lobby"
       />
 
       <View style={styles.content}>
