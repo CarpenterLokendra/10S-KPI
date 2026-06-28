@@ -136,29 +136,31 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
           <View style={styles.rightButtons}>
             <TouchableOpacity
               style={[
-                styles.iconButton,
+                styles.homeButton,
                 {
-                  backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.3)',
-                  borderColor: '#f0b429',
+                  borderColor: isDark ? 'rgba(240,180,41,0.3)' : '#6125c9',
                 },
               ]}
               onPress={() => setShowGuide(true)}
             >
-              <Text style={styles.iconText}>?</Text>
+              <Text style={[styles.guideButtonText, { color: isDark ? '#fbbf24' : '#6125c9' }]}>?</Text>
             </TouchableOpacity>
 
             {onHomePress && (
               <TouchableOpacity
                 style={[
-                  styles.iconButton,
+                  styles.homeButton,
                   {
-                    backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.3)',
-                    borderColor: '#f0b429',
+                    borderColor: isDark ? 'rgba(240,180,41,0.3)' : '#6125c9',
                   },
                 ]}
                 onPress={onHomePress}
               >
-                <Text style={styles.iconText}>🏠</Text>
+                <MaterialCommunityIcons
+                  name="home"
+                  size={20}
+                  color={isDark ? '#fbbf24' : '#6125c9'}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -350,6 +352,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     backgroundColor: 'transparent',
+  },
+  guideButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
   },
   landingButtonsRow: {
     flexDirection: 'row',
