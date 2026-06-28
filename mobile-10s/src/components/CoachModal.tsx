@@ -7,6 +7,7 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeStore } from '../store/theme.store';
 import {
   calculatePopoverPosition,
@@ -37,6 +38,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
   const { mode } = useThemeStore();
   const isDark = mode === 'dark';
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [elementLayout, setElementLayout] = useState<{
     x: number;
     y: number;
@@ -44,46 +46,78 @@ export const CoachModal: React.FC<CoachModalProps> = ({
     height: number;
   } | null>(null);
 
-  const step = steps[currentStep];
+  // Ensure currentStep is within bounds and steps array is valid
+  const isValidSteps = Array.isArray(steps) && steps.length > 0;
+  const safeCurrentStep = isValidSteps ? Math.min(currentStep, steps.length - 1) : 0;
+  const step = isValidSteps ? steps[safeCurrentStep] : undefined;
 
   useEffect(() => {
-    if (visible && step.referenceElement) {
+    if (visible && step && step.referenceElement && typeof step.referenceElement.current?.measureInWindow === 'function') {
       const timer = setTimeout(() => {
         step.referenceElement?.current?.measureInWindow((x, y, w, h) => {
-          setElementLayout({ x, y, width: w, height: h });
+          setElementLayout({ x, y: Math.max(0, y), width: w, height: h });
         });
-      }, 200);
+      }, 300);
       return () => clearTimeout(timer);
-    } else if (!step.referenceElement) {
+    } else {
       setElementLayout(null);
     }
-  }, [visible, currentStep, step.referenceElement]);
+  }, [visible, safeCurrentStep, step]);
 
   useEffect(() => {
     if (visible) setCurrentStep(0);
   }, [visible]);
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+    if (safeCurrentStep < steps.length - 1) {
+      setCurrentStep(safeCurrentStep + 1);
     } else {
-      onClose();
+      if (typeof onClose === 'function') {
+        onClose();
+      }
     }
   };
 
   const handlePrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+    if (safeCurrentStep > 0) {
+      setCurrentStep(safeCurrentStep - 1);
     }
   };
 
-  // Calculate popover position using web app's positioning system
-  const popoverPos = calculatePopoverPosition(
-    elementLayout,
-    { width, height },
-    step.side || 'bottom',
-    step.align || 'start'
-  );
+  // Guard: don't render if no valid steps or step is available
+  if (!isValidSteps || !step) {
+    return (
+      <Modal visible={visible} transparent animationType="fade">
+        <View style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]} />
+      </Modal>
+    );
+  }
+
+  // Adjust element layout for SafeAreaView insets before calculating popover position
+  const adjustedLayout = elementLayout
+    ? {
+        ...elementLayout,
+        y: elementLayout.y + insets.top,
+      }
+    : null;
+
+  let popoverPos;
+  try {
+    popoverPos = calculatePopoverPosition(
+      adjustedLayout,
+      { width, height },
+      (step?.side || 'bottom') as PopoverSide,
+      (step?.align || 'start') as PopoverAlign
+    );
+  } catch (err) {
+    console.error('Error calculating popover position:', err);
+    popoverPos = {
+      top: height / 2 - 90,
+      left: (width - 280) / 2,
+      width: 280,
+      side: 'bottom' as PopoverSide,
+    };
+  }
 
   return (
     <Modal visible={visible} transparent animationType="fade">
@@ -93,13 +127,15 @@ export const CoachModal: React.FC<CoachModalProps> = ({
           { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.6)' },
         ]}
       >
+
+
         {/* Highlight the referenced element */}
         {elementLayout && (
           <View
             style={[
               styles.highlight,
               {
-                top: elementLayout.y - 8,
+                top: elementLayout.y + insets.top - 8,
                 left: elementLayout.x - 8,
                 width: elementLayout.width + 16,
                 height: elementLayout.height + 16,
@@ -150,7 +186,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
                       styles.dot,
                       {
                         backgroundColor:
-                          currentStep === index
+                          safeCurrentStep === index
                             ? '#f0b429'
                             : isDark
                             ? '#444'
@@ -166,7 +202,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
                   { color: isDark ? '#aaa' : '#666' },
                 ]}
               >
-                {currentStep + 1}/{steps.length}
+                {safeCurrentStep + 1}/{steps.length}
               </Text>
             </View>
 
@@ -175,14 +211,14 @@ export const CoachModal: React.FC<CoachModalProps> = ({
               <TouchableOpacity
                 style={[
                   styles.button,
-                  currentStep === 0 && styles.buttonDisabled,
+                  safeCurrentStep === 0 && styles.buttonDisabled,
                   {
                     backgroundColor: isDark ? '#333' : '#f0f0f0',
-                    opacity: currentStep === 0 ? 0.5 : 1,
+                    opacity: safeCurrentStep === 0 ? 0.5 : 1,
                   },
                 ]}
                 onPress={handlePrev}
-                disabled={currentStep === 0}
+                disabled={safeCurrentStep === 0}
               >
                 <Text
                   style={[
@@ -208,7 +244,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
                     { color: '#000', fontWeight: '700' },
                   ]}
                 >
-                  {currentStep === steps.length - 1 ? 'Got it!' : 'Next →'}
+                  {safeCurrentStep === steps.length - 1 ? 'Got it!' : 'Next →'}
                 </Text>
               </TouchableOpacity>
             </View>

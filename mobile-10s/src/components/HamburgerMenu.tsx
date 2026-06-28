@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Image } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeStore } from '../store/theme.store';
@@ -15,14 +15,18 @@ interface HamburgerMenuProps {
   showThemeAndLanguage?: boolean;
 }
 
-export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
-  onNavigate = () => {},
-  onLogout = () => {},
-  isAuthenticated = false,
-  onThemeToggle = () => {},
-  onLanguageChange = () => {},
-  showThemeAndLanguage = false,
-}) => {
+export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
+  (
+    {
+      onNavigate = () => {},
+      onLogout = () => {},
+      isAuthenticated = false,
+      onThemeToggle = () => {},
+      onLanguageChange = () => {},
+      showThemeAndLanguage = false,
+    },
+    ref
+  ) => {
   const { mode, language, setLanguage, setMode } = useThemeStore();
   const { username, rating, avatarUrl } = useUserStore();
   const colors = useThemeColors();
@@ -98,6 +102,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
     <View ref={containerRef} collapsable={false} style={styles.container}>
       {/* Toggle button — always visible in header */}
       <TouchableOpacity
+        ref={ref}
         onPress={handleToggle}
         style={styles.hamburgerButton}
       >
@@ -530,7 +535,8 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       )}
     </View>
   );
-};
+  }
+);
 
 const styles = StyleSheet.create({
   container: {

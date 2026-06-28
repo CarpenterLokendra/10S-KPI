@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeColors } from '../hooks/useThemeColors';
@@ -19,6 +19,7 @@ interface TopControlsBarProps {
   onHomePress?: () => void;
   page?: PageType;
   onCoachPress?: () => void;
+  onButtonRefsReady?: (refs: { menuBtn?: React.RefObject<View>; helpBtn?: React.RefObject<View> }) => void;
 }
 
 export const TopControlsBar: React.FC<TopControlsBarProps> = ({
@@ -30,6 +31,7 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
   onHomePress,
   page = 'generic',
   onCoachPress,
+  onButtonRefsReady,
 }) => {
   const colors = useThemeColors();
   const { t } = useTranslation();
@@ -37,6 +39,18 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
   const isDark = colors.isDark;
   const [showGuide, setShowGuide] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+
+  // Create refs for coach modal button positioning
+  const menuBtnRef = useRef<View>(null);
+  const helpBtnRef = useRef<View>(null);
+
+  // Pass refs to parent when component mounts
+  useEffect(() => {
+    onButtonRefsReady?.({
+      menuBtn: menuBtnRef,
+      helpBtn: helpBtnRef,
+    });
+  }, [onButtonRefsReady]);
 
   const LANGUAGES: { code: Language; flag: string; name: string; nativeName: string }[] = [
     { code: 'en', flag: '🇬🇧', name: 'English', nativeName: 'English' },
@@ -58,7 +72,6 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
       return [
         { icon: '☰', title: g.menuBtn.title, description: g.menuBtn.description },
         { icon: '❓', title: g.helpBtn.title, description: g.helpBtn.description },
-        { icon: '🏠', title: g.backBtn.title, description: g.backBtn.description },
         { icon: '🔑', title: g.joinCode.title, description: g.joinCode.description },
         { icon: '➕', title: g.createCard.title, description: g.createCard.description },
         { icon: '🎮', title: g.lobbyList.title, description: g.lobbyList.description },
@@ -242,6 +255,7 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
         {/* Left — Hamburger Menu (only when authenticated) */}
         {isAuthenticated && (
           <HamburgerMenu
+            ref={menuBtnRef}
             isAuthenticated={isAuthenticated}
             onNavigate={onNavigate}
             onLogout={onLogout}
@@ -249,14 +263,9 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
           />
         )}
 
-        {/* Center — Back + Title */}
+        {/* Center — Title */}
         {title && (
           <View style={styles.centerContainer}>
-            {onBackPress && (
-              <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-                <Text style={[styles.backText, { color: colors.headingAccent }]}>←</Text>
-              </TouchableOpacity>
-            )}
             <Text
               style={[styles.title, { color: colors.textPrimary }]}
               numberOfLines={1}
@@ -270,6 +279,7 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
         {isAuthenticated && (
           <View style={styles.rightButtons}>
             <TouchableOpacity
+              ref={helpBtnRef}
               style={[
                 styles.homeButton,
                 {
@@ -461,13 +471,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-  },
-  backButton: {
-    padding: 6,
-  },
-  backText: {
-    fontSize: 18,
-    fontWeight: '600',
   },
   title: {
     fontSize: 16,

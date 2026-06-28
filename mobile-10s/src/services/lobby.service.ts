@@ -8,10 +8,11 @@ export const lobbyService = {
     return response.data.lobbies || [];
   },
 
-  async createLobby(data: { name: string; maxPlayers?: number }) {
+  async createLobby(data: { name: string; maxPlayers?: number; isPrivate?: boolean }) {
     const response = await apiClient.post('/lobbies', {
       name: data.name,
-      max_players: data.maxPlayers || 5,
+      max_players: data.maxPlayers || 3,
+      is_private: data.isPrivate || false,
     });
     return response.data;
   },
@@ -23,6 +24,11 @@ export const lobbyService = {
 
   async getLobby(lobbyId: string) {
     const response = await apiClient.get(`/lobbies/${lobbyId}`);
+    return response.data;
+  },
+
+  async joinByCode(code: string) {
+    const response = await apiClient.post(`/lobbies/${code}/join`);
     return response.data;
   },
 };
