@@ -170,7 +170,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar onHomePress={onHomePress} />
+      <TopControlsBar />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
