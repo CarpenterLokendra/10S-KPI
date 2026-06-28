@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { authService } from '../services/auth.service';
 import { useThemeStore } from '../store/theme.store';
+import { useUserStore } from '../store/user.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { StrengthIndicator } from '../components/StrengthIndicator';
@@ -42,6 +43,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   onHomePress,
 }) => {
   const { mode } = useThemeStore();
+  const { setUser } = useUserStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
@@ -153,11 +155,24 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     setIsLoading(true);
 
     try {
+      let response;
       if (isLogin) {
-        await authService.login(formData.username, formData.password);
+        response = await authService.login(formData.username, formData.password);
       } else {
-        await authService.register(formData.username, formData.email, formData.password);
+        response = await authService.register(formData.username, formData.email, formData.password);
       }
+
+      // Store user data in user store
+      if (response?.user) {
+        setUser({
+          userId: response.user.id,
+          username: response.user.username,
+          rating: response.user.rating || 0,
+          isPremium: response.user.is_premium || false,
+          avatarUrl: response.user.avatar_url || null,
+        });
+      }
+
       onLoginSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Authentication failed';

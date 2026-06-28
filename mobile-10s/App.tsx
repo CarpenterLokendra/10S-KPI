@@ -12,6 +12,7 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { QuickMatchWaitingScreen } from './src/screens/QuickMatchWaitingScreen';
 import { authService } from './src/services/auth.service';
 import { useThemeStore } from './src/store/theme.store';
+import { useUserStore } from './src/store/user.store';
 import { AnimatedBackground } from './src/components/AnimatedBackground';
 
 type AppState = 'loading' | 'landing' | 'auth' | 'register' | 'lobby' | 'quickmatch-wait' | 'game' | 'results' | 'leaderboard' | 'profile' | 'settings';
@@ -24,6 +25,7 @@ export default function App() {
   const [currentGame, setCurrentGame] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { loadSettings } = useThemeStore();
+  const { setUser } = useUserStore();
 
   useEffect(() => {
     const initApp = async () => {
@@ -37,6 +39,21 @@ export default function App() {
     try {
       const token = await authService.getStoredToken();
       if (token) {
+        // Fetch user data from backend to populate user store (including avatar)
+        try {
+          const response = await apiClient.get('/users/me');
+          if (response.data?.user) {
+            setUser({
+              userId: response.data.user.id,
+              username: response.data.user.username,
+              rating: response.data.user.rating || 0,
+              isPremium: response.data.user.is_premium || false,
+              avatarUrl: response.data.user.avatar_url || null,
+            });
+          }
+        } catch (err) {
+          console.error('Failed to fetch user data:', err);
+        }
         setIsAuthenticated(true);
         setAppState('lobby');
       } else {
@@ -95,6 +112,9 @@ export default function App() {
   const handleLogout = async () => {
     try {
       await authService.logout();
+      // Clear user data from store
+      const { clearUser } = useUserStore.getState();
+      clearUser();
       setIsAuthenticated(false);
       setGameId(null);
       setCurrentGame(null);
