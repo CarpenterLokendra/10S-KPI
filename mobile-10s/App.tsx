@@ -22,6 +22,7 @@ export default function App() {
   const [appState, setAppState] = useState<AppState>('loading');
   const [gameId, setGameId] = useState<string | null>(null);
   const [currentGame, setCurrentGame] = useState<any>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { loadSettings } = useThemeStore();
 
   useEffect(() => {
@@ -36,17 +37,29 @@ export default function App() {
     try {
       const token = await authService.getStoredToken();
       if (token) {
+        setIsAuthenticated(true);
         setAppState('lobby');
       } else {
+        setIsAuthenticated(false);
         setAppState('landing');
       }
     } catch {
+      setIsAuthenticated(false);
       setAppState('landing');
     }
   };
 
   const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
     setAppState('lobby');
+  };
+
+  const handlePlayNow = () => {
+    setAppState('lobby');
+  };
+
+  const handleQuickMatch = () => {
+    setAppState('quickmatch-wait');
   };
 
   const handleGameStart = (gId: string) => {
@@ -82,9 +95,10 @@ export default function App() {
   const handleLogout = async () => {
     try {
       await authService.logout();
+      setIsAuthenticated(false);
       setGameId(null);
       setCurrentGame(null);
-      setAppState('auth');
+      setAppState('landing');
     } catch (err) {
       console.error('Logout failed:', err);
     }
@@ -116,6 +130,9 @@ export default function App() {
           onSignUpPress={() => setAppState('register')}
           onLeaderboardPress={() => setAppState('leaderboard')}
           onHomePress={handleHome}
+          isAuthenticated={isAuthenticated}
+          onPlayNow={handlePlayNow}
+          onQuickMatch={handleQuickMatch}
         />
       );
     }

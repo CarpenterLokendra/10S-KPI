@@ -317,40 +317,6 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
                 />
               </TouchableOpacity>
 
-              {/* Logout Button — authenticated only */}
-              {isAuthenticated && (
-                <TouchableOpacity
-                  style={[
-                    styles.logoutButton,
-                    {
-                      backgroundColor: isDark
-                        ? 'rgba(239, 68, 68, 0.1)'
-                        : 'rgba(239, 68, 68, 0.1)',
-                      borderColor: '#ef4444',
-                    },
-                  ]}
-                  onPress={() => handleMenuItemPress(() => onLogout?.())}
-                >
-                  <View style={styles.menuItemContent}>
-                    <MaterialCommunityIcons
-                      name="logout"
-                      size={20}
-                      color="#ef4444"
-                    />
-                    <Text
-                      style={[
-                        styles.menuItemText,
-                        {
-                          color: '#ef4444',
-                        },
-                      ]}
-                    >
-                      {t('nav.logout') || 'Logout'}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-
               {/* Dark Mode Toggle */}
               <TouchableOpacity
                   style={[
@@ -383,7 +349,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
                         },
                       ]}
                     >
-                      {t('settings.theme') || 'Dark Mode'}
+                      {t('settings.theme') || 'Theme'}
                     </Text>
                   </View>
                   <View
@@ -405,122 +371,120 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
                   </View>
                 </TouchableOpacity>
 
-              {/* Language Selector — only on landing, login, signup */}
-              {showThemeAndLanguage && (
-                <>
-                  <TouchableOpacity
-                    style={[
-                      styles.menuItem,
-                      {
-                        backgroundColor: isDark
-                          ? 'rgba(255, 255, 255, 0.05)'
-                          : 'rgba(97, 37, 201, 0.08)',
-                        borderColor: accentColor,
-                      },
-                    ]}
-                    onPress={() => setLanguageExpanded(!languageExpanded)}
-                  >
-                    <View style={styles.menuItemContent}>
-                      <MaterialCommunityIcons
-                        name="earth"
-                        size={20}
-                        color={accentColor}
-                      />
-                      <Text
-                        style={[
-                          styles.menuItemText,
-                          {
-                            color: isDark ? '#ffffff' : '#000000',
-                          },
-                        ]}
-                      >
-                        {t('settings.language') || 'Language'}
-                      </Text>
-                    </View>
+              {/* Language Selector — always visible */}
+              <>
+                <TouchableOpacity
+                  style={[
+                    styles.menuItem,
+                    {
+                      backgroundColor: isDark
+                        ? 'rgba(255, 255, 255, 0.05)'
+                        : 'rgba(97, 37, 201, 0.08)',
+                      borderColor: accentColor,
+                    },
+                  ]}
+                  onPress={() => setLanguageExpanded(!languageExpanded)}
+                >
+                  <View style={styles.menuItemContent}>
+                    <MaterialCommunityIcons
+                      name="earth"
+                      size={20}
+                      color={accentColor}
+                    />
                     <Text
                       style={[
-                        styles.languageLabel,
-                        { color: accentColor },
-                      ]}
-                    >
-                      {languages.find(l => l.code === language)?.emoji}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* Language List */}
-                  {languageExpanded && (
-                    <View
-                      style={[
-                        styles.languageList,
+                        styles.menuItemText,
                         {
-                          backgroundColor: isDark
-                            ? 'rgba(255, 255, 255, 0.02)'
-                            : 'rgba(97, 37, 201, 0.04)',
+                          color: isDark ? '#ffffff' : '#000000',
                         },
                       ]}
                     >
-                      {languages.map((lang) => (
-                        <TouchableOpacity
-                          key={lang.code}
+                      {t('settings.language') || 'Language'}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.languageLabel,
+                      { color: accentColor },
+                    ]}
+                  >
+                    {languages.find(l => l.code === language)?.emoji}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Language List */}
+                {languageExpanded && (
+                  <View
+                    style={[
+                      styles.languageList,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(255, 255, 255, 0.02)'
+                          : 'rgba(97, 37, 201, 0.04)',
+                      },
+                    ]}
+                  >
+                    {languages.map((lang) => (
+                      <TouchableOpacity
+                        key={lang.code}
+                        style={[
+                          styles.languageItem,
+                          {
+                            backgroundColor:
+                              language === lang.code
+                                ? isDark
+                                  ? 'rgba(245, 158, 11, 0.15)'
+                                  : 'rgba(97, 37, 201, 0.15)'
+                                : 'transparent',
+                            borderColor:
+                              language === lang.code
+                                ? accentColor
+                                : 'rgba(128, 128, 128, 0.2)',
+                          },
+                        ]}
+                        onPress={() => {
+                          setLanguage(lang.code as any);
+                          setLanguageExpanded(false);
+                          setIsOpen(false);
+                        }}
+                      >
+                        <Text
                           style={[
-                            styles.languageItem,
+                            styles.languageItemText,
                             {
-                              backgroundColor:
-                                language === lang.code
-                                  ? isDark
-                                    ? 'rgba(245, 158, 11, 0.15)'
-                                    : 'rgba(97, 37, 201, 0.15)'
-                                  : 'transparent',
-                              borderColor:
+                              color:
                                 language === lang.code
                                   ? accentColor
-                                  : 'rgba(128, 128, 128, 0.2)',
+                                  : isDark
+                                    ? '#ffffff'
+                                    : '#000000',
+                              fontWeight:
+                                language === lang.code ? '700' : '500',
                             },
                           ]}
-                          onPress={() => {
-                            setLanguage(lang.code as any);
-                            setLanguageExpanded(false);
-                            setIsOpen(false);
-                          }}
                         >
-                          <Text
-                            style={[
-                              styles.languageItemText,
-                              {
-                                color:
-                                  language === lang.code
-                                    ? accentColor
-                                    : isDark
-                                      ? '#ffffff'
-                                      : '#000000',
-                                fontWeight:
-                                  language === lang.code ? '700' : '500',
-                              },
-                            ]}
-                          >
-                            {lang.emoji} {lang.nativeName}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.languageItemSubText,
-                              {
-                                color:
-                                  language === lang.code
-                                    ? accentColor
-                                    : isDark
-                                      ? '#aaa'
-                                      : '#666',
-                              },
-                            ]}
-                          >
-                            {lang.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-                </>
-              )}
+                          {lang.emoji} {lang.nativeName}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.languageItemSubText,
+                            {
+                              color:
+                                language === lang.code
+                                  ? accentColor
+                                  : isDark
+                                    ? '#aaa'
+                                    : '#666',
+                            },
+                          ]}
+                        >
+                          {lang.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </>
             </ScrollView>
           </View>
         </Modal>

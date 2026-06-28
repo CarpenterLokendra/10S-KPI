@@ -15,9 +15,12 @@ interface LandingScreenProps {
   onSignUpPress: () => void;
   onLeaderboardPress?: () => void;
   onHomePress?: () => void;
+  isAuthenticated?: boolean;
+  onPlayNow?: () => void;
+  onQuickMatch?: () => void;
 }
 
-export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSignUpPress, onLeaderboardPress, onHomePress }) => {
+export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSignUpPress, onLeaderboardPress, onHomePress, isAuthenticated = false, onPlayNow, onQuickMatch }) => {
   const { mode } = useThemeStore();
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -186,27 +189,57 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
 
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: colors.primaryButtonBg }]}
-            onPress={onLoginPress}
-          >
-            <Text style={[styles.primaryButtonText, { color: colors.primaryButtonText }]}>{t('landing.login')}</Text>
-          </TouchableOpacity>
+          {!isAuthenticated ? (
+            <>
+              <TouchableOpacity
+                style={[styles.primaryButton, { backgroundColor: colors.primaryButtonBg }]}
+                onPress={onLoginPress}
+              >
+                <Text style={[styles.primaryButtonText, { color: colors.primaryButtonText }]}>{t('landing.login')}</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.secondaryButton,
-              {
-                borderColor: colors.secondaryButtonBorder,
-                backgroundColor: colors.secondaryButtonBg,
-              },
-            ]}
-            onPress={onSignUpPress}
-          >
-            <Text style={[styles.secondaryButtonText, { color: colors.secondaryButtonText }]}>
-              {t('landing.signup')}
-            </Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.secondaryButton,
+                  {
+                    borderColor: colors.secondaryButtonBorder,
+                    backgroundColor: colors.secondaryButtonBg,
+                  },
+                ]}
+                onPress={onSignUpPress}
+              >
+                <Text style={[styles.secondaryButtonText, { color: colors.secondaryButtonText }]}>
+                  {t('landing.signup')}
+                </Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={[styles.primaryButton, { backgroundColor: colors.primaryButtonBg }]}
+                onPress={onPlayNow}
+              >
+                <Text style={[styles.primaryButtonText, { color: colors.primaryButtonText }]}>
+                  🎮 {t('landing.playNowButton')}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.secondaryButton,
+                  {
+                    borderColor: colors.secondaryButtonBorder,
+                    backgroundColor: colors.secondaryButtonBg,
+                  },
+                ]}
+                onPress={onQuickMatch}
+              >
+                <Text style={[styles.secondaryButtonText, { color: colors.secondaryButtonText }]}>
+                  ⚡ {t('landing.quickMatch')}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         {/* Stats Section */}
