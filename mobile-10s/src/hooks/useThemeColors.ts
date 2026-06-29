@@ -42,8 +42,8 @@ export const useThemeColors = () => {
     statusInfo: '#3b82f6',
 
     // Game-specific colors
-    startGameEnabledBg: isDark ? '#f0b429' : '#6125c9',
-    startGameDisabledBg: isDark ? '#4b5563' : '#d1d5db',
+    startGameEnabledBg: '#16a34a',
+    startGameDisabledBg: '#9ca3af',
     startGameDisabledText: '#e5e7eb',
     deleteButtonBg: '#ef4444',
     deleteButtonBorder: '#dc2626',

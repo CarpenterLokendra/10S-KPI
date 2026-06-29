@@ -80,6 +80,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBackPress, onNav
         onNavigate={onNavigate}
         onLogout={onLogout}
         onHomePress={onHomePress}
+        showBackButton={true}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

@@ -20,6 +20,7 @@ interface TopControlsBarProps {
   page?: PageType;
   onCoachPress?: () => void;
   onButtonRefsReady?: (refs: { menuBtn?: React.RefObject<View>; helpBtn?: React.RefObject<View> }) => void;
+  showBackButton?: boolean;
 }
 
 export const TopControlsBar: React.FC<TopControlsBarProps> = ({
@@ -32,6 +33,7 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
   page = 'generic',
   onCoachPress,
   onButtonRefsReady,
+  showBackButton = false,
 }) => {
   const colors = useThemeColors();
   const { t } = useTranslation();
@@ -267,7 +269,7 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
         {title && (
           <View style={styles.centerContainer}>
             <Text
-              style={[styles.title, { color: colors.textPrimary }]}
+              style={[styles.title, { color: isDark ? '#f59e0b' : '#6125c9' }]}
               numberOfLines={1}
             >
               {title}
@@ -297,22 +299,45 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
               <Text style={[styles.guideButtonText, { color: isDark ? '#fbbf24' : '#6125c9' }]}>?</Text>
             </TouchableOpacity>
 
-            {onHomePress && (
+            {showBackButton && onBackPress ? (
               <TouchableOpacity
                 style={[
-                  styles.homeButton,
+                  styles.backButton,
                   {
-                    borderColor: isDark ? 'rgba(240,180,41,0.3)' : '#6125c9',
+                    backgroundColor: isDark ? '#f59e0b' : '#6125c9',
                   },
                 ]}
-                onPress={onHomePress}
+                onPress={onBackPress}
               >
-                <MaterialCommunityIcons
-                  name="home"
-                  size={20}
-                  color={isDark ? '#fbbf24' : '#6125c9'}
-                />
+                <Text
+                  style={[
+                    styles.backButtonText,
+                    {
+                      color: isDark ? '#000000' : '#ffffff',
+                    },
+                  ]}
+                >
+                  Back
+                </Text>
               </TouchableOpacity>
+            ) : (
+              onHomePress && (
+                <TouchableOpacity
+                  style={[
+                    styles.homeButton,
+                    {
+                      borderColor: isDark ? 'rgba(240,180,41,0.3)' : '#6125c9',
+                    },
+                  ]}
+                  onPress={onHomePress}
+                >
+                  <MaterialCommunityIcons
+                    name="home"
+                    size={20}
+                    color={isDark ? '#fbbf24' : '#6125c9'}
+                  />
+                </TouchableOpacity>
+              )
             )}
           </View>
         )}
@@ -466,21 +491,23 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   centerContainer: {
-    flex: 1,
+    flex: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    justifyContent: 'flex-start',
+    gap: 12,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   rightButtons: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginLeft: 'auto',
   },
   iconButton: {
     width: 40,
@@ -502,6 +529,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     backgroundColor: 'transparent',
+  },
+  backButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   guideButtonText: {
     fontSize: 18,

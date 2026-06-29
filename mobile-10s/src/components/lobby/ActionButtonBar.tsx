@@ -102,9 +102,9 @@ export const ActionButtonBar: React.FC<ActionButtonBarProps> = ({
             activeOpacity={canStart && !isLoading ? 0.7 : 1}
           >
             {isLoading ? (
-              <ActivityIndicator color={colors.isDark ? '#000000' : '#ffffff'} size="small" />
+              <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={[styles.buttonText, { color: colors.isDark ? '#000000' : '#ffffff' }]}>
+              <Text style={[styles.buttonText, { color: '#fff' }]}>
                 {canStart ? '▶ START GAME' : 'WAITING...'}
               </Text>
             )}
@@ -117,14 +117,14 @@ export const ActionButtonBar: React.FC<ActionButtonBarProps> = ({
             style={[
               styles.leaveButton,
               {
-                backgroundColor: colors.accentButton,
+                backgroundColor: isCreator ? '#ef4444' : colors.accentButton,
               },
             ]}
             onPress={handleLeavePress}
             disabled={isLeaving}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>
+            <Text style={[styles.buttonText, { color: isCreator ? '#ffffff' : '#000000' }]}>
               {isCreator ? '🗑️ DELETE LOBBY' : '🚪 LEAVE LOBBY'}
             </Text>
           </TouchableOpacity>

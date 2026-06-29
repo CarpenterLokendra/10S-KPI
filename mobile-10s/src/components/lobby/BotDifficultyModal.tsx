@@ -23,6 +23,7 @@ export const BotDifficultyModal: React.FC<BotDifficultyModalProps> = ({
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const colors = useThemeColors();
   const { t } = useTranslation();
+  const isDark = colors.isDark;
 
   const handleConfirm = () => {
     onConfirm(selectedDifficulty);
@@ -46,8 +47,8 @@ export const BotDifficultyModal: React.FC<BotDifficultyModalProps> = ({
           style={[
             styles.modalContainer,
             {
-              backgroundColor: '#000000',
-              borderColor: colors.cardBorder,
+              backgroundColor: isDark ? '#000000' : '#ffffff',
+              borderColor: isDark ? 'rgba(240,180,41,0.3)' : 'rgba(97,37,201,0.3)',
             },
           ]}
         >
@@ -84,7 +85,7 @@ export const BotDifficultyModal: React.FC<BotDifficultyModalProps> = ({
                 onPress={() => setSelectedDifficulty(option.value)}
                 activeOpacity={0.7}
               >
-                <View style={styles.radioCircle}>
+                <View style={[styles.radioCircle, { borderColor: isDark ? '#555' : '#d1d5db' }]}>
                   {selectedDifficulty === option.value && (
                     <View
                       style={[
@@ -115,8 +116,8 @@ export const BotDifficultyModal: React.FC<BotDifficultyModalProps> = ({
                 styles.button,
                 styles.cancelButton,
                 {
-                  backgroundColor: '#1a1a1a',
-                  borderColor: colors.cardBorder,
+                  backgroundColor: isDark ? '#1a1a1a' : '#f3f4f6',
+                  borderColor: isDark ? 'rgba(240,180,41,0.3)' : 'rgba(97,37,201,0.3)',
                 },
               ]}
               onPress={onClose}
@@ -126,7 +127,7 @@ export const BotDifficultyModal: React.FC<BotDifficultyModalProps> = ({
                 style={[
                   styles.buttonText,
                   {
-                    color: colors.textSecondary,
+                    color: isDark ? colors.textSecondary : '#000000',
                   },
                 ]}
               >
@@ -145,7 +146,7 @@ export const BotDifficultyModal: React.FC<BotDifficultyModalProps> = ({
               onPress={handleConfirm}
               activeOpacity={0.7}
             >
-              <Text style={styles.confirmButtonText}>{t('lobby.addBot')}</Text>
+              <Text style={[styles.confirmButtonText, { color: isDark ? '#000' : '#fff' }]}>{t('lobby.addBot')}</Text>
             </TouchableOpacity>
           </View>
         </View>

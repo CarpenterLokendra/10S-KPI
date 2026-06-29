@@ -32,6 +32,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBackPress, onL
         onNavigate={onNavigate}
         onLogout={onLogout}
         onHomePress={onHomePress}
+        showBackButton={true}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

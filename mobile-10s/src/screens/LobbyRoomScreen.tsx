@@ -256,7 +256,9 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
   const isCreator = lobby?.creator_id === userId;
   const readyCount = lobby?.players.filter((p) => p.is_ready).length || 0;
   const totalOccupied = (lobby?.current_players || 0) + (lobby?.pending_bots?.length || 0);
-  const canStart = isCreator && totalOccupied === lobby?.max_players;
+  const allHumansReady = lobby?.players.every((p) => p.is_ready);
+  const allSlotsFilled = totalOccupied === lobby?.max_players;
+  const canStart = isCreator && allHumansReady && allSlotsFilled;
 
   // Loading state
   if (isLoading && !lobby) {
@@ -356,10 +358,17 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
           />
         )}
 
+        {allSlotsFilled && !allHumansReady && (
+          <StatusAlert
+            variant="warning"
+            message={`⏳ ${readyCount}/${lobby?.current_players} players ready`}
+          />
+        )}
+
         {canStart && (
           <StatusAlert
             variant="success"
-            message="✓ All slots filled! Creator can start the game."
+            message="✓ All players ready! Creator can start the game."
           />
         )}
 
@@ -411,7 +420,7 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
                 style={[
                   styles.emptySlot,
                   {
-                    borderColor: colors.cardBorder,
+                    borderColor: colors.isDark ? '#f59e0b' : '#6125c9',
                     backgroundColor: colors.isDark ? '#000000' : '#ffffff',
                   },
                 ]}

@@ -103,6 +103,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBackPres
         onNavigate={onNavigate}
         onLogout={onLogout}
         onHomePress={onHomePress}
+        showBackButton={true}
       />
 
       {/* Filter Buttons */}
