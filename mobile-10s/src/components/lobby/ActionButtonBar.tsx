@@ -102,9 +102,9 @@ export const ActionButtonBar: React.FC<ActionButtonBarProps> = ({
             activeOpacity={canStart && !isLoading ? 0.7 : 1}
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={colors.isDark ? '#000000' : '#ffffff'} size="small" />
             ) : (
-              <Text style={[styles.buttonText, { color: '#fff' }]}>
+              <Text style={[styles.buttonText, { color: colors.isDark ? '#000000' : '#ffffff' }]}>
                 {canStart ? '▶ START GAME' : 'WAITING...'}
               </Text>
             )}

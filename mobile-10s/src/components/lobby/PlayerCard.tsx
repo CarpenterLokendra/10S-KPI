@@ -11,6 +11,10 @@ interface PlayerCardProps {
   avatarUrl?: string | null;
   onPress?: () => void;
   onReadyToggle?: (isReady: boolean) => void;
+  isBot?: boolean;
+  botDifficulty?: 'easy' | 'medium' | 'hard';
+  botColor?: string;
+  onRemoveBot?: () => void;
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -21,18 +25,35 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   avatarUrl,
   onPress,
   onReadyToggle,
+  isBot,
+  botDifficulty,
+  botColor,
+  onRemoveBot,
 }) => {
   const colors = useThemeColors();
 
   const statusColor = isReady ? colors.statusReady : colors.statusWaiting;
-  const initials = username.charAt(0).toUpperCase();
+  const initials = isBot ? '🤖' : username.charAt(0).toUpperCase();
+
+  const getDifficultyColor = (difficulty?: string) => {
+    switch (difficulty) {
+      case 'easy':
+        return '#10b981';
+      case 'medium':
+        return '#f59e0b';
+      case 'hard':
+        return '#ef4444';
+      default:
+        return colors.accentPrimary;
+    }
+  };
 
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: '#000000',
+          backgroundColor: colors.isDark ? '#000000' : '#ffffff',
           borderColor: statusColor,
         },
       ]}
@@ -52,14 +73,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         {/* Avatar and Name Section */}
         <View style={styles.headerRow}>
           {/* Avatar */}
-          {avatarUrl ? (
+          {avatarUrl && !isBot ? (
             <Image
               source={{ uri: avatarUrl }}
               style={styles.avatar}
             />
           ) : (
             <LinearGradient
-              colors={['#6125c9', '#f0b429']}
+              colors={isBot && botColor ? [botColor, `${botColor}80`] : ['#6125c9', '#f0b429']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.avatar}
@@ -80,14 +101,31 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                 ]}
                 numberOfLines={1}
               >
-                {username}
+                {isBot ? `🤖 ${username}` : username}
               </Text>
 
               {/* Badges */}
               <View style={styles.badges}>
-                {isCreator && (
+                {isBot && botDifficulty && (
+                  <View
+                    style={[
+                      styles.difficultyBadge,
+                      { backgroundColor: `${getDifficultyColor(botDifficulty)}30` },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.difficultyBadgeText,
+                        { color: getDifficultyColor(botDifficulty) },
+                      ]}
+                    >
+                      {botDifficulty.charAt(0).toUpperCase() + botDifficulty.slice(1)}
+                    </Text>
+                  </View>
+                )}
+                {isCreator && !isBot && (
                   <View style={[styles.creatorBadge, { backgroundColor: colors.accentPrimary }]}>
-                    <Text style={styles.creatorBadgeText}>Creator</Text>
+                    <Text style={[styles.creatorBadgeText, { color: colors.isDark ? '#000000' : '#ffffff' }]}>Creator</Text>
                   </View>
                 )}
                 {isCurrentUser && (
@@ -96,10 +134,21 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               </View>
             </View>
           </View>
+
+          {/* Remove Bot Button - Right Side */}
+          {isBot && onRemoveBot && (
+            <TouchableOpacity
+              style={[styles.removeBotButton, { backgroundColor: '#ef4444' }]}
+              onPress={onRemoveBot}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.removeBotButtonText}>−</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Status Section */}
-        {isCurrentUser && onReadyToggle && !isReady ? (
+        {!isBot && isCurrentUser && onReadyToggle && !isReady ? (
           <TouchableOpacity
             style={[
               styles.readyButton,
@@ -207,6 +256,31 @@ const styles = StyleSheet.create({
   youLabel: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  difficultyBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  difficultyBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  removeBotButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 'auto',
+  },
+  removeBotButtonText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
   },
   statusSection: {
     flexDirection: 'row',

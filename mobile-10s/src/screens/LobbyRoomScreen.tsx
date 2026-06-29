@@ -20,6 +20,8 @@ import { PlayerCard } from '../components/lobby/PlayerCard';
 import { StatusAlert } from '../components/lobby/StatusAlert';
 import { LobbyHeaderSection } from '../components/lobby/LobbyHeaderSection';
 import { ActionButtonBar } from '../components/lobby/ActionButtonBar';
+import { BotDifficultyModal } from '../components/lobby/BotDifficultyModal';
+import { BOT_NAMES, BOT_COLOR_MAP } from '../utils/botAvatars';
 
 interface Player {
   user_id: string;
@@ -27,6 +29,9 @@ interface Player {
   is_ready: boolean;
   is_creator: boolean;
   avatar_url?: string | null;
+  is_bot?: boolean;
+  bot_difficulty?: 'easy' | 'medium' | 'hard';
+  bot_position?: number;
 }
 
 interface Lobby {
@@ -41,6 +46,7 @@ interface Lobby {
   game_id?: string;
   expires_at?: string;
   is_private?: boolean;
+  pending_bots?: Array<{ position: number; difficulty: 'easy' | 'medium' | 'hard' }>;
 }
 
 interface LobbyRoomScreenProps {
@@ -67,6 +73,7 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [showBotModal, setShowBotModal] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const navigationPendingRef = useRef(false);
@@ -228,11 +235,28 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
     }
   };
 
+  const handleAddBot = async (difficulty: 'easy' | 'medium' | 'hard') => {
+    setShowBotModal(false);
+    try {
+      await lobbyService.addBot(lobbyCode, difficulty);
+    } catch (err) {
+      Alert.alert('Error', 'Failed to add bot');
+    }
+  };
+
+  const handleRemoveBot = async (position: number) => {
+    try {
+      await lobbyService.removeBot(lobbyCode, position);
+    } catch (err) {
+      Alert.alert('Error', 'Failed to remove bot');
+    }
+  };
+
   const currentPlayer = lobby?.players.find((p) => p.user_id === userId);
   const isCreator = lobby?.creator_id === userId;
   const readyCount = lobby?.players.filter((p) => p.is_ready).length || 0;
-  const allReady = lobby && lobby.players.length === lobby.max_players && lobby.players.every((p) => p.is_ready);
-  const canStart = isCreator && allReady;
+  const totalOccupied = (lobby?.current_players || 0) + (lobby?.pending_bots?.length || 0);
+  const canStart = isCreator && totalOccupied === lobby?.max_players;
 
   // Loading state
   if (isLoading && !lobby) {
@@ -325,29 +349,23 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
         <CodeDisplayCard code={lobby?.code || ''} />
 
         {/* Status Alerts */}
-        {!allReady && lobby?.current_players === lobby?.max_players && (
-          <StatusAlert
-            variant="warning"
-            message={`⏳ ${readyCount}/${lobby?.current_players} players ready`}
-          />
-        )}
-
-        {isCreator && lobby?.current_players < lobby?.max_players && (
+        {isCreator && totalOccupied < (lobby?.max_players || 0) && (
           <StatusAlert
             variant="info"
-            message={`👥 ${lobby?.max_players - lobby?.current_players} slots available`}
+            message={`👥 ${(lobby?.max_players || 0) - totalOccupied} slots available`}
           />
         )}
 
-        {allReady && lobby?.current_players >= 3 && (
+        {canStart && (
           <StatusAlert
             variant="success"
-            message="✓ All players ready! Creator can start the game."
+            message="✓ All slots filled! Creator can start the game."
           />
         )}
 
         {/* Players Grid */}
         <View style={styles.playerGrid}>
+          {/* Real players */}
           {lobby?.players.map((player) => (
             <PlayerCard
               key={player.user_id}
@@ -359,6 +377,50 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
               onReadyToggle={player.user_id === userId ? handleToggleReady : undefined}
             />
           ))}
+
+          {/* Bot player cards (from pending_bots) */}
+          {lobby?.pending_bots?.map((bot, idx) => {
+            const botName = BOT_NAMES[idx % BOT_NAMES.length];
+            const botColor = BOT_COLOR_MAP[botName];
+            return (
+              <PlayerCard
+                key={`bot-${bot.position}`}
+                username={botName}
+                isReady={true}
+                isCreator={false}
+                isCurrentUser={false}
+                avatarUrl={null}
+                isBot={true}
+                botDifficulty={bot.difficulty}
+                botColor={botColor}
+                onRemoveBot={isCreator ? () => handleRemoveBot(bot.position) : undefined}
+              />
+            );
+          })}
+
+          {/* Empty slots with Add Bot button (creator only) */}
+          {isCreator &&
+            Array.from({
+              length:
+                (lobby?.max_players || 0) -
+                (lobby?.current_players || 0) -
+                (lobby?.pending_bots?.length || 0),
+            }).map((_, i) => (
+              <TouchableOpacity
+                key={`empty-${i}`}
+                style={[
+                  styles.emptySlot,
+                  {
+                    borderColor: colors.cardBorder,
+                    backgroundColor: colors.isDark ? '#000000' : '#ffffff',
+                  },
+                ]}
+                onPress={() => setShowBotModal(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.emptySlotText, { color: colors.isDark ? '#ffffff' : '#000000' }]}>➕ {t('lobby.addBot')}</Text>
+              </TouchableOpacity>
+            ))}
         </View>
       </ScrollView>
 
@@ -372,6 +434,13 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
         onStartGame={isCreator ? handleStartGame : undefined}
         onLeaveLobby={handleLeaveLobby}
         onDeleteLobby={isCreator ? handleDeleteLobby : undefined}
+      />
+
+      {/* Bot Difficulty Modal */}
+      <BotDifficultyModal
+        visible={showBotModal}
+        onClose={() => setShowBotModal(false)}
+        onConfirm={handleAddBot}
       />
     </View>
   );
@@ -429,5 +498,19 @@ const styles = StyleSheet.create({
   },
   playerGrid: {
     gap: 12,
+  },
+  emptySlot: {
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    paddingVertical: 20,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 80,
+  },
+  emptySlotText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

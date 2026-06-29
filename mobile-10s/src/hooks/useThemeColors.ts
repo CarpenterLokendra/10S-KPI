@@ -20,12 +20,12 @@ export const useThemeColors = () => {
     headingAccent: isDark ? '#f0b429' : '#000000',
     gold: '#f0b429',
     accentPrimary: isDark ? '#f0b429' : '#6125c9',
-    accentButton: isDark ? '#f59e0b' : '#6125c9',
+    accentButton: isDark ? '#f0b429' : '#6125c9',
 
     // Primary button colors
-    primaryButtonBg: isDark ? '#f59e0b' : '#6125c9',
+    primaryButtonBg: isDark ? '#f0b429' : '#6125c9',
     primaryButtonText: isDark ? '#000000' : '#ffffff',
-    primaryButtonShadow: isDark ? 'rgba(245, 158, 11, 0.3)' : 'rgba(97, 37, 201, 0.15)',
+    primaryButtonShadow: isDark ? 'rgba(240, 180, 41, 0.3)' : 'rgba(97, 37, 201, 0.15)',
 
     // Secondary button colors
     secondaryButtonBg: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(97,37,201,0.1)',
@@ -42,8 +42,8 @@ export const useThemeColors = () => {
     statusInfo: '#3b82f6',
 
     // Game-specific colors
-    startGameEnabledBg: '#16a34a',
-    startGameDisabledBg: '#9ca3af',
+    startGameEnabledBg: isDark ? '#f0b429' : '#6125c9',
+    startGameDisabledBg: isDark ? '#4b5563' : '#d1d5db',
     startGameDisabledText: '#e5e7eb',
     deleteButtonBg: '#ef4444',
     deleteButtonBorder: '#dc2626',

@@ -123,4 +123,26 @@ export const lobbyService = {
       throw error;
     }
   },
+
+  async addBot(code: string, difficulty: 'easy' | 'medium' | 'hard') {
+    try {
+      console.log('[LobbyService] Adding bot with difficulty:', difficulty, 'to lobby:', code);
+      const response = await apiClient.patch(`/lobbies/${code}/add-bot`, { difficulty });
+      return response.data;
+    } catch (error) {
+      console.error('[LobbyService] Add bot failed:', error);
+      throw error;
+    }
+  },
+
+  async removeBot(code: string, position: number) {
+    try {
+      console.log('[LobbyService] Removing bot at position:', position, 'from lobby:', code);
+      const response = await apiClient.delete(`/lobbies/${code}/bots/${position}`);
+      return response.data;
+    } catch (error) {
+      console.error('[LobbyService] Remove bot failed:', error);
+      throw error;
+    }
+  },
 };
