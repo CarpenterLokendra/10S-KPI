@@ -10,9 +10,11 @@ import {
   Modal,
   ScrollView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { lobbyService } from '../services/lobby.service';
 import { useThemeStore } from '../store/theme.store';
+import { useUserStore } from '../store/user.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
@@ -51,6 +53,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   onHomePress,
 }) => {
   const { mode } = useThemeStore();
+  const { userId } = useUserStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
@@ -73,6 +76,15 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   }>({});
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem('auth_token');
+      console.log('[LobbyScreen] Auth token on load:', token ? 'EXISTS ✅' : 'MISSING ❌');
+      if (!token) {
+        console.warn('[LobbyScreen] ERROR: No auth token found! User may not be logged in.');
+      }
+    };
+    checkAuth();
+
     loadLobbies();
     const interval = setInterval(loadLobbies, 2000);
     return () => clearInterval(interval);
@@ -101,22 +113,24 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   };
 
   const handleCreateLobby = async () => {
-    if (!lobbyName.trim()) {
-      alert(t('lobby.gameName'));
-      return;
-    }
-
     setIsLoading(true);
     try {
+      console.log('[LobbyScreen] Creating lobby with name:', lobbyName, 'maxPlayers:', maxPlayers, 'isPrivate:', isPrivate);
       const lobby = await lobbyService.createLobby({
-        name: lobbyName,
+        name: lobbyName.trim() || undefined,
         maxPlayers,
         isPrivate,
       });
+      console.log('[LobbyScreen] Lobby created with code:', lobby.code);
       resetCreateForm();
-      onGameStart(lobby.id);
+      // Pass the lobby code to navigate to lobby room
+      onGameStart(lobby.code);
     } catch (err) {
-      alert(t('lobby.error'));
+      console.error('[LobbyScreen] Create lobby failed:', err);
+      const errorMsg = (err as any)?.response?.data?.detail ||
+                       (err as any)?.response?.data?.message ||
+                       t('lobby.error');
+      alert(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -128,9 +142,9 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
     setIsLoading(true);
     try {
-      const result = await lobbyService.joinByCode(code);
+      await lobbyService.joinByCode(code);
       setJoinCode('');
-      onGameStart(result.lobby_id || result.id);
+      onGameStart(code);
     } catch (err) {
       alert(t('lobby.error'));
     } finally {
@@ -138,13 +152,48 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     }
   };
 
-  const handleJoinLobby = async (lobbyId: string) => {
+  const handleJoinLobby = async (lobbyCode: string) => {
+    console.log('[LobbyScreen] JOIN BUTTON CLICKED - Code:', lobbyCode);
     setIsLoading(true);
     try {
-      await lobbyService.joinLobby(lobbyId);
-      onGameStart(lobbyId);
-    } catch (err) {
-      alert(t('lobby.error'));
+      console.log('[LobbyScreen] 1️⃣ Attempting to join lobby with code:', lobbyCode);
+      const result = await lobbyService.joinLobby(lobbyCode);
+      console.log('[LobbyScreen] 2️⃣ Join API succeeded, result:', result);
+      console.log('[LobbyScreen] 3️⃣ Calling onGameStart with lobbyCode:', lobbyCode);
+      onGameStart(lobbyCode);
+      console.log('[LobbyScreen] 4️⃣ onGameStart called successfully');
+    } catch (err: any) {
+      console.error('[LobbyScreen] ❌ Join lobby error:', err);
+      console.error('[LobbyScreen] Error code:', err.code);
+      console.error('[LobbyScreen] Error message:', err.message);
+      console.error('[LobbyScreen] Response status:', err.response?.status);
+      console.error('[LobbyScreen] Response data:', err.response?.data);
+
+      let errorMsg = 'Failed to join lobby';
+
+      if (err.response) {
+        // Server responded with error status
+        const data = err.response.data;
+        errorMsg = data?.detail || data?.message || `Server error: ${err.response.status}`;
+        console.error('[LobbyScreen] Server error message:', errorMsg);
+      } else if (err.code === 'ECONNABORTED') {
+        errorMsg = 'Request timeout - check your connection';
+      } else if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED') {
+        errorMsg = 'Cannot reach server - check API endpoint';
+      } else if (err.message?.includes('Network')) {
+        errorMsg = 'Network error - check your connection';
+      }
+
+      console.log('[LobbyScreen] Showing error:', errorMsg);
+
+      // If already in lobby, navigate to it anyway
+      if (errorMsg.includes('Already in') || err.response?.status === 400) {
+        console.log('[LobbyScreen] Already in lobby, navigating to lobby room anyway');
+        onGameStart(lobbyCode);
+        return;
+      }
+
+      alert(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -225,10 +274,15 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
   const getSpotsAvailable = (current: number, max: number) => max - current;
 
-  const canJoin = (lobby: Lobby) =>
-    lobby.status === 'waiting' && lobby.current_players < lobby.max_players;
+  const canJoin = (lobby: Lobby) => {
+    const isUserInLobby = lobby.players?.some((p) => p.user_id === userId);
+    if (isUserInLobby) return true;
+    return lobby.status === 'waiting' && lobby.current_players < lobby.max_players;
+  };
 
   const getJoinLabel = (lobby: Lobby) => {
+    const isUserInLobby = lobby.players?.some((p) => p.user_id === userId);
+    if (isUserInLobby) return t('lobby.enterLobby');
     if (lobby.current_players >= lobby.max_players) return t('lobby.full');
     if (lobby.status !== 'waiting') return t('lobby.inProgress');
     return t('lobby.joinLobby');
@@ -244,8 +298,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         style={[
           styles.lobbyCard,
           {
-            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.2)',
-            borderColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
+            backgroundColor: colors.cardBg,
+            borderColor: colors.cardBorder,
           },
         ]}
       >
@@ -325,17 +379,19 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
           style={[
             styles.joinBtn,
             {
-              backgroundColor: canJoin(item) ? colors.primaryButtonBg : '#ccc',
+              backgroundColor: colors.primaryButtonBg,
+              opacity: canJoin(item) ? 1 : 0.5,
             },
           ]}
-          onPress={() => handleJoinLobby(item.id)}
+          onPress={() => handleJoinLobby(item.code)}
           disabled={!canJoin(item) || isLoading}
+          activeOpacity={0.8}
         >
           <Text
             style={[
               styles.joinBtnText,
               {
-                color: canJoin(item) ? colors.primaryButtonText : '#999',
+                color: colors.primaryButtonText,
               },
             ]}
           >
@@ -370,83 +426,78 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             {t('lobby.subtitle')}
           </Text>
 
-          {/* Action Row: Join by Code + Create Lobby */}
-          <View style={styles.actionRow}>
-            {/* Join by Code Card */}
-            <View
-              style={[
-                styles.actionCard,
-                {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)',
-                  borderColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
-                },
-              ]}
-            >
-              <Text style={[styles.actionCardTitle, { color: colors.textPrimary }]}>
-                {t('lobby.joinByCode')}
-              </Text>
-              <TextInput
-                style={[
-                  styles.codeInput,
-                  {
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
-                    color: isDark ? '#fff' : '#000',
-                    borderColor: isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.4)',
-                  },
-                ]}
-                placeholder={t('lobby.enterCode')}
-                placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
-                value={joinCode}
-                onChangeText={(text) => setJoinCode(text.toUpperCase())}
-                editable={!isLoading}
-                maxLength={6}
-              />
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  {
-                    backgroundColor: joinCode.trim() ? colors.primaryButtonBg : '#ccc',
-                  },
-                ]}
-                onPress={handleJoinByCode}
-                disabled={!joinCode.trim() || isLoading}
-              >
-                <Text
-                  style={[
-                    styles.actionButtonText,
-                    {
-                      color: joinCode.trim() ? colors.primaryButtonText : '#999',
-                    },
-                  ]}
-                >
-                  {t('lobby.joinLobby')}
-                </Text>
-              </TouchableOpacity>
-            </View>
+          {/* Create Lobby Button */}
+          <TouchableOpacity
+            style={[
+              styles.createLobbyButton,
+              {
+                backgroundColor: colors.primaryButtonBg,
+                opacity: isLoading ? 0.5 : 1,
+              },
+            ]}
+            onPress={() => setShowCreateModal(true)}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.createLobbyButtonText, { color: colors.primaryButtonText }]}>
+              {t('lobby.createLobby')}
+            </Text>
+          </TouchableOpacity>
 
-            {/* Create Lobby Card */}
-            <View
+          {/* Join by Code Component */}
+          <View
+            style={[
+              styles.actionCard,
+              {
+                backgroundColor: colors.cardBg,
+                borderColor: colors.cardBorder,
+                marginBottom: 24,
+                marginHorizontal: 16,
+              },
+            ]}
+          >
+            <Text style={[styles.actionCardTitle, { color: colors.textPrimary }]}>
+              {t('lobby.joinByCode')}
+            </Text>
+            <TextInput
               style={[
-                styles.actionCard,
+                styles.codeInput,
                 {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)',
-                  borderColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
+                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)',
+                  color: colors.textPrimary,
+                  borderColor: colors.cardBorder,
                 },
               ]}
+              placeholder={t('lobby.enterCode')}
+              placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
+              value={joinCode}
+              onChangeText={(text) => setJoinCode(text.toUpperCase())}
+              editable={!isLoading}
+              maxLength={6}
+            />
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                {
+                  backgroundColor: colors.primaryButtonBg,
+                  opacity: joinCode.trim() ? 1 : 0.5,
+                },
+              ]}
+              onPress={handleJoinByCode}
+              disabled={!joinCode.trim() || isLoading}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.actionCardTitle, { color: colors.textPrimary }]}>
-                {t('lobby.createLobby')}
-              </Text>
-              <TouchableOpacity
-                style={[styles.createButton, { backgroundColor: colors.primaryButtonBg }]}
-                onPress={() => setShowCreateModal(true)}
-                disabled={isLoading}
+              <Text
+                style={[
+                  styles.actionButtonText,
+                  {
+                    color: colors.primaryButtonText,
+                  },
+                ]}
               >
-                <Text style={[styles.createButtonText, { color: colors.primaryButtonText }]}>
-                  {t('lobby.createNew')}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                {t('lobby.joinLobby')}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Active Lobbies Section Header */}
@@ -502,7 +553,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             style={[
               styles.modalCard,
               {
-                backgroundColor: isDark ? '#1a1f2e' : '#fff',
+                backgroundColor: colors.background,
               },
             ]}
           >
@@ -519,9 +570,9 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                 style={[
                   styles.input,
                   {
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
-                    color: isDark ? '#fff' : '#000',
-                    borderColor: isDark ? 'rgba(240,180,41,0.3)' : 'rgba(240,180,41,0.4)',
+                    backgroundColor: colors.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)',
+                    color: colors.textPrimary,
+                    borderColor: colors.cardBorder,
                   },
                 ]}
                 placeholder={t('lobby.gameName')}
@@ -553,9 +604,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         borderColor:
                           maxPlayers === num
                             ? colors.primaryButtonBg
-                            : isDark
-                            ? 'rgba(240,180,41,0.3)'
-                            : 'rgba(240,180,41,0.4)',
+                            : colors.cardBorder,
                       },
                     ]}
                     onPress={() => setMaxPlayers(num)}
@@ -716,6 +765,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 12,
+    textAlign: 'center',
   },
   codeInput: {
     borderRadius: 8,
@@ -743,6 +793,20 @@ const styles = StyleSheet.create({
   createButtonText: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  createLobbyButton: {
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    marginHorizontal: 16,
+  },
+  createLobbyButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   sectionHeader: {
     fontSize: 16,

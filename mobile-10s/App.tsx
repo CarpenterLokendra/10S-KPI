@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { LandingScreen } from './src/screens/LandingScreen';
@@ -10,20 +10,23 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { QuickMatchWaitingScreen } from './src/screens/QuickMatchWaitingScreen';
+import { LobbyRoomScreen } from './src/screens/LobbyRoomScreen';
 import { authService } from './src/services/auth.service';
 import { useThemeStore } from './src/store/theme.store';
 import { useUserStore } from './src/store/user.store';
 import { AnimatedBackground } from './src/components/AnimatedBackground';
 
-type AppState = 'loading' | 'landing' | 'auth' | 'register' | 'lobby' | 'quickmatch-wait' | 'game' | 'results' | 'leaderboard' | 'profile' | 'settings';
+type AppState = 'loading' | 'landing' | 'auth' | 'register' | 'lobby' | 'lobby-room' | 'quickmatch-wait' | 'game' | 'results' | 'leaderboard' | 'profile' | 'settings';
 
 import apiClient from './src/services/api';
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>('loading');
   const [gameId, setGameId] = useState<string | null>(null);
+  const [lobbyCode, setLobbyCode] = useState<string | null>(null);
   const [currentGame, setCurrentGame] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const { loadSettings } = useThemeStore();
   const { setUser } = useUserStore();
 
@@ -38,7 +41,11 @@ export default function App() {
   const checkAuthStatus = async () => {
     try {
       const token = await authService.getStoredToken();
-      if (token) {
+      const storedUserId = await authService.getStoredUserId();
+
+      if (token && storedUserId) {
+        setUserId(storedUserId);
+
         // Fetch user data from backend to populate user store (including avatar)
         try {
           const response = await apiClient.get('/users/me');
@@ -66,7 +73,15 @@ export default function App() {
     }
   };
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = async () => {
+    try {
+      const storedUserId = await authService.getStoredUserId();
+      if (storedUserId) {
+        setUserId(storedUserId);
+      }
+    } catch (err) {
+      console.error('Failed to get stored userId:', err);
+    }
     setIsAuthenticated(true);
     setAppState('lobby');
   };
@@ -79,9 +94,23 @@ export default function App() {
     setAppState('quickmatch-wait');
   };
 
-  const handleGameStart = (gId: string) => {
-    setGameId(gId);
-    setAppState('game');
+  const handleGameStart = (idOrCode: string) => {
+    console.log('[App] handleGameStart called with:', idOrCode);
+    // If it looks like a lobby code (6 hex chars), navigate to lobby room
+    if (/^[0-9a-f]{6}$/i.test(idOrCode)) {
+      console.log('[App] 🎯 Detected as lobby code, navigating to lobby-room');
+      setLobbyCode(idOrCode);
+      setAppState('lobby-room');
+    } else {
+      console.log('[App] 🎮 Detected as game ID, navigating to game');
+      setGameId(idOrCode);
+      setAppState('game');
+    }
+  };
+
+  const handleLeaveLobby = () => {
+    setLobbyCode(null);
+    setAppState('lobby');
   };
 
   const handleGameEnd = async () => {
@@ -115,6 +144,7 @@ export default function App() {
       // Clear user data from store
       const { clearUser } = useUserStore.getState();
       clearUser();
+      setUserId(null);
       setIsAuthenticated(false);
       setGameId(null);
       setCurrentGame(null);
@@ -190,6 +220,27 @@ export default function App() {
           onSettingsPress={() => setAppState('settings')}
           onQuickMatchPress={() => setAppState('quickmatch-wait')}
           onNavigate={handleNavigate}
+          onHomePress={handleHome}
+        />
+      );
+    }
+
+    if (appState === 'lobby-room') {
+      console.log('[App] Rendering lobby-room, lobbyCode:', lobbyCode, 'userId:', userId);
+      if (!lobbyCode || !userId) {
+        console.warn('[App] Missing lobbyCode or userId for lobby-room state');
+        return (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a1a1a' }}>
+            <Text style={{ color: '#fff' }}>Missing data for lobby room</Text>
+          </View>
+        );
+      }
+      return (
+        <LobbyRoomScreen
+          lobbyCode={lobbyCode}
+          userId={userId}
+          onGameStart={handleGameStart}
+          onLeaveLobby={handleLeaveLobby}
           onHomePress={handleHome}
         />
       );

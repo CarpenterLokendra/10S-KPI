@@ -162,6 +162,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         response = await authService.register(formData.username, formData.email, formData.password);
       }
 
+      console.log('[AuthScreen] Login/Register response:', {
+        token: response?.token ? 'EXISTS' : 'MISSING',
+        user: response?.user ? 'EXISTS' : 'MISSING',
+      });
+
       // Store user data in user store
       if (response?.user) {
         setUser({
@@ -173,9 +178,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         });
       }
 
+      alert('✅ Login successful! Token stored.');
       onLoginSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+      console.error('[AuthScreen] Auth error:', errorMessage);
+      alert('❌ Login failed: ' + errorMessage);
       if (isLogin) {
         setErrors({ username: errorMessage });
       } else {
