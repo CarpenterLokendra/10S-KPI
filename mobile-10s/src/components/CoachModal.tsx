@@ -93,7 +93,6 @@ export const CoachModal: React.FC<CoachModalProps> = ({
     );
   }
 
-  // Adjust element layout for SafeAreaView insets before calculating popover position
   const adjustedLayout = elementLayout
     ? {
         ...elementLayout,

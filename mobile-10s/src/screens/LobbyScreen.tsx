@@ -69,6 +69,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   const [showCoach, setShowCoach] = useState(false);
 
   const lobbiesListRef = useRef<FlatList>(null);
+  const createLobbyBtnRef = useRef<View>(null);
+  const joinByCodeCardRef = useRef<View>(null);
   const loadingRef = useRef(false);
   const [topBarRefs, setTopBarRefs] = useState<{
     menuBtn?: React.RefObject<View>;
@@ -216,16 +218,16 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         align: 'start' as const,
       },
       {
-        title: '🔑 Join by Code',
-        description: t('coach.lobby.joinCode.desc') || 'Enter a 6-character lobby code to join a game.',
-        referenceElement: undefined,
-        side: 'bottom' as const,
-        align: 'start' as const,
-      },
-      {
         title: '➕ Create Lobby',
         description: t('coach.lobby.createLobby.desc') || 'Start your own game here.',
-        referenceElement: undefined,
+        referenceElement: createLobbyBtnRef,
+        side: 'bottom' as const,
+        align: 'center' as const,
+      },
+      {
+        title: '🔑 Join by Code',
+        description: t('coach.lobby.joinCode.desc') || 'Enter a 6-character lobby code to join a game.',
+        referenceElement: joinByCodeCardRef,
         side: 'bottom' as const,
         align: 'start' as const,
       },
@@ -428,6 +430,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
           {/* Create Lobby Button */}
           <TouchableOpacity
+            ref={createLobbyBtnRef}
             style={[
               styles.createLobbyButton,
               {
@@ -446,6 +449,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
           {/* Join by Code Component */}
           <View
+            ref={joinByCodeCardRef}
             style={[
               styles.actionCard,
               {
