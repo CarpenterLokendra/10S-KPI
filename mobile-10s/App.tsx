@@ -49,13 +49,14 @@ export default function App() {
         // Fetch user data from backend to populate user store (including avatar)
         try {
           const response = await apiClient.get('/users/me');
-          if (response.data?.user) {
+          const userData = response.data;
+          if (userData?.id) {
             setUser({
-              userId: response.data.user.id,
-              username: response.data.user.username,
-              rating: response.data.user.rating || 0,
-              isPremium: response.data.user.is_premium || false,
-              avatarUrl: response.data.user.avatar_url || null,
+              userId: userData.id,
+              username: userData.username,
+              rating: userData.rating || 0,
+              isPremium: userData.is_premium || false,
+              avatarUrl: userData.avatar_url || null,
             });
           }
         } catch (err) {

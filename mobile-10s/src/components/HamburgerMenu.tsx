@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, forwardRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeStore } from '../store/theme.store';
 import { useUserStore } from '../store/user.store';
@@ -169,25 +170,27 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
               scrollEnabled={languageExpanded}
               nestedScrollEnabled={true}
             >
-              {/* User Profile Card — only when authenticated */}
-              {isAuthenticated && username && (
+              {/* User Profile Card — render if username exists in store */}
+              {username && (
                 <>
                   <View style={[styles.profileCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(97,37,201,0.08)' }]}>
-                    <View
-                      style={[
-                        styles.avatar,
-                        { backgroundColor: accentColor },
-                      ]}
-                    >
-                      {avatarUrl ? (
+                    {avatarUrl ? (
+                      <View style={styles.avatar}>
                         <Image
                           source={{ uri: avatarUrl }}
                           style={styles.avatarImage}
                         />
-                      ) : (
+                      </View>
+                    ) : (
+                      <LinearGradient
+                        colors={['#6125c9', '#f0b429']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.avatar}
+                      >
                         <Text style={styles.avatarText}>{getAvatarLetter()}</Text>
-                      )}
-                    </View>
+                      </LinearGradient>
+                    )}
                     <View style={styles.profileInfo}>
                       <Text style={[styles.username, { color: isDark ? '#ffffff' : '#000000' }]}>
                         {username}
