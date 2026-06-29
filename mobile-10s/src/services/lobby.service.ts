@@ -5,7 +5,8 @@ export const lobbyService = {
     const response = await apiClient.get('/lobbies', {
       params: { lobby_status: 'waiting' },
     });
-    return response.data.lobbies || [];
+    const data = response.data;
+    return Array.isArray(data) ? data : (data.lobbies || []);
   },
 
   async createLobby(data: { name: string; maxPlayers?: number; isPrivate?: boolean }) {

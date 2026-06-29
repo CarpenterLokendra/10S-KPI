@@ -21,7 +21,7 @@ import { CoachModal } from '../components/CoachModal';
 interface Lobby {
   id: string;
   code: string;
-  name: string;
+  name: string | null;
   current_players: number;
   max_players: number;
   status?: 'waiting' | 'in_progress' | 'closed';
@@ -66,6 +66,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   const [showCoach, setShowCoach] = useState(false);
 
   const lobbiesListRef = useRef<FlatList>(null);
+  const loadingRef = useRef(false);
   const [topBarRefs, setTopBarRefs] = useState<{
     menuBtn?: React.RefObject<View>;
     helpBtn?: React.RefObject<View>;
@@ -73,13 +74,14 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
   useEffect(() => {
     loadLobbies();
-    const interval = setInterval(loadLobbies, 3000);
+    const interval = setInterval(loadLobbies, 2000);
     return () => clearInterval(interval);
   }, []);
 
   const loadLobbies = async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     try {
-      setIsLoading(true);
       setError(null);
       const data = await lobbyService.getLobbies();
       setLobbies(data);
@@ -87,7 +89,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
       setError(t('lobby.error'));
       console.error('Failed to load lobbies:', err);
     } finally {
-      setIsLoading(false);
+      loadingRef.current = false;
     }
   };
 
@@ -128,7 +130,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     try {
       const result = await lobbyService.joinByCode(code);
       setJoinCode('');
-      onGameStart(result.id || result.lobby?.id);
+      onGameStart(result.lobby_id || result.id);
     } catch (err) {
       alert(t('lobby.error'));
     } finally {
