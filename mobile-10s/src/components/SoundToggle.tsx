@@ -31,7 +31,7 @@ export const SoundToggle: React.FC = () => {
           style={[
             styles.toggleCircle,
             {
-              transform: [{ translateX: soundEnabled ? 28 : 2 }],
+              transform: [{ translateX: soundEnabled ? 25 : 0 }],
               backgroundColor: isDark ? '#000' : '#fff',
             },
           ]}

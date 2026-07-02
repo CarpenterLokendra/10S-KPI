@@ -31,7 +31,7 @@ export const DarkModeToggle: React.FC = () => {
           style={[
             styles.toggleCircle,
             {
-              transform: [{ translateX: isDark ? 28 : 2 }],
+              transform: [{ translateX: isDark ? 25 : 0 }],
               backgroundColor: isDark ? '#000' : '#fff',
             },
           ]}

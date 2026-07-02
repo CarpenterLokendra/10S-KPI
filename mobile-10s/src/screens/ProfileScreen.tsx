@@ -156,7 +156,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f1729' : '#ffffff' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       {/* Custom Header with Hamburger Menu and Back Button */}
       <View
         style={{

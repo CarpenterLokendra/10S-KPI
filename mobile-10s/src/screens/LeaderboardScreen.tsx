@@ -222,7 +222,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f1729' : '#ffffff' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       <TopControlsBar
         isAuthenticated={true}
         title={t('page.leaderboard')}
@@ -231,6 +231,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
         onLogout={onLogout}
         onHomePress={onHomePress}
         showBackButton={true}
+        showGuideButton={false}
       />
 
       {error && (

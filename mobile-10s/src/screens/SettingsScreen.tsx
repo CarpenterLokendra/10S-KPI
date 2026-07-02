@@ -7,21 +7,18 @@ import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { DarkModeToggle } from '../components/DarkModeToggle';
 import { SoundToggle } from '../components/SoundToggle';
-import { ThemeToggle } from '../components/ThemeToggle';
 import { SettingsSection } from '../components/SettingsSection';
 import { OptionGrid, type OptionGridItem } from '../components/OptionGrid';
 import { VolumeSlider } from '../components/VolumeSlider';
 
 interface SettingsScreenProps {
   onBackPress: () => void;
-  onLogout: () => void;
   onNavigate?: (screen: string) => void;
   onHomePress?: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onBackPress,
-  onLogout,
   onNavigate,
   onHomePress,
 }) => {
@@ -81,7 +78,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         title={t('settings.title') || 'Settings'}
         onBackPress={onBackPress}
         onNavigate={onNavigate}
-        onLogout={onLogout}
         onHomePress={onHomePress}
         showBackButton={true}
         showGuideButton={false}
@@ -128,11 +124,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </Text>
         </SettingsSection>
 
-        {/* Visual Theme Section */}
-        <SettingsSection title={t('settings.visualTheme') || 'Visual Theme'} emoji="🎨">
-          <ThemeToggle />
-        </SettingsSection>
-
         {/* Theme Mode Section */}
         <SettingsSection title="Theme Mode" emoji="🌙">
           <DarkModeToggle />
@@ -168,19 +159,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <Text style={[styles.versionText, { color: colors.textSecondary }]}>1.0.0</Text>
           </View>
         </SettingsSection>
-
-        {/* Logout Section */}
-        <View style={styles.logoutContainer}>
-          <TouchableOpacity
-            style={[styles.logoutButton, { borderColor: '#ff6b6b' }]}
-            onPress={onLogout}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.logoutText, { color: '#ff6b6b' }]}>
-              {t('settings.logout') || 'Logout'}
-            </Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -225,19 +203,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     textAlign: 'center',
-  },
-  logoutContainer: {
-    marginBottom: 20,
-  },
-  logoutButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    alignItems: 'center',
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '700',
   },
 });

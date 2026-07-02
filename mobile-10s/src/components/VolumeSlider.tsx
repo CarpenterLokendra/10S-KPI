@@ -1,11 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  PanResponder,
-  LayoutChangeEvent,
-  Dimensions,
+  Pressable,
 } from 'react-native';
 import { useThemeColors } from '../hooks/useThemeColors';
 
@@ -19,28 +17,14 @@ export const VolumeSlider: React.FC<VolumeSliderProps> = ({
   onVolumeChange,
 }) => {
   const colors = useThemeColors();
-  const [trackWidth, setTrackWidth] = useState(0);
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: (event) => {
-        const newPosition = event.nativeEvent.locationX;
-        const newVolume = Math.max(
-          0,
-          Math.min(1, newPosition / trackWidth)
-        );
-        onVolumeChange(newVolume);
-      },
-    })
-  ).current;
-
-  const handleLayout = (event: LayoutChangeEvent) => {
-    setTrackWidth(event.nativeEvent.layout.width);
-  };
-
-  const thumbPosition = trackWidth > 0 ? volume * trackWidth - 8 : 0;
   const volumePercentage = Math.round(volume * 100);
+
+  const volumeLevels = [0, 0.25, 0.5, 0.75, 1];
+  const levelLabels = ['Mute', '25%', '50%', '75%', '100%'];
+
+  const handleVolumeChange = (newVolume: number) => {
+    onVolumeChange(newVolume);
+  };
 
   return (
     <View style={styles.container}>
@@ -52,13 +36,13 @@ export const VolumeSlider: React.FC<VolumeSliderProps> = ({
           {volumePercentage}%
         </Text>
       </View>
+
+      {/* Visual slider representation */}
       <View
         style={[
           styles.track,
           { backgroundColor: colors.cardBorder },
         ]}
-        onLayout={handleLayout}
-        {...panResponder.panHandlers}
       >
         <View
           style={[
@@ -69,16 +53,39 @@ export const VolumeSlider: React.FC<VolumeSliderProps> = ({
             },
           ]}
         />
-        <View
-          style={[
-            styles.thumb,
-            {
-              left: thumbPosition,
-              backgroundColor: colors.accentPrimary,
-              shadowColor: colors.accentPrimary,
-            },
-          ]}
-        />
+      </View>
+
+      {/* Volume level buttons */}
+      <View style={styles.buttonContainer}>
+        {volumeLevels.map((level, index) => (
+          <Pressable
+            key={index}
+            style={[
+              styles.levelButton,
+              {
+                backgroundColor:
+                  Math.abs(volume - level) < 0.01
+                    ? colors.accentPrimary
+                    : colors.cardBorder,
+              },
+            ]}
+            onPress={() => handleVolumeChange(level)}
+          >
+            <Text
+              style={[
+                styles.levelButtonText,
+                {
+                  color:
+                    Math.abs(volume - level) < 0.01
+                      ? colors.textPrimary
+                      : colors.textSecondary,
+                },
+              ]}
+            >
+              {levelLabels[index]}
+            </Text>
+          </Pressable>
+        ))}
       </View>
     </View>
   );
@@ -108,20 +115,27 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     overflow: 'hidden',
     position: 'relative',
+    marginBottom: 16,
   },
   fill: {
     height: 6,
     borderRadius: 3,
   },
-  thumb: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    position: 'absolute',
-    top: -5,
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-between',
+  },
+  levelButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  levelButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

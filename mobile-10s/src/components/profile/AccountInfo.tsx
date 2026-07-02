@@ -98,21 +98,23 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
         <TouchableOpacity
           onPress={onLogout}
           style={{
-            paddingVertical: 12,
-            borderTopWidth: 1,
-            borderTopColor: colors.cardBorder,
+            paddingVertical: 14,
+            paddingHorizontal: 20,
+            backgroundColor: '#3b82f6',
+            borderRadius: 12,
             marginBottom: 12,
+            marginTop: 12,
           }}
         >
           <Text
             style={{
-              color: '#3b82f6',
+              color: '#ffffff',
               fontSize: 14,
               fontWeight: '600',
               textAlign: 'center',
             }}
           >
-            🚪 Logout
+            Logout
           </Text>
         </TouchableOpacity>
 
@@ -121,20 +123,22 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
           onPress={handleDeletePress}
           disabled={isDeleting}
           style={{
-            paddingVertical: 12,
-            borderTopWidth: 1,
-            borderTopColor: colors.cardBorder,
+            paddingVertical: 14,
+            paddingHorizontal: 20,
+            backgroundColor: '#FF3B30',
+            borderRadius: 12,
+            opacity: isDeleting ? 0.6 : 1,
           }}
         >
           <Text
             style={{
-              color: '#FF3B30',
+              color: '#ffffff',
               fontSize: 14,
               fontWeight: '600',
               textAlign: 'center',
             }}
           >
-            {isDeleting ? '🗑️ Deleting...' : '🗑️ Delete Account'}
+            {isDeleting ? 'Deleting...' : 'Delete Account'}
           </Text>
         </TouchableOpacity>
       </View>
