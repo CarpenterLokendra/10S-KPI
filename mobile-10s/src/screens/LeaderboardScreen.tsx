@@ -1,101 +1,228 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+  RefreshControl,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
+import { leaderboardService, type LeaderboardEntry, type GlobalStatsResponse } from '../services/leaderboard.service';
 
-interface LeaderboardPlayer {
-  id: string;
-  username: string;
-  score: number;
-  rank: number;
-  wins: number;
-  gamesPlayed: number;
-}
+const MEDALS = ['🥇', '🥈', '🥉'];
 
 interface LeaderboardScreenProps {
   onBackPress: () => void;
   onNavigate?: (screen: string) => void;
+  onProfilePress?: (userId: string) => void;
   onLogout?: () => void;
   onHomePress?: () => void;
 }
 
-export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBackPress, onNavigate, onLogout, onHomePress }) => {
+export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
+  onBackPress,
+  onNavigate,
+  onProfilePress,
+  onLogout,
+  onHomePress,
+}) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
-  const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
+
+  const [sortBy, setSortBy] = useState<'rating' | 'total_games_won' | 'total_games_played' | 'total_points_scored'>('total_points_scored');
+  const [players, setPlayers] = useState<LeaderboardEntry[]>([]);
+  const [globalStats, setGlobalStats] = useState<GlobalStatsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [filterType, setFilterType] = useState<'rating' | 'wins'>('rating');
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchLeaderboard = async (showLoader = true) => {
+    try {
+      if (showLoader) setIsLoading(true);
+      setError(null);
+
+      const [leaderboardData, statsData] = await Promise.all([
+        leaderboardService.getLeaderboard(100, 0, sortBy),
+        leaderboardService.getGlobalStats(),
+      ]);
+
+      setPlayers(leaderboardData.players);
+      setGlobalStats(statsData);
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.detail || 'Failed to load leaderboard';
+      setError(errorMessage);
+      console.error('[LeaderboardScreen] Error:', errorMessage);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    // Mock leaderboard data - in real app, fetch from API
-    setTimeout(() => {
-      const mockData: LeaderboardPlayer[] = [
-        { id: '1', username: 'ProPlayer', score: 4500, rank: 1, wins: 156, gamesPlayed: 203 },
-        { id: '2', username: 'CardMaster', score: 4200, rank: 2, wins: 142, gamesPlayed: 195 },
-        { id: '3', username: 'SharpThinker', score: 4000, rank: 3, wins: 138, gamesPlayed: 187 },
-        { id: '4', username: 'QuickReflex', score: 3800, rank: 4, wins: 125, gamesPlayed: 175 },
-        { id: '5', username: 'TenCatcher', score: 3600, rank: 5, wins: 118, gamesPlayed: 168 },
-      ];
-      setLeaderboard(mockData);
-      setIsLoading(false);
-    }, 800);
-  }, []);
+    fetchLeaderboard();
+  }, [sortBy]);
 
-  const renderLeaderboardItem = ({ item, index }: { item: LeaderboardPlayer; index: number }) => {
-    const getMedalEmoji = (rank: number) => {
-      if (rank === 1) return '🥇';
-      if (rank === 2) return '🥈';
-      if (rank === 3) return '🥉';
-      return '';
-    };
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchLeaderboard(false);
+  };
+
+  const handleSortChange = (newSort: typeof sortBy) => {
+    setSortBy(newSort);
+  };
+
+  const renderGlobalStats = () => {
+    if (!globalStats) return null;
+
+    const stats = [
+      { label: 'Players', value: globalStats.total_players },
+      { label: 'Games', value: globalStats.total_games_played },
+      { label: 'Avg Rating', value: (globalStats.average_player_rating ?? 0).toFixed(0) },
+      { label: 'Top Rating', value: (globalStats.highest_rating ?? 0).toFixed(0) },
+    ];
 
     return (
-      <View
+      <View style={styles.statsGrid}>
+        {stats.map((stat, idx) => (
+          <View
+            key={idx}
+            style={[
+              styles.statBox,
+              {
+                backgroundColor: colors.cardBg,
+                borderColor: colors.cardBorder,
+              },
+            ]}
+          >
+            <Text style={[styles.statBoxLabel, { color: colors.textMuted }]}>
+              {stat.label}
+            </Text>
+            <Text
+              style={[
+                styles.statBoxValue,
+                { color: isDark ? '#f59e0b' : '#6125c9' },
+              ]}
+            >
+              {stat.value}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderSortButtons = () => {
+    const sortOptions: Array<{ key: typeof sortBy; label: string }> = [
+      { key: 'total_points_scored', label: 'Points' },
+      { key: 'rating', label: 'Rating' },
+      { key: 'total_games_won', label: 'Wins' },
+      { key: 'total_games_played', label: 'Games' },
+    ];
+
+    return (
+      <View style={styles.sortButtonsContainer}>
+        {sortOptions.map((option) => (
+          <TouchableOpacity
+            key={option.key}
+            onPress={() => handleSortChange(option.key)}
+            style={[
+              styles.sortButton,
+              {
+                backgroundColor:
+                  sortBy === option.key ? colors.primaryButtonBg : colors.cardBg,
+                borderColor:
+                  sortBy === option.key ? colors.primaryButtonBg : colors.cardBorder,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.sortButtonText,
+                {
+                  color:
+                    sortBy === option.key
+                      ? colors.primaryButtonText
+                      : colors.textPrimary,
+                  fontWeight: sortBy === option.key ? '700' : '500',
+                },
+              ]}
+            >
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
+  const renderPlayerItem = ({ item, index }: { item: LeaderboardEntry; index: number }) => {
+    const displayName = item.username || `Player ${item.user_id.slice(0, 8)}`;
+    const displayRank = MEDALS[index] || `#${item.rank}`;
+
+    return (
+      <TouchableOpacity
+        onPress={() => onProfilePress?.(item.user_id)}
         style={[
           styles.playerRow,
           {
             backgroundColor:
               index === 0
                 ? isDark
-                  ? 'rgba(240,180,41,0.15)'
-                  : 'rgba(240,180,41,0.2)'
-                : isDark
-                ? 'rgba(255,255,255,0.05)'
-                : 'rgba(255,255,255,0.1)',
-            borderLeftColor: index === 0 ? '#f0b429' : isDark ? 'rgba(240,180,41,0.1)' : 'rgba(240,180,41,0.2)',
+                  ? 'rgba(240,180,41,0.1)'
+                  : 'rgba(240,180,41,0.15)'
+                : 'transparent',
+            borderColor: colors.cardBorder,
           },
         ]}
       >
-        <View style={styles.rankContainer}>
-          <Text style={[styles.rankText, { color: colors.headingAccent }]}>
-            {getMedalEmoji(item.rank) || `#${item.rank}`}
-          </Text>
-        </View>
+        {/* Rank */}
+        <Text style={[styles.rank, { color: isDark ? '#f59e0b' : '#6125c9' }]}>
+          {displayRank}
+        </Text>
 
+        {/* Player Info */}
         <View style={styles.playerInfo}>
-          <Text style={[styles.playerName, { color: colors.textPrimary }]}>{item.username}</Text>
-          <Text style={[styles.playerStats, { color: colors.textSecondary }]}>
-            {item.wins}W • {item.gamesPlayed}G
+          <Text style={[styles.playerName, { color: colors.textPrimary }]}>
+            {displayName}
+          </Text>
+          <Text style={[styles.playerGames, { color: colors.textSecondary }]}>
+            {item.total_games}G • {item.total_wins}W
           </Text>
         </View>
 
-        <View style={styles.scoreContainer}>
-          <Text style={[styles.score, { color: colors.headingAccent }]}>{item.score}</Text>
-          <Text style={[styles.scoreLabel, { color: colors.textSecondary }]}>
-            pts
-          </Text>
+        {/* Stats */}
+        <View style={styles.playerStats}>
+          <View style={styles.statItem}>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+              {(item.rating ?? 0).toFixed(0)}
+            </Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={[styles.statLabel, { color: '#3b82f6' }]}>
+              {((item.win_rate ?? 0) * 100).toFixed(0)}%
+            </Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={[styles.statLabel, { color: isDark ? '#f59e0b' : '#6125c9' }]}>
+              {item.total_points ?? 0}
+            </Text>
+          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f1729' : '#ffffff' }]}>
       <TopControlsBar
         isAuthenticated={true}
         title={t('page.leaderboard')}
@@ -106,74 +233,61 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBackPres
         showBackButton={true}
       />
 
-      {/* Filter Buttons */}
-      <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filterType === 'rating' && {
-              backgroundColor: colors.activeFilterBg,
-              borderColor: colors.activeFilterBg,
-            },
-            filterType !== 'rating' && {
-              backgroundColor: colors.secondaryButtonBg,
-              borderColor: colors.secondaryButtonBorder,
-            },
-          ]}
-          onPress={() => setFilterType('rating')}
-        >
-          <Text
-            style={[
-              styles.filterText,
-              {
-                color: filterType === 'rating' ? colors.activeFilterText : colors.textPrimary,
-                fontWeight: filterType === 'rating' ? '700' : '600',
-              },
-            ]}
-          >
-            Rating
-          </Text>
-        </TouchableOpacity>
+      {error && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={() => fetchLeaderboard()}>
+            <Text style={styles.errorRetry}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filterType === 'wins' && {
-              backgroundColor: colors.activeFilterBg,
-              borderColor: colors.activeFilterBg,
-            },
-            filterType !== 'wins' && {
-              backgroundColor: colors.secondaryButtonBg,
-              borderColor: colors.secondaryButtonBorder,
-            },
-          ]}
-          onPress={() => setFilterType('wins')}
-        >
-          <Text
-            style={[
-              styles.filterText,
-              {
-                color: filterType === 'wins' ? colors.activeFilterText : colors.textPrimary,
-                fontWeight: filterType === 'wins' ? '700' : '600',
-              },
-            ]}
-          >
-            Wins
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {isLoading ? (
+      {/* Loading State */}
+      {isLoading && !players.length ? (
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#f0b429" />
+          <ActivityIndicator size="large" color={colors.primaryButtonBg} />
         </View>
       ) : (
         <FlatList
-          data={leaderboard}
-          renderItem={renderLeaderboardItem}
-          keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            <>
+              {/* Global Stats */}
+              {globalStats && renderGlobalStats()}
+
+              {/* Sort Buttons */}
+              {renderSortButtons()}
+
+              {/* Players Header */}
+              {players.length > 0 && (
+                <View style={[styles.tableHeader, { borderBottomColor: colors.cardBorder }]}>
+                  <Text style={[styles.headerRank, { color: colors.textMuted }]}>Rank</Text>
+                  <Text style={[styles.headerPlayer, { color: colors.textMuted }]}>Player</Text>
+                  <Text style={[styles.headerStats, { color: colors.textMuted }]}>Rating / Win% / Pts</Text>
+                </View>
+              )}
+            </>
+          }
+          data={players}
+          renderItem={renderPlayerItem}
+          keyExtractor={(item) => item.user_id}
           contentContainerStyle={styles.listContent}
           scrollIndicatorInsets={{ right: 1 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primaryButtonBg}
+            />
+          }
+          ListEmptyComponent={
+            !isLoading ? (
+              <View style={styles.emptyContainer}>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                  No players yet. Be the first!
+                </Text>
+              </View>
+            ) : null
+          }
         />
       )}
     </SafeAreaView>
@@ -184,76 +298,145 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  filterContainer: {
+  errorBanner: {
+    backgroundColor: '#FF3B30',
+    padding: 10,
+    marginHorizontal: 12,
+    marginTop: 8,
+    borderRadius: 8,
     flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  filterButton: {
+  errorText: {
+    color: '#fff',
     flex: 1,
+    fontSize: 12,
+  },
+  errorRetry: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    gap: 8,
+  },
+  statBox: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
   },
-  filterText: {
-    fontSize: 14,
+  statBoxLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginBottom: 3,
+  },
+  statBoxValue: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  sortButtonsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 6,
+  },
+  sortButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sortButtonText: {
+    fontSize: 12,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    marginBottom: 4,
+  },
+  headerRank: {
+    width: 35,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  headerPlayer: {
+    flex: 1,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  headerStats: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 'auto',
   },
   listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 12,
+    paddingBottom: 20,
+    gap: 2,
   },
   playerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    borderBottomWidth: 1,
   },
-  rankContainer: {
-    width: 40,
-    alignItems: 'center',
-  },
-  rankText: {
-    fontSize: 18,
+  rank: {
+    width: 35,
+    fontSize: 16,
     fontWeight: '700',
+    textAlign: 'center',
   },
   playerInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 8,
   },
   playerName: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  playerStats: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  scoreContainer: {
-    alignItems: 'flex-end',
-  },
-  score: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  scoreLabel: {
+  playerGames: {
     fontSize: 11,
     fontWeight: '500',
+  },
+  playerStats: {
+    flexDirection: 'row',
+    gap: 10,
+    marginLeft: 'auto',
+  },
+  statItem: {
+    minWidth: 45,
+    alignItems: 'flex-end',
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

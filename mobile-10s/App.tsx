@@ -27,6 +27,7 @@ export default function App() {
   const [currentGame, setCurrentGame] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
   const { loadSettings } = useThemeStore();
   const { setUser } = useUserStore();
 
@@ -260,6 +261,10 @@ export default function App() {
         <LeaderboardScreen
           onBackPress={() => setAppState('lobby')}
           onNavigate={handleNavigate}
+          onProfilePress={(profileUserId) => {
+            setSelectedProfileUserId(profileUserId);
+            setAppState('profile');
+          }}
           onLogout={handleLogout}
           onHomePress={handleHome}
         />
@@ -269,7 +274,11 @@ export default function App() {
     if (appState === 'profile') {
       return (
         <ProfileScreen
-          onBackPress={() => setAppState('lobby')}
+          userId={selectedProfileUserId || undefined}
+          onBackPress={() => {
+            setSelectedProfileUserId(null);
+            setAppState('lobby');
+          }}
           onNavigate={handleNavigate}
           onLogout={handleLogout}
           onHomePress={handleHome}
