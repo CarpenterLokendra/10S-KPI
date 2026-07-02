@@ -20,6 +20,7 @@ import { ProfileStats } from '../components/profile/ProfileStats';
 import { EditProfileModal } from '../components/profile/EditProfileModal';
 import { AccountInfo } from '../components/profile/AccountInfo';
 import { PremiumSubscription } from '../components/profile/PremiumSubscription';
+import { HamburgerMenu } from '../components/HamburgerMenu';
 import { profileService } from '../services/profile.service';
 import apiClient from '../services/api';
 import type { ProfileData } from '../types/profile';
@@ -28,6 +29,7 @@ interface ProfileScreenProps {
   onLogout: () => void;
   onNavigate?: (screen: string) => void;
   onHomePress?: () => void;
+  onBackPress?: () => void;
   userId?: string;
 }
 
@@ -35,6 +37,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onLogout,
   onNavigate,
   onHomePress,
+  onBackPress,
   userId,
 }) => {
   const { mode } = useThemeStore();
@@ -154,7 +157,81 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0f1729' : '#ffffff' }]}>
-      <TopControlsBar onHomePress={onHomePress} />
+      {/* Custom Header with Hamburger Menu and Back Button */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 8,
+          paddingVertical: 12,
+          backgroundColor: 'transparent',
+          gap: 8,
+        }}
+      >
+        <HamburgerMenu
+          isAuthenticated={true}
+          onNavigate={onNavigate}
+          onLogout={onLogout}
+          showThemeAndLanguage={true}
+        />
+
+        <View
+          style={{
+            flex: 0,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            gap: 12,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: '800',
+              color: isDark ? '#f59e0b' : '#6125c9',
+              textAlign: 'center',
+              letterSpacing: 0.5,
+            }}
+          >
+            Profile
+          </Text>
+        </View>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            marginLeft: 'auto',
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => {
+              if (onBackPress) {
+                onBackPress();
+              }
+            }}
+            style={{
+              paddingVertical: 8,
+              paddingHorizontal: 14,
+              backgroundColor: colors.primaryButtonBg,
+              borderRadius: 8,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Text
+              style={{
+                color: colors.primaryButtonText,
+                fontWeight: '600',
+                fontSize: 13,
+              }}
+            >
+              Back
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {error && (
         <View
