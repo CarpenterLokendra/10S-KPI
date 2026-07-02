@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
@@ -94,14 +95,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBackPress, onNav
             },
           ]}
         >
-          <View
-            style={[
-              styles.avatar,
-              { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)' },
-            ]}
+          <LinearGradient
+            colors={['#f59e0b', '#6125c9']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.avatar}
           >
             <Text style={styles.avatarText}>{profile.username[0].toUpperCase()}</Text>
-          </View>
+          </LinearGradient>
           <View>
             <Text style={[styles.username, { color: colors.textPrimary }]}>{profile.username}</Text>
             <Text style={[styles.rank, { color: colors.headingAccent }]}>
