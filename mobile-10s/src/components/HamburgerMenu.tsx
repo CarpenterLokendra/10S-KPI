@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, forwardRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Image, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Svg, { Line } from 'react-native-svg';
 import { useThemeStore } from '../store/theme.store';
 import { useUserStore } from '../store/user.store';
 import { useThemeColors } from '../hooks/useThemeColors';
@@ -71,15 +70,13 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
   const languages = [
     { code: 'en', name: 'English', nativeName: 'English', emoji: '🇬🇧' },
     { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', emoji: '🇮🇳' },
-    { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', emoji: '🇮🇳' },
+    { code: 'bn', name: 'Bengali', nativeName: 'বाংলা', emoji: '🇮🇳' },
     { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்', emoji: '🇮🇳' },
     { code: 'te', name: 'Telugu', nativeName: 'తెలుగు', emoji: '🇮🇳' },
     { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം', emoji: '🇮🇳' },
     { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ', emoji: '🇮🇳' },
     { code: 'bho', name: 'Bhojpuri', nativeName: 'भोजपुरी', emoji: '🇮🇳' },
   ];
-
-  const accentColor = isDark ? '#f59e0b' : '#6125c9';
 
   const handleMenuItemPress = (action: () => void) => {
     action();
@@ -106,19 +103,13 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
   const accentColor = isDark ? '#f59e0b' : '#6125c9';
   const lineColor = isDark ? '#f59e0b' : '#ffffff';
 
-  const topLineX1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [4, 12] });
-  const topLineY1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [6, 6] });
-  const topLineX2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [20, 6] });
-  const topLineY2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [6, 12] });
+  const topLineRotate = openProgress.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-45deg'] });
+  const topLineTranslateY = openProgress.interpolate({ inputRange: [0, 1], outputRange: [0, 4] });
 
   const middleLineOpacity = openProgress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
 
-  const bottomLineX1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [4, 18] });
-  const bottomLineY1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [18, 12] });
-  const bottomLineX2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [20, 12] });
-  const bottomLineY2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [18, 6] });
-
-  const AnimatedLine = Animated.createAnimatedComponent(Line);
+  const bottomLineRotate = openProgress.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '45deg'] });
+  const bottomLineTranslateY = openProgress.interpolate({ inputRange: [0, 1], outputRange: [0, -4] });
 
   return (
     <View ref={containerRef} collapsable={false} style={styles.container}>
@@ -133,6 +124,7 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
             borderWidth: isDark ? 1 : 0,
             borderColor: isDark ? '#f59e0b' : 'transparent',
             borderRadius: 8,
+            overflow: 'hidden',
             shadowColor: isDark ? '#f59e0b' : 'transparent',
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: isDark ? 0.4 : 0,
@@ -142,36 +134,41 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
         ]}
         activeOpacity={0.8}
       >
-        <Svg width={24} height={24} viewBox="0 0 24 24">
-          <AnimatedLine
-            x1={topLineX1}
-            y1={topLineY1}
-            x2={topLineX2}
-            y2={topLineY2}
-            stroke={lineColor}
-            strokeWidth="2"
-            strokeLinecap="round"
+        <View style={styles.hamburgerLinesContainer}>
+          <Animated.View
+            style={[
+              styles.hamburgerLine,
+              {
+                backgroundColor: lineColor,
+                transform: [
+                  { rotate: topLineRotate },
+                  { translateY: topLineTranslateY },
+                ],
+              },
+            ]}
           />
-          <AnimatedLine
-            x1="4"
-            y1="12"
-            x2="20"
-            y2="12"
-            stroke={lineColor}
-            strokeWidth="2"
-            strokeLinecap="round"
-            opacity={middleLineOpacity}
+          <Animated.View
+            style={[
+              styles.hamburgerLine,
+              {
+                backgroundColor: lineColor,
+                opacity: middleLineOpacity,
+              },
+            ]}
           />
-          <AnimatedLine
-            x1={bottomLineX1}
-            y1={bottomLineY1}
-            x2={bottomLineX2}
-            y2={bottomLineY2}
-            stroke={lineColor}
-            strokeWidth="2"
-            strokeLinecap="round"
+          <Animated.View
+            style={[
+              styles.hamburgerLine,
+              {
+                backgroundColor: lineColor,
+                transform: [
+                  { rotate: bottomLineRotate },
+                  { translateY: bottomLineTranslateY },
+                ],
+              },
+            ]}
           />
-        </Svg>
+        </View>
       </TouchableOpacity>
 
       {/* Menu — only visible when open */}
@@ -588,10 +585,22 @@ const styles = StyleSheet.create({
     zIndex: 200,
   },
   hamburgerButton: {
-    width: 48,
-    height: 48,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  hamburgerLinesContainer: {
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 3,
+  },
+  hamburgerLine: {
+    width: 20,
+    height: 2,
+    borderRadius: 1,
   },
   menuPanel: {
     position: 'absolute',
