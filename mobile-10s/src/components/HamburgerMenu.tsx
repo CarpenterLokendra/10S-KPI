@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, forwardRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Image, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Svg, { Line } from 'react-native-svg';
 import { useThemeStore } from '../store/theme.store';
 import { useUserStore } from '../store/user.store';
 import { useThemeColors } from '../hooks/useThemeColors';
@@ -80,11 +81,16 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
 
   const handleMenuItemPress = (action: () => void) => {
     action();
-    setIsOpen(false);
+    closeMenu();
   };
 
   const getAvatarLetter = () => {
     return username ? username.charAt(0).toUpperCase() : 'U';
+  };
+
+  const closeMenu = () => {
+    setIsOpen(false);
+    Animated.timing(openProgress, { toValue: 0, duration: 300, useNativeDriver: false }).start();
   };
 
   const handleToggle = () => {
@@ -92,24 +98,29 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
       containerRef.current?.measure((_fx, _fy, _width, height, px, py) => {
         setMenuPos({ top: py + height + 8, left: px });
         setIsOpen(true);
-        Animated.timing(openProgress, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+        Animated.timing(openProgress, { toValue: 1, duration: 300, useNativeDriver: false }).start();
       });
     } else {
-      setIsOpen(false);
-      Animated.timing(openProgress, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+      closeMenu();
     }
   };
 
   const accentColor = isDark ? '#f59e0b' : '#6125c9';
   const lineColor = isDark ? '#f59e0b' : '#ffffff';
 
-  const topLineRotate = openProgress.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-45deg'] });
-  const topLineTranslateY = openProgress.interpolate({ inputRange: [0, 1], outputRange: [0, 4] });
+  const topLineX1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [4, 12] });
+  const topLineY1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [6, 6] });
+  const topLineX2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [20, 6] });
+  const topLineY2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [6, 12] });
 
   const middleLineOpacity = openProgress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
 
-  const bottomLineRotate = openProgress.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '45deg'] });
-  const bottomLineTranslateY = openProgress.interpolate({ inputRange: [0, 1], outputRange: [0, -4] });
+  const bottomLineX1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [4, 18] });
+  const bottomLineY1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [18, 12] });
+  const bottomLineX2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [20, 12] });
+  const bottomLineY2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [18, 6] });
+
+  const AnimatedLine = Animated.createAnimatedComponent(Line);
 
   return (
     <View ref={containerRef} collapsable={false} style={styles.container}>
@@ -134,41 +145,36 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
         ]}
         activeOpacity={0.8}
       >
-        <View style={styles.hamburgerLinesContainer}>
-          <Animated.View
-            style={[
-              styles.hamburgerLine,
-              {
-                backgroundColor: lineColor,
-                transform: [
-                  { rotate: topLineRotate },
-                  { translateY: topLineTranslateY },
-                ],
-              },
-            ]}
+        <Svg width={20} height={20} viewBox="0 0 24 24">
+          <AnimatedLine
+            x1={topLineX1}
+            y1={topLineY1}
+            x2={topLineX2}
+            y2={topLineY2}
+            stroke={lineColor}
+            strokeWidth="2"
+            strokeLinecap="round"
           />
-          <Animated.View
-            style={[
-              styles.hamburgerLine,
-              {
-                backgroundColor: lineColor,
-                opacity: middleLineOpacity,
-              },
-            ]}
+          <AnimatedLine
+            x1="4"
+            y1="12"
+            x2="20"
+            y2="12"
+            stroke={lineColor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            opacity={middleLineOpacity}
           />
-          <Animated.View
-            style={[
-              styles.hamburgerLine,
-              {
-                backgroundColor: lineColor,
-                transform: [
-                  { rotate: bottomLineRotate },
-                  { translateY: bottomLineTranslateY },
-                ],
-              },
-            ]}
+          <AnimatedLine
+            x1={bottomLineX1}
+            y1={bottomLineY1}
+            x2={bottomLineX2}
+            y2={bottomLineY2}
+            stroke={lineColor}
+            strokeWidth="2"
+            strokeLinecap="round"
           />
-        </View>
+        </Svg>
       </TouchableOpacity>
 
       {/* Menu — only visible when open */}
@@ -177,12 +183,12 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
           transparent
           animationType="none"
           visible={isOpen}
-          onRequestClose={() => setIsOpen(false)}
+          onRequestClose={closeMenu}
         >
           {/* Full-screen backdrop to close on outside tap */}
           <TouchableOpacity
             style={StyleSheet.absoluteFill}
-            onPress={() => setIsOpen(false)}
+            onPress={closeMenu}
           />
 
           {/* Menu panel — inside Modal, positioned below button */}
@@ -531,7 +537,7 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
                         onPress={() => {
                           setLanguage(lang.code as any);
                           setLanguageExpanded(false);
-                          setIsOpen(false);
+                          closeMenu();
                         }}
                       >
                         <Text
@@ -589,18 +595,6 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  hamburgerLinesContainer: {
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 3,
-  },
-  hamburgerLine: {
-    width: 20,
-    height: 2,
-    borderRadius: 1,
   },
   menuPanel: {
     position: 'absolute',

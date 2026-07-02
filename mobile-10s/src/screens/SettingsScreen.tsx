@@ -129,25 +129,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <DarkModeToggle />
         </SettingsSection>
 
-        {/* Account Section */}
-        <SettingsSection title={t('settings.account') || 'Account'} emoji="👤">
-          <TouchableOpacity
-            style={styles.settingRow}
-            onPress={() => onNavigate?.('profile')}
-            activeOpacity={0.7}
-          >
-            <View>
-              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                {t('settings.accountInfo') || 'Account Information'}
-              </Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                View and manage your profile
-              </Text>
-            </View>
-            <Text style={[styles.arrow, { color: colors.textMuted }]}>›</Text>
-          </TouchableOpacity>
-        </SettingsSection>
-
         {/* About Section */}
         <SettingsSection title={t('settings.about') || 'About'} emoji="ℹ️">
           <View style={styles.settingRow}>
@@ -184,13 +165,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     marginBottom: 2,
-  },
-  settingDescription: {
-    fontSize: 12,
-    fontWeight: '400',
-  },
-  arrow: {
-    fontSize: 18,
   },
   versionText: {
     fontSize: 14,
