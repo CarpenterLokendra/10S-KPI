@@ -35,8 +35,12 @@ export const authService = {
     return { token, user };
   },
 
-  async register(username: string, password: string) {
-    const response = await apiClient.post('/auth/register', { username, password });
+  async register(username: string, password: string, email?: string) {
+    const payload: any = { username, password };
+    if (email) {
+      payload.email = email;
+    }
+    const response = await apiClient.post('/auth/register', payload);
     const { access_token, user } = response.data;
     const token = access_token;
 
