@@ -12,6 +12,7 @@
     },
     "android": {
       "package": "com.lokendra.mobile10s",
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png",

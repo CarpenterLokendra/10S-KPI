@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '../../hooks/useThemeColors';
+import { BotAvatar } from '../BotAvatar';
+import { BOT_NAMES } from '../../utils/botAvatars';
 
 interface PlayerCardProps {
   username: string;
@@ -73,14 +75,18 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         {/* Avatar and Name Section */}
         <View style={styles.headerRow}>
           {/* Avatar */}
-          {avatarUrl && !isBot ? (
+          {isBot ? (
+            <View style={styles.avatar}>
+              <BotAvatar botName={username} size={40} />
+            </View>
+          ) : avatarUrl ? (
             <Image
               source={{ uri: avatarUrl }}
               style={styles.avatar}
             />
           ) : (
             <LinearGradient
-              colors={isBot && botColor ? [botColor, `${botColor}80`] : ['#6125c9', '#f0b429']}
+              colors={['#6125c9', '#f0b429']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.avatar}

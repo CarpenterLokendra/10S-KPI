@@ -125,7 +125,7 @@ export const ActionButtonBar: React.FC<ActionButtonBarProps> = ({
             activeOpacity={0.7}
           >
             <Text style={[styles.buttonText, { color: isCreator ? '#ffffff' : '#000000' }]}>
-              {isCreator ? '🗑️ DELETE LOBBY' : '🚪 LEAVE LOBBY'}
+              {isCreator ? 'DELETE LOBBY' : 'LEAVE LOBBY'}
             </Text>
           </TouchableOpacity>
         )}

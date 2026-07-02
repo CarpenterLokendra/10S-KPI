@@ -40,6 +40,7 @@ interface LobbyScreenProps {
   onQuickMatchPress?: () => void;
   onNavigate?: (screen: string) => void;
   onHomePress?: () => void;
+  isAuthenticated?: boolean;
 }
 
 export const LobbyScreen: React.FC<LobbyScreenProps> = ({
@@ -51,6 +52,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   onQuickMatchPress,
   onNavigate,
   onHomePress,
+  isAuthenticated = true,
 }) => {
   const { mode } = useThemeStore();
   const { userId } = useUserStore();
@@ -78,19 +80,16 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   }>({});
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = await AsyncStorage.getItem('auth_token');
-      console.log('[LobbyScreen] Auth token on load:', token ? 'EXISTS ✅' : 'MISSING ❌');
-      if (!token) {
-        console.warn('[LobbyScreen] ERROR: No auth token found! User may not be logged in.');
-      }
-    };
-    checkAuth();
+    if (!isAuthenticated) {
+      console.warn('[LobbyScreen] Not authenticated, cannot load lobbies');
+      setError('You must be logged in to view lobbies');
+      return;
+    }
 
     loadLobbies();
     const interval = setInterval(loadLobbies, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated]);
 
   const loadLobbies = async () => {
     if (loadingRef.current) return;

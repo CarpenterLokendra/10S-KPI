@@ -44,13 +44,13 @@ export default function App() {
       const storedUserId = await authService.getStoredUserId();
 
       if (token && storedUserId) {
-        setUserId(storedUserId);
-
-        // Fetch user data from backend to populate user store (including avatar)
         try {
+          // Validate token by fetching user data
           const response = await apiClient.get('/users/me');
           const userData = response.data;
+
           if (userData?.id) {
+            setUserId(storedUserId);
             setUser({
               userId: userData.id,
               username: userData.username,
@@ -58,17 +58,24 @@ export default function App() {
               isPremium: userData.is_premium || false,
               avatarUrl: userData.avatar_url || null,
             });
+            setIsAuthenticated(true);
+            setAppState('lobby');
+          } else {
+            throw new Error('Invalid user data');
           }
-        } catch (err) {
-          console.error('Failed to fetch user data:', err);
+        } catch (err: any) {
+          // Token is invalid or expired
+          console.warn('[App] Token validation failed:', err.message);
+          await authService.logout();
+          setIsAuthenticated(false);
+          setAppState('landing');
         }
-        setIsAuthenticated(true);
-        setAppState('lobby');
       } else {
         setIsAuthenticated(false);
         setAppState('landing');
       }
-    } catch {
+    } catch (err) {
+      console.error('[App] Auth check error:', err);
       setIsAuthenticated(false);
       setAppState('landing');
     }
@@ -222,6 +229,7 @@ export default function App() {
           onQuickMatchPress={() => setAppState('quickmatch-wait')}
           onNavigate={handleNavigate}
           onHomePress={handleHome}
+          isAuthenticated={isAuthenticated}
         />
       );
     }

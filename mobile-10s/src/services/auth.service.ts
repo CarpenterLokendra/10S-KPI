@@ -3,7 +3,19 @@ import apiClient, { setCachedToken } from './api';
 
 export const authService = {
   async login(username: string, password: string) {
-    const response = await apiClient.post('/auth/login', { username, password });
+    console.log('[AuthService] Attempting login to:', '/auth/login');
+    let response;
+    try {
+      response = await apiClient.post('/auth/login', { username, password });
+    } catch (err: any) {
+      console.error('[AuthService] ❌ Login error code:', err?.code);
+      console.error('[AuthService] ❌ Login error message:', err?.message);
+      console.error('[AuthService] ❌ Login response status:', err?.response?.status);
+      console.error('[AuthService] ❌ Login response data:', JSON.stringify(err?.response?.data));
+      console.error('[AuthService] ❌ Login config url:', err?.config?.url);
+      console.error('[AuthService] ❌ Login config baseURL:', err?.config?.baseURL);
+      throw err;
+    }
     const { access_token, user } = response.data;
     const token = access_token;
 
@@ -23,8 +35,8 @@ export const authService = {
     return { token, user };
   },
 
-  async register(username: string, email: string, password: string) {
-    const response = await apiClient.post('/auth/register', { username, email, password });
+  async register(username: string, password: string) {
+    const response = await apiClient.post('/auth/register', { username, password });
     const { access_token, user } = response.data;
     const token = access_token;
 

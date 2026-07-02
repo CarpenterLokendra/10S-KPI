@@ -51,8 +51,8 @@ export default function RegisterForm() {
       newErrors.username = 'Username is required'
     } else if (formData.username.length < 3) {
       newErrors.username = 'Username must be at least 3 characters'
-    } else if (formData.username.length > 10) {
-      newErrors.username = 'Username must be maximum 10 characters'
+    } else if (formData.username.length > 15) {
+      newErrors.username = 'Username must be maximum 15 characters'
     }
 
     if (!formData.email.trim()) {

@@ -21,7 +21,6 @@ interface AuthScreenProps {
 
 interface FormData {
   username: string;
-  email: string;
   password: string;
   confirmPassword: string;
 }
@@ -50,7 +49,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
   const [formData, setFormData] = useState<FormData>({
     username: '',
-    email: '',
     password: '',
     confirmPassword: '',
   });
@@ -71,7 +69,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   useEffect(() => {
     setIsLogin(!isRegisterMode);
     // Clear form data when switching between modes
-    setFormData({ username: '', email: '', password: '', confirmPassword: '' });
+    setFormData({ username: '', password: '', confirmPassword: '' });
     setErrors({});
     setPasswordStrength({ minLength: false, hasUppercase: false, hasLowercase: false, hasNumber: false, hasSpecial: false });
     setShowPassword(false);
@@ -99,18 +97,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       // Only apply length restrictions during registration
       if (formData.username.length < 3) {
         newErrors.username = 'Username must be at least 3 characters';
-      } else if (formData.username.length > 10) {
-        newErrors.username = 'Username must be maximum 10 characters';
+      } else if (formData.username.length > 15) {
+        newErrors.username = 'Username must be maximum 15 characters';
       }
     }
 
     if (!isLogin) {
-      if (!formData.email.trim()) {
-        newErrors.email = 'Email is required';
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        newErrors.email = 'Please enter a valid email';
-      }
-
       if (!formData.password) {
         newErrors.password = 'Password is required';
       } else {
@@ -159,7 +151,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       if (isLogin) {
         response = await authService.login(formData.username, formData.password);
       } else {
-        response = await authService.register(formData.username, formData.email, formData.password);
+        response = await authService.register(formData.username, formData.password);
       }
 
       console.log('[AuthScreen] Login/Register response:', {
@@ -178,16 +170,22 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         });
       }
 
-      alert('✅ Login successful! Token stored.');
       onLoginSuccess();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.detail || (err instanceof Error ? err.message : 'Authentication failed');
       console.error('[AuthScreen] Auth error:', errorMessage);
-      alert('❌ Login failed: ' + errorMessage);
+
       if (isLogin) {
+        alert('❌ Login failed: ' + errorMessage);
         setErrors({ username: errorMessage });
       } else {
-        setErrors({ email: errorMessage });
+        // For registration, check if it's a username error
+        if (errorMessage.toLowerCase().includes('username')) {
+          setErrors({ username: 'Username is already registered, try some other username' });
+        } else {
+          alert('❌ Registration failed: ' + errorMessage);
+          setErrors({ password: errorMessage });
+        }
       }
     } finally {
       setIsLoading(false);
@@ -254,30 +252,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             />
             {errors.username && <Text style={styles.fieldError}>{errors.username}</Text>}
           </View>
-
-          {/* Email Field - Register Only */}
-          {!isLogin && (
-            <View style={styles.fieldContainer}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('auth.email') || 'Email'}</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.15)',
-                    color: isDark ? '#fff' : '#000',
-                    borderColor: errors.email ? '#FF3B30' : (isDark ? 'rgba(100,100,100,0.5)' : '#6125c9'),
-                  },
-                ]}
-                placeholder="Enter your email"
-                placeholderTextColor={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
-                value={formData.email}
-                onChangeText={(text) => handleChange('email', text)}
-                keyboardType="email-address"
-                editable={!isLoading}
-              />
-              {errors.email && <Text style={styles.fieldError}>{errors.email}</Text>}
-            </View>
-          )}
 
           {/* Password Field */}
           <View style={styles.fieldContainer}>

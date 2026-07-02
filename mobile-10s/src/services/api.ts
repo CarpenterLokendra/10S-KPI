@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://192.168.29.254:8000/api/v1';
+const API_BASE_URL = 'http://10.0.2.2:8000/api/v1';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -35,7 +35,7 @@ apiClient.interceptors.request.use(
         config.params.auth_token = token;
         console.log('[APIClient] ✅ Added auth_token to params');
       } else {
-        console.warn('[APIClient] ❌ NO TOKEN AVAILABLE - request will be unauthorized');
+        console.warn('[APIClient] ⚠️ NO TOKEN AVAILABLE - proceeding without auth');
       }
 
       return config;
