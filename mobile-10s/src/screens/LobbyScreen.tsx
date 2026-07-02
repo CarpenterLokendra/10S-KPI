@@ -336,6 +336,16 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
           </Text>
         </View>
 
+        {/* Creator Row */}
+        <View style={styles.infoRow}>
+          <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
+            Creator
+          </Text>
+          <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
+            {item.players?.find((p: any) => p.is_creator)?.username || 'Unknown'}
+          </Text>
+        </View>
+
         {/* Players Row */}
         <View style={styles.infoRow}>
           <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
