@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, forwardRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Image, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Svg, { Line } from 'react-native-svg';
 import { useThemeStore } from '../store/theme.store';
 import { useUserStore } from '../store/user.store';
 import { useThemeColors } from '../hooks/useThemeColors';
@@ -38,6 +39,7 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
   const containerRef = useRef<View>(null);
   const [menuPos, setMenuPos] = useState({ top: 80, left: 12 });
   const [dynamicMenuWidth, setDynamicMenuWidth] = useState(240);
+  const openProgress = useRef(new Animated.Value(0)).current;
 
   // Calculate dynamic menu width based on longest text in current language
   useEffect(() => {
@@ -93,11 +95,30 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
       containerRef.current?.measure((_fx, _fy, _width, height, px, py) => {
         setMenuPos({ top: py + height + 8, left: px });
         setIsOpen(true);
+        Animated.timing(openProgress, { toValue: 1, duration: 300, useNativeDriver: true }).start();
       });
     } else {
       setIsOpen(false);
+      Animated.timing(openProgress, { toValue: 0, duration: 300, useNativeDriver: true }).start();
     }
   };
+
+  const accentColor = isDark ? '#f59e0b' : '#6125c9';
+  const lineColor = isDark ? '#f59e0b' : '#ffffff';
+
+  const topLineX1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [4, 12] });
+  const topLineY1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [6, 6] });
+  const topLineX2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [20, 6] });
+  const topLineY2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [6, 12] });
+
+  const middleLineOpacity = openProgress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+
+  const bottomLineX1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [4, 18] });
+  const bottomLineY1 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [18, 12] });
+  const bottomLineX2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [20, 12] });
+  const bottomLineY2 = openProgress.interpolate({ inputRange: [0, 1], outputRange: [18, 6] });
+
+  const AnimatedLine = Animated.createAnimatedComponent(Line);
 
   return (
     <View ref={containerRef} collapsable={false} style={styles.container}>
@@ -105,31 +126,52 @@ export const HamburgerMenu = forwardRef<TouchableOpacity, HamburgerMenuProps>(
       <TouchableOpacity
         ref={ref}
         onPress={handleToggle}
-        style={styles.hamburgerButton}
+        style={[
+          styles.hamburgerButton,
+          {
+            backgroundColor: isDark ? 'transparent' : '#6125c9',
+            borderWidth: isDark ? 1 : 0,
+            borderColor: isDark ? '#f59e0b' : 'transparent',
+            borderRadius: 8,
+            shadowColor: isDark ? '#f59e0b' : 'transparent',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: isDark ? 0.4 : 0,
+            shadowRadius: isDark ? 12 : 0,
+            elevation: isDark ? 8 : 0,
+          },
+        ]}
+        activeOpacity={0.8}
       >
-        {isOpen ? (
-          <View
-            style={[
-              styles.arrowBox,
-              {
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(97, 37, 201, 0.1)',
-                borderColor: accentColor,
-              },
-            ]}
-          >
-            <MaterialCommunityIcons
-              name="chevron-up"
-              size={20}
-              color={accentColor}
-            />
-          </View>
-        ) : (
-          <>
-            <View style={[styles.hamburgerLine, { backgroundColor: isDark ? '#ffffff' : '#000000' }]} />
-            <View style={[styles.hamburgerLine, { backgroundColor: isDark ? '#ffffff' : '#000000' }]} />
-            <View style={[styles.hamburgerLine, { backgroundColor: isDark ? '#ffffff' : '#000000' }]} />
-          </>
-        )}
+        <Svg width={24} height={24} viewBox="0 0 24 24">
+          <AnimatedLine
+            x1={topLineX1}
+            y1={topLineY1}
+            x2={topLineX2}
+            y2={topLineY2}
+            stroke={lineColor}
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <AnimatedLine
+            x1="4"
+            y1="12"
+            x2="20"
+            y2="12"
+            stroke={lineColor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            opacity={middleLineOpacity}
+          />
+          <AnimatedLine
+            x1={bottomLineX1}
+            y1={bottomLineY1}
+            x2={bottomLineX2}
+            y2={bottomLineY2}
+            stroke={lineColor}
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </Svg>
       </TouchableOpacity>
 
       {/* Menu — only visible when open */}
@@ -546,26 +588,10 @@ const styles = StyleSheet.create({
     zIndex: 200,
   },
   hamburgerButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 6,
     width: 48,
     height: 48,
-  },
-  arrowBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  hamburgerLine: {
-    width: 22,
-    height: 2.5,
-    borderRadius: 1.25,
   },
   menuPanel: {
     position: 'absolute',
