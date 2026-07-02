@@ -259,12 +259,16 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
   const formatTimestamp = (createdAt?: string): string => {
     if (!createdAt) return '';
-    const date = new Date(createdAt);
+    // Ensure the timestamp is treated as UTC by adding Z suffix if missing
+    const isoString = createdAt.includes('Z') ? createdAt : `${createdAt}Z`;
+    const date = new Date(isoString);
     const now = new Date();
+    
+    // Calculate difference in milliseconds
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return 'just now';
     if (diffMins < 60) return `${diffMins}m ago`;
@@ -326,16 +330,6 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
           </View>
         </View>
 
-        {/* Game Type Row */}
-        <View style={styles.infoRow}>
-          <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
-            {t('lobby.gameType')}
-          </Text>
-          <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-            {item.is_private ? `🔒 ${t('lobby.private')}` : t('lobby.public')}
-          </Text>
-        </View>
-
         {/* Creator Row */}
         <View style={styles.infoRow}>
           <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
@@ -343,6 +337,16 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
           </Text>
           <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
             {item.players?.find((p: any) => p.is_creator)?.username || 'Unknown'}
+          </Text>
+        </View>
+
+        {/* Game Type Row */}
+        <View style={styles.infoRow}>
+          <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
+            {t('lobby.gameType')}
+          </Text>
+          <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
+            {item.is_private ? `🔒 ${t('lobby.private')}` : t('lobby.public')}
           </Text>
         </View>
 
