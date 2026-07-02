@@ -22,12 +22,12 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
     <View style={styles.container}>
       <View style={styles.header}>
         {emoji && <Text style={styles.emoji}>{emoji}</Text>}
-        <Text style={[styles.title, { color: isDark ? '#f0b429' : '#6125c9' }]}>
+        <Text style={[styles.title, { color: colors.headingAccent }]}>
           {title}
         </Text>
       </View>
       {description && (
-        <Text style={[styles.description, { color: isDark ? '#94a3b8' : '#666666' }]}>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>
           {description}
         </Text>
       )}
@@ -35,12 +35,8 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
         style={[
           styles.content,
           {
-            backgroundColor: isDark
-              ? 'rgba(15, 23, 42, 0.6)'
-              : 'rgba(255, 255, 255, 0.8)',
-            borderColor: isDark
-              ? 'rgba(255, 255, 255, 0.1)'
-              : '#e5e7eb',
+            backgroundColor: colors.cardBg,
+            borderColor: colors.cardBorder,
           },
         ]}
       >

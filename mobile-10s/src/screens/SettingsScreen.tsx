@@ -1,14 +1,16 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useThemeStore } from '../store/theme.store';
+import { useThemeStore, type Language, type SoundTheme } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { DarkModeToggle } from '../components/DarkModeToggle';
 import { SoundToggle } from '../components/SoundToggle';
-import { LanguageToggle } from '../components/LanguageToggle';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { SettingsSection } from '../components/SettingsSection';
+import { OptionGrid, type OptionGridItem } from '../components/OptionGrid';
+import { VolumeSlider } from '../components/VolumeSlider';
 
 interface SettingsScreenProps {
   onBackPress: () => void;
@@ -17,129 +19,170 @@ interface SettingsScreenProps {
   onHomePress?: () => void;
 }
 
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBackPress, onLogout, onNavigate, onHomePress }) => {
-  const { mode } = useThemeStore();
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({
+  onBackPress,
+  onLogout,
+  onNavigate,
+  onHomePress,
+}) => {
+  const { language, setLanguage, soundTheme, setSoundTheme, soundVolume, setSoundVolume } =
+    useThemeStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
-  const isDark = colors.isDark;
+
+  const languages: OptionGridItem[] = [
+    { code: 'en', emoji: '🇬🇧', label: 'English', sublabel: 'English' },
+    { code: 'hi', emoji: '🇮🇳', label: 'हिन्दी', sublabel: 'Hindi' },
+    { code: 'bn', emoji: '🇮🇳', label: 'বাংলা', sublabel: 'Bengali' },
+    { code: 'ta', emoji: '🇮🇳', label: 'தமிழ்', sublabel: 'Tamil' },
+    { code: 'te', emoji: '🇮🇳', label: 'తెలుగు', sublabel: 'Telugu' },
+    { code: 'ml', emoji: '🇮🇳', label: 'മലയാളം', sublabel: 'Malayalam' },
+    { code: 'kn', emoji: '🇮🇳', label: 'ಕನ್ನಡ', sublabel: 'Kannada' },
+    { code: 'bho', emoji: '🇮🇳', label: 'भोजपुरी', sublabel: 'Bhojpuri' },
+  ];
+
+  const soundThemes: OptionGridItem[] = [
+    {
+      code: 'classic',
+      emoji: '8️⃣',
+      label: 'Classic',
+      sublabel: 'Retro arcade-style beeps',
+    },
+    {
+      code: 'modern',
+      emoji: '🎹',
+      label: 'Modern',
+      sublabel: 'Smooth synth sounds',
+    },
+    {
+      code: 'nature',
+      emoji: '🌿',
+      label: 'Nature',
+      sublabel: 'Gentle natural tones',
+    },
+    {
+      code: 'magical',
+      emoji: '✨',
+      label: 'Magical',
+      sublabel: 'Mystical enchanted sounds',
+    },
+    {
+      code: 'cyberpunk',
+      emoji: '🤖',
+      label: 'Cyberpunk',
+      sublabel: 'Electronic futuristic vibes',
+    },
+  ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       <TopControlsBar
         isAuthenticated={true}
-        title={t('settings.title')}
+        title={t('settings.title') || 'Settings'}
         onBackPress={onBackPress}
         onNavigate={onNavigate}
         onLogout={onLogout}
         onHomePress={onHomePress}
         showBackButton={true}
+        showGuideButton={false}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Appearance Section */}
-        <Section title="Appearance" isDark={isDark}>
-          <DarkModeToggle />
-          <ThemeToggle />
-        </Section>
-
-        {/* Sound & Haptics Section */}
-        <Section title="Sound & Haptics" isDark={isDark}>
+        {/* Audio Section */}
+        <SettingsSection title={t('settings.audio') || 'Audio'} emoji="🔊">
           <SoundToggle />
-        </Section>
+          <VolumeSlider volume={soundVolume} onVolumeChange={setSoundVolume} />
+        </SettingsSection>
 
         {/* Language Section */}
-        <Section title="Language" isDark={isDark}>
-          <LanguageToggle />
-        </Section>
+        <SettingsSection title={t('settings.language') || 'Language'} emoji="🌐">
+          <OptionGrid
+            items={languages}
+            selectedCode={language}
+            onSelect={(code) => setLanguage(code as Language)}
+            columns={2}
+          />
+        </SettingsSection>
+
+        {/* Sound Theme Section */}
+        <SettingsSection
+          title={t('settings.soundTheme') || 'Sound Theme'}
+          emoji="🎵"
+          description={t('settings.soundThemeDesc') || 'Choose your sound pack'}
+        >
+          <OptionGrid
+            items={soundThemes}
+            selectedCode={soundTheme}
+            onSelect={(code) => setSoundTheme(code as SoundTheme)}
+            columns={2}
+          />
+          <Text
+            style={[
+              styles.soundNote,
+              {
+                color: colors.textSecondary,
+              },
+            ]}
+          >
+            💬 Audio playback coming in next release
+          </Text>
+        </SettingsSection>
+
+        {/* Visual Theme Section */}
+        <SettingsSection title={t('settings.visualTheme') || 'Visual Theme'} emoji="🎨">
+          <ThemeToggle />
+        </SettingsSection>
+
+        {/* Theme Mode Section */}
+        <SettingsSection title="Theme Mode" emoji="🌙">
+          <DarkModeToggle />
+        </SettingsSection>
 
         {/* Account Section */}
-        <Section title="Account" isDark={isDark}>
-          <View style={styles.settingRow}>
+        <SettingsSection title={t('settings.account') || 'Account'} emoji="👤">
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => onNavigate?.('profile')}
+            activeOpacity={0.7}
+          >
             <View>
               <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                Account Information
+                {t('settings.accountInfo') || 'Account Information'}
               </Text>
               <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
                 View and manage your profile
               </Text>
             </View>
             <Text style={[styles.arrow, { color: colors.textMuted }]}>›</Text>
-          </View>
-        </Section>
+          </TouchableOpacity>
+        </SettingsSection>
 
         {/* About Section */}
-        <Section title="About" isDark={isDark}>
+        <SettingsSection title={t('settings.about') || 'About'} emoji="ℹ️">
           <View style={styles.settingRow}>
             <View>
-              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>Version</Text>
+              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
+                {t('settings.version') || 'Version'}
+              </Text>
             </View>
-            <Text style={[styles.versionText, { color: colors.textSecondary }]}>
-              1.0.0
-            </Text>
+            <Text style={[styles.versionText, { color: colors.textSecondary }]}>1.0.0</Text>
           </View>
-          <View
-            style={[
-              styles.divider,
-              { borderBottomColor: isDark ? 'rgba(240,180,41,0.1)' : 'rgba(240,180,41,0.2)' },
-            ]}
-          />
-          <View style={styles.settingRow}>
-            <View>
-              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>Privacy Policy</Text>
-            </View>
-            <Text style={[styles.arrow, { color: colors.textMuted }]}>›</Text>
-          </View>
-          <View
-            style={[
-              styles.divider,
-              { borderBottomColor: isDark ? 'rgba(240,180,41,0.1)' : 'rgba(240,180,41,0.2)' },
-            ]}
-          />
-          <View style={styles.settingRow}>
-            <View>
-              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>Terms of Service</Text>
-            </View>
-            <Text style={[styles.arrow, { color: colors.textMuted }]}>›</Text>
-          </View>
-        </Section>
+        </SettingsSection>
 
         {/* Logout Section */}
         <View style={styles.logoutContainer}>
           <TouchableOpacity
             style={[styles.logoutButton, { borderColor: '#ff6b6b' }]}
             onPress={onLogout}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.logoutText, { color: '#ff6b6b' }]}>Logout</Text>
+            <Text style={[styles.logoutText, { color: '#ff6b6b' }]}>
+              {t('settings.logout') || 'Logout'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-};
-
-interface SectionProps {
-  title: string;
-  isDark: boolean;
-  children: React.ReactNode;
-}
-
-const Section: React.FC<SectionProps> = ({ title, isDark, children }) => {
-  const colors = useThemeColors();
-  return (
-    <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.headingAccent }]}>{title}</Text>
-    <View
-      style={[
-        styles.sectionContent,
-        {
-          backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)',
-          borderColor: isDark ? 'rgba(240,180,41,0.1)' : 'rgba(240,180,41,0.2)',
-        },
-      ]}
-    >
-      {children}
-    </View>
-  </View>
   );
 };
 
@@ -148,54 +191,43 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-  },
-  section: {
-    marginBottom: 28,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  sectionContent: {
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingVertical: 4,
-    overflow: 'hidden',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingBottom: 40,
   },
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
   },
   settingLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   settingDescription: {
     fontSize: 12,
     fontWeight: '400',
   },
   arrow: {
-    fontSize: 20,
+    fontSize: 18,
   },
   versionText: {
     fontSize: 14,
     fontWeight: '500',
   },
-  divider: {
-    borderBottomWidth: 1,
-    marginHorizontal: 16,
+  soundNote: {
+    marginHorizontal: 12,
+    marginVertical: 12,
+    paddingVertical: 8,
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   logoutContainer: {
-    marginBottom: 40,
+    marginBottom: 20,
   },
   logoutButton: {
     paddingVertical: 14,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useThemeStore, type BackgroundTheme } from '../store/theme.store';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 const THEMES: { code: BackgroundTheme; name: string; icon: string }[] = [
   { code: 'static', name: 'Static', icon: '⬛' },
@@ -8,12 +9,13 @@ const THEMES: { code: BackgroundTheme; name: string; icon: string }[] = [
 ];
 
 export const ThemeToggle: React.FC = () => {
-  const { backgroundTheme, setBackgroundTheme, mode } = useThemeStore();
-  const isDark = mode === 'dark';
+  const { backgroundTheme, setBackgroundTheme } = useThemeStore();
+  const colors = useThemeColors();
+  const isDark = colors.isDark;
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: isDark ? '#fff' : '#333' }]}>
+      <Text style={[styles.label, { color: colors.textPrimary }]}>
         Background Theme
       </Text>
       <View style={styles.buttonGroup}>
@@ -22,13 +24,13 @@ export const ThemeToggle: React.FC = () => {
             key={code}
             style={[
               styles.button,
-              backgroundTheme === code && styles.activeButton,
+              backgroundTheme === code && {
+                borderColor: colors.accentPrimary,
+              },
               {
                 backgroundColor: backgroundTheme === code
-                  ? '#f0b429'
-                  : isDark
-                  ? 'rgba(255,255,255,0.1)'
-                  : 'rgba(0,0,0,0.05)',
+                  ? colors.accentPrimary
+                  : colors.cardBg,
               },
             ]}
             onPress={() => setBackgroundTheme(code)}
@@ -40,7 +42,7 @@ export const ThemeToggle: React.FC = () => {
                 {
                   color: backgroundTheme === code
                     ? isDark ? '#000' : '#fff'
-                    : isDark ? '#fff' : '#333',
+                    : colors.textPrimary,
                   fontWeight: backgroundTheme === code ? '700' : '500',
                 },
               ]}

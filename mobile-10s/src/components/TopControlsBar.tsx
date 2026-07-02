@@ -21,6 +21,7 @@ interface TopControlsBarProps {
   onCoachPress?: () => void;
   onButtonRefsReady?: (refs: { menuBtn?: React.RefObject<View>; helpBtn?: React.RefObject<View> }) => void;
   showBackButton?: boolean;
+  showGuideButton?: boolean;
 }
 
 export const TopControlsBar: React.FC<TopControlsBarProps> = ({
@@ -34,6 +35,7 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
   onCoachPress,
   onButtonRefsReady,
   showBackButton = false,
+  showGuideButton = true,
 }) => {
   const colors = useThemeColors();
   const { t } = useTranslation();
@@ -280,24 +282,26 @@ export const TopControlsBar: React.FC<TopControlsBarProps> = ({
         {/* Right — Guide + Home (only when authenticated) */}
         {isAuthenticated && (
           <View style={styles.rightButtons}>
-            <TouchableOpacity
-              ref={helpBtnRef}
-              style={[
-                styles.homeButton,
-                {
-                  borderColor: isDark ? 'rgba(240,180,41,0.3)' : '#6125c9',
-                },
-              ]}
-              onPress={() => {
-                if (page === 'lobby' && onCoachPress) {
-                  onCoachPress();
-                } else {
-                  setShowGuide(true);
-                }
-              }}
-            >
-              <Text style={[styles.guideButtonText, { color: isDark ? '#fbbf24' : '#6125c9' }]}>?</Text>
-            </TouchableOpacity>
+            {showGuideButton && (
+              <TouchableOpacity
+                ref={helpBtnRef}
+                style={[
+                  styles.homeButton,
+                  {
+                    borderColor: isDark ? 'rgba(240,180,41,0.3)' : '#6125c9',
+                  },
+                ]}
+                onPress={() => {
+                  if (page === 'lobby' && onCoachPress) {
+                    onCoachPress();
+                  } else {
+                    setShowGuide(true);
+                  }
+                }}
+              >
+                <Text style={[styles.guideButtonText, { color: isDark ? '#fbbf24' : '#6125c9' }]}>?</Text>
+              </TouchableOpacity>
+            )}
 
             {showBackButton && onBackPress ? (
               <TouchableOpacity

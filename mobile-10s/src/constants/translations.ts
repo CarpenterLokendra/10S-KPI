@@ -150,12 +150,57 @@ export const translations = {
     'profile.games': 'Games',
     'profile.back': 'Back',
     'settings.title': 'Settings',
+    'settings.audio': 'Audio',
     'settings.appearance': 'Appearance',
     'settings.darkMode': 'Dark Mode',
     'settings.backgroundTheme': 'Background Theme',
+    'settings.visualTheme': 'Visual Theme',
     'settings.theme': 'Theme',
     'settings.language': 'Language',
     'settings.sound': 'Sound Effects',
+
+    'settings.audio': 'Audio',
+
+    'settings.visualTheme': 'Visual Theme',
+
+    'settings.soundTheme': 'Sound Theme',
+
+    'settings.soundThemeDesc': 'Choose your sound pack',
+
+    'settings.volume': 'Volume',
+
+    'settings.classic': 'Classic',
+
+    'settings.classicDesc': 'Retro arcade-style beeps',
+
+    'settings.modern': 'Modern',
+
+    'settings.modernDesc': 'Smooth synth sounds',
+
+    'settings.nature': 'Nature',
+
+    'settings.natureDesc': 'Gentle natural tones',
+
+    'settings.magical': 'Magical',
+
+    'settings.magicalDesc': 'Mystical enchanted sounds',
+
+    'settings.cyberpunk': 'Cyberpunk',
+
+    'settings.cyberpunkDesc': 'Electronic futuristic vibes',
+    'settings.soundTheme': 'Sound Theme',
+    'settings.soundThemeDesc': 'Choose your sound pack',
+    'settings.volume': 'Volume',
+    'settings.classic': 'Classic',
+    'settings.classicDesc': 'Retro arcade-style beeps',
+    'settings.modern': 'Modern',
+    'settings.modernDesc': 'Smooth synth sounds',
+    'settings.nature': 'Nature',
+    'settings.natureDesc': 'Gentle natural tones',
+    'settings.magical': 'Magical',
+    'settings.magicalDesc': 'Mystical enchanted sounds',
+    'settings.cyberpunk': 'Cyberpunk',
+    'settings.cyberpunkDesc': 'Electronic futuristic vibes',
     'settings.account': 'Account',
     'settings.accountInfo': 'Account Information',
     'settings.about': 'About',
@@ -527,6 +572,36 @@ export const translations = {
     'settings.theme': 'थीम',
     'settings.language': 'भाषा',
     'settings.sound': 'ध्वनि प्रभाव',
+
+    'settings.audio': 'Audio',
+
+    'settings.visualTheme': 'Visual Theme',
+
+    'settings.soundTheme': 'Sound Theme',
+
+    'settings.soundThemeDesc': 'Choose your sound pack',
+
+    'settings.volume': 'Volume',
+
+    'settings.classic': 'Classic',
+
+    'settings.classicDesc': 'Retro arcade-style beeps',
+
+    'settings.modern': 'Modern',
+
+    'settings.modernDesc': 'Smooth synth sounds',
+
+    'settings.nature': 'Nature',
+
+    'settings.natureDesc': 'Gentle natural tones',
+
+    'settings.magical': 'Magical',
+
+    'settings.magicalDesc': 'Mystical enchanted sounds',
+
+    'settings.cyberpunk': 'Cyberpunk',
+
+    'settings.cyberpunkDesc': 'Electronic futuristic vibes',
     'settings.account': 'खाता',
     'settings.accountInfo': 'खाता जानकारी',
     'settings.about': 'के बारे में',
@@ -801,6 +876,36 @@ export const translations = {
     'settings.theme': 'থিম',
     'settings.language': 'ভাষা',
     'settings.sound': 'সাউন্ড ইফেক্টস',
+
+    'settings.audio': 'Audio',
+
+    'settings.visualTheme': 'Visual Theme',
+
+    'settings.soundTheme': 'Sound Theme',
+
+    'settings.soundThemeDesc': 'Choose your sound pack',
+
+    'settings.volume': 'Volume',
+
+    'settings.classic': 'Classic',
+
+    'settings.classicDesc': 'Retro arcade-style beeps',
+
+    'settings.modern': 'Modern',
+
+    'settings.modernDesc': 'Smooth synth sounds',
+
+    'settings.nature': 'Nature',
+
+    'settings.natureDesc': 'Gentle natural tones',
+
+    'settings.magical': 'Magical',
+
+    'settings.magicalDesc': 'Mystical enchanted sounds',
+
+    'settings.cyberpunk': 'Cyberpunk',
+
+    'settings.cyberpunkDesc': 'Electronic futuristic vibes',
     'settings.account': 'অ্যাকাউন্ট',
     'settings.accountInfo': 'অ্যাকাউন্ট তথ্য',
     'settings.about': 'সম্পর্কে',
@@ -1056,6 +1161,36 @@ export const translations = {
     'settings.theme': 'தீம்',
     'settings.language': 'மொழி',
     'settings.sound': 'ஒலி விளைவுகள்',
+
+    'settings.audio': 'Audio',
+
+    'settings.visualTheme': 'Visual Theme',
+
+    'settings.soundTheme': 'Sound Theme',
+
+    'settings.soundThemeDesc': 'Choose your sound pack',
+
+    'settings.volume': 'Volume',
+
+    'settings.classic': 'Classic',
+
+    'settings.classicDesc': 'Retro arcade-style beeps',
+
+    'settings.modern': 'Modern',
+
+    'settings.modernDesc': 'Smooth synth sounds',
+
+    'settings.nature': 'Nature',
+
+    'settings.natureDesc': 'Gentle natural tones',
+
+    'settings.magical': 'Magical',
+
+    'settings.magicalDesc': 'Mystical enchanted sounds',
+
+    'settings.cyberpunk': 'Cyberpunk',
+
+    'settings.cyberpunkDesc': 'Electronic futuristic vibes',
     'settings.account': 'கணக்கு',
     'settings.accountInfo': 'கணக்கு தகவல்',
     'settings.about': 'பற்றி',
@@ -1311,6 +1446,36 @@ export const translations = {
     'settings.theme': 'థీమ్',
     'settings.language': 'భాష',
     'settings.sound': 'ధ్వని ప్రభావాలు',
+
+    'settings.audio': 'Audio',
+
+    'settings.visualTheme': 'Visual Theme',
+
+    'settings.soundTheme': 'Sound Theme',
+
+    'settings.soundThemeDesc': 'Choose your sound pack',
+
+    'settings.volume': 'Volume',
+
+    'settings.classic': 'Classic',
+
+    'settings.classicDesc': 'Retro arcade-style beeps',
+
+    'settings.modern': 'Modern',
+
+    'settings.modernDesc': 'Smooth synth sounds',
+
+    'settings.nature': 'Nature',
+
+    'settings.natureDesc': 'Gentle natural tones',
+
+    'settings.magical': 'Magical',
+
+    'settings.magicalDesc': 'Mystical enchanted sounds',
+
+    'settings.cyberpunk': 'Cyberpunk',
+
+    'settings.cyberpunkDesc': 'Electronic futuristic vibes',
     'settings.account': 'ఖాతా',
     'settings.accountInfo': 'ఖాత ఖాతా సమాచారం',
     'settings.about': 'గురించి',
@@ -1550,6 +1715,36 @@ export const translations = {
     'settings.theme': 'തീം',
     'settings.language': 'ഭാഷ',
     'settings.sound': 'സൗണ്ട് ഇഫക്റ്റുകൾ',
+
+    'settings.audio': 'Audio',
+
+    'settings.visualTheme': 'Visual Theme',
+
+    'settings.soundTheme': 'Sound Theme',
+
+    'settings.soundThemeDesc': 'Choose your sound pack',
+
+    'settings.volume': 'Volume',
+
+    'settings.classic': 'Classic',
+
+    'settings.classicDesc': 'Retro arcade-style beeps',
+
+    'settings.modern': 'Modern',
+
+    'settings.modernDesc': 'Smooth synth sounds',
+
+    'settings.nature': 'Nature',
+
+    'settings.natureDesc': 'Gentle natural tones',
+
+    'settings.magical': 'Magical',
+
+    'settings.magicalDesc': 'Mystical enchanted sounds',
+
+    'settings.cyberpunk': 'Cyberpunk',
+
+    'settings.cyberpunkDesc': 'Electronic futuristic vibes',
     'settings.account': 'അക്കൌണ്ട്',
     'settings.accountInfo': 'അക്കൌണ്ട് വിവരങ്ങൾ',
     'settings.about': 'കുറിച്ച്',
@@ -1806,6 +2001,36 @@ export const translations = {
     'settings.theme': 'ಥೀಮ್',
     'settings.language': 'ಭಾಷೆ',
     'settings.sound': 'ಧ್ವನಿ ಪರಿಣಾಮಗಳು',
+
+    'settings.audio': 'Audio',
+
+    'settings.visualTheme': 'Visual Theme',
+
+    'settings.soundTheme': 'Sound Theme',
+
+    'settings.soundThemeDesc': 'Choose your sound pack',
+
+    'settings.volume': 'Volume',
+
+    'settings.classic': 'Classic',
+
+    'settings.classicDesc': 'Retro arcade-style beeps',
+
+    'settings.modern': 'Modern',
+
+    'settings.modernDesc': 'Smooth synth sounds',
+
+    'settings.nature': 'Nature',
+
+    'settings.natureDesc': 'Gentle natural tones',
+
+    'settings.magical': 'Magical',
+
+    'settings.magicalDesc': 'Mystical enchanted sounds',
+
+    'settings.cyberpunk': 'Cyberpunk',
+
+    'settings.cyberpunkDesc': 'Electronic futuristic vibes',
     'settings.account': 'ಖಾತೆ',
     'settings.accountInfo': 'ಖಾತೆ ಮಾಹಿತಿ',
     'settings.about': 'ಕುರಿತು',
@@ -2046,6 +2271,36 @@ export const translations = {
     'settings.theme': 'थीम',
     'settings.language': 'भाषा',
     'settings.sound': 'ध्वनि प्रभाव',
+
+    'settings.audio': 'Audio',
+
+    'settings.visualTheme': 'Visual Theme',
+
+    'settings.soundTheme': 'Sound Theme',
+
+    'settings.soundThemeDesc': 'Choose your sound pack',
+
+    'settings.volume': 'Volume',
+
+    'settings.classic': 'Classic',
+
+    'settings.classicDesc': 'Retro arcade-style beeps',
+
+    'settings.modern': 'Modern',
+
+    'settings.modernDesc': 'Smooth synth sounds',
+
+    'settings.nature': 'Nature',
+
+    'settings.natureDesc': 'Gentle natural tones',
+
+    'settings.magical': 'Magical',
+
+    'settings.magicalDesc': 'Mystical enchanted sounds',
+
+    'settings.cyberpunk': 'Cyberpunk',
+
+    'settings.cyberpunkDesc': 'Electronic futuristic vibes',
     'settings.account': 'खाता',
     'settings.accountInfo': 'खाता जानकारी',
     'settings.about': 'के बारे में',

@@ -1,18 +1,20 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useThemeStore } from '../store/theme.store';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 export const DarkModeToggle: React.FC = () => {
   const { mode, setMode } = useThemeStore();
+  const colors = useThemeColors();
   const isDark = mode === 'dark';
 
   return (
     <View style={styles.container}>
       <View style={styles.labelContainer}>
-        <Text style={[styles.label, { color: isDark ? '#fff' : '#333' }]}>
+        <Text style={[styles.label, { color: colors.textPrimary }]}>
           Dark Mode
         </Text>
-        <Text style={[styles.status, { color: isDark ? '#aaa' : '#666' }]}>
+        <Text style={[styles.status, { color: colors.textSecondary }]}>
           {isDark ? 'Enabled' : 'Disabled'}
         </Text>
       </View>
@@ -20,7 +22,7 @@ export const DarkModeToggle: React.FC = () => {
         style={[
           styles.toggleButton,
           {
-            backgroundColor: isDark ? '#f0b429' : 'rgba(100,150,220,0.3)',
+            backgroundColor: isDark ? colors.accentPrimary : colors.accentPrimary,
           },
         ]}
         onPress={() => setMode(isDark ? 'light' : 'dark')}

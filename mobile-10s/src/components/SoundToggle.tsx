@@ -1,18 +1,20 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useThemeStore } from '../store/theme.store';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 export const SoundToggle: React.FC = () => {
-  const { soundEnabled, setSoundEnabled, mode } = useThemeStore();
-  const isDark = mode === 'dark';
+  const { soundEnabled, setSoundEnabled } = useThemeStore();
+  const colors = useThemeColors();
+  const isDark = colors.isDark;
 
   return (
     <View style={styles.container}>
       <View style={styles.labelContainer}>
-        <Text style={[styles.label, { color: isDark ? '#fff' : '#333' }]}>
+        <Text style={[styles.label, { color: colors.textPrimary }]}>
           Sound Effects
         </Text>
-        <Text style={[styles.status, { color: isDark ? '#aaa' : '#666' }]}>
+        <Text style={[styles.status, { color: colors.textSecondary }]}>
           {soundEnabled ? 'On' : 'Off'}
         </Text>
       </View>
@@ -20,7 +22,7 @@ export const SoundToggle: React.FC = () => {
         style={[
           styles.toggleButton,
           {
-            backgroundColor: soundEnabled ? '#f0b429' : 'rgba(255,0,0,0.3)',
+            backgroundColor: soundEnabled ? colors.accentPrimary : colors.accentPrimary,
           },
         ]}
         onPress={() => setSoundEnabled(!soundEnabled)}
