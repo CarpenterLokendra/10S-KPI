@@ -38,20 +38,16 @@ export const leaderboardService = {
 
       const normalizedData = {
         ...response.data,
-        players: response.data.players.map((player: any, index: number) => {
-          const totalGames = player.games_played || player.total_games || 0;
-          const totalWins = player.games_won || player.total_wins || 0;
-          const totalPoints = player.total_points || player.total_points_scored || 0;
-          const rank = player.rank || (offset + index + 1);
-          return {
-            ...player,
-            rank,
-            total_games: totalGames,
-            total_wins: totalWins,
-            total_points: totalPoints,
-            win_rate: player.win_rate ?? (totalGames > 0 ? totalWins / totalGames : 0),
-          };
-        }),
+        players: response.data.players.map((player: any) => ({
+          user_id: player.user_id,
+          username: player.username || `Player ${player.user_id.slice(0, 8)}`,
+          rank: player.rank,
+          rating: player.rating,
+          total_games: player.total_games || 0,
+          total_wins: player.total_wins || 0,
+          total_points: player.total_points_scored || 0,
+          win_rate: typeof player.win_rate === 'number' ? player.win_rate : 0,
+        })),
       };
 
       return normalizedData;

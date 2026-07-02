@@ -71,7 +71,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
       {/* Rating */}
       <Text style={{ fontSize: 16, color: colors.textSecondary, marginBottom: 4 }}>
-        Rating: <Text style={{ fontWeight: '700', color: colors.headingAccent }}>{user.rating.toFixed(0)}</Text>
+        Rating: <Text style={{ fontWeight: '700', color: colors.headingAccent }}>{(user.rating ?? 0).toFixed(0)}</Text>
       </Text>
 
       {/* Join Date */}
