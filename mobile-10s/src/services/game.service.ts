@@ -1,6 +1,13 @@
 import apiClient from './api';
 
 export const gameService = {
+  async quickStart(botDifficulty: 'easy' | 'medium' | 'hard' = 'medium') {
+    const response = await apiClient.post('/games/quick-start', {
+      bot_difficulty: botDifficulty,
+    });
+    return response.data;
+  },
+
   async getGame(gameId: string) {
     const response = await apiClient.get(`/games/${gameId}`);
     return response.data;

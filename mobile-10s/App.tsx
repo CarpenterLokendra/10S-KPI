@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { LandingScreen } from './src/screens/LandingScreen';
@@ -9,14 +9,17 @@ import { ResultsScreen } from './src/screens/ResultsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
-import { QuickMatchWaitingScreen } from './src/screens/QuickMatchWaitingScreen';
 import { LobbyRoomScreen } from './src/screens/LobbyRoomScreen';
+import { BotDifficultyModal } from './src/components/lobby/BotDifficultyModal';
 import { authService } from './src/services/auth.service';
+import { gameService } from './src/services/game.service';
 import { useThemeStore } from './src/store/theme.store';
 import { useUserStore } from './src/store/user.store';
 import { AnimatedBackground } from './src/components/AnimatedBackground';
+import { useTranslation } from './src/hooks/useTranslation';
+import { useGameStore } from './src/store/game.store';
 
-type AppState = 'loading' | 'landing' | 'auth' | 'register' | 'lobby' | 'lobby-room' | 'quickmatch-wait' | 'game' | 'results' | 'leaderboard' | 'profile' | 'settings';
+type AppState = 'loading' | 'landing' | 'auth' | 'register' | 'lobby' | 'lobby-room' | 'game' | 'results' | 'leaderboard' | 'profile' | 'settings';
 
 import apiClient from './src/services/api';
 
@@ -28,8 +31,11 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
+  const [showQuickMatchModal, setShowQuickMatchModal] = useState(false);
+  const [quickMatchLoading, setQuickMatchLoading] = useState(false);
   const { loadSettings } = useThemeStore();
   const { setUser } = useUserStore();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const initApp = async () => {
@@ -60,7 +66,7 @@ export default function App() {
               avatarUrl: userData.avatar_url || null,
             });
             setIsAuthenticated(true);
-            setAppState('lobby');
+            setAppState('landing');
           } else {
             throw new Error('Invalid user data');
           }
@@ -100,7 +106,28 @@ export default function App() {
   };
 
   const handleQuickMatch = () => {
-    setAppState('quickmatch-wait');
+    console.log('[App] Quick match button clicked, opening modal');
+    setShowQuickMatchModal(true);
+  };
+
+  const handleQuickMatchConfirm = async (difficulty: 'easy' | 'medium' | 'hard') => {
+    try {
+      setQuickMatchLoading(true);
+      const data = await gameService.quickStart(difficulty);
+      setShowQuickMatchModal(false);
+      setQuickMatchLoading(false);
+
+      // Initialize game store with the game ID and difficulty
+      const gameStore = useGameStore.getState();
+      gameStore.initGame(data.game_id, difficulty);
+
+      setGameId(data.game_id);
+      setAppState('game');
+    } catch (err) {
+      console.error('[App] Quick match failed:', err);
+      setQuickMatchLoading(false);
+      Alert.alert('Error', 'Failed to start quick match. Please try again.');
+    }
   };
 
   const handleGameStart = (idOrCode: string) => {
@@ -227,7 +254,7 @@ export default function App() {
           onLeaderboardPress={() => setAppState('leaderboard')}
           onProfilePress={() => setAppState('profile')}
           onSettingsPress={() => setAppState('settings')}
-          onQuickMatchPress={() => setAppState('quickmatch-wait')}
+          onQuickMatchPress={handleQuickMatch}
           onNavigate={handleNavigate}
           onHomePress={handleHome}
           isAuthenticated={isAuthenticated}
@@ -297,19 +324,6 @@ export default function App() {
       );
     }
 
-    if (appState === 'quickmatch-wait') {
-      return (
-        <QuickMatchWaitingScreen
-          onCancel={() => setAppState('lobby')}
-          onGameFound={(gId) => {
-            setGameId(gId);
-            setAppState('game');
-          }}
-          onHomePress={handleHome}
-        />
-      );
-    }
-
     if (appState === 'game' && gameId) {
       return <GameScreen gameId={gameId} onGameEnd={handleGameEnd} onHomePress={handleHome} />;
     }
@@ -335,6 +349,14 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AnimatedBackground>{screenContent}</AnimatedBackground>
+      <BotDifficultyModal
+        visible={showQuickMatchModal}
+        onClose={() => setShowQuickMatchModal(false)}
+        onConfirm={handleQuickMatchConfirm}
+        title={`⚡ ${t('quickmatch.chooseDifficulty')}`}
+        confirmLabel={t('quickmatch.startGame')}
+        loading={quickMatchLoading}
+      />
     </SafeAreaProvider>
   );
 }

@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   Modal,
   StyleSheet,
+  Pressable,
 } from 'react-native';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -13,20 +14,29 @@ interface BotDifficultyModalProps {
   visible: boolean;
   onClose: () => void;
   onConfirm: (difficulty: 'easy' | 'medium' | 'hard') => void;
+  title?: string;
+  confirmLabel?: string;
+  loading?: boolean;
 }
 
 export const BotDifficultyModal: React.FC<BotDifficultyModalProps> = ({
   visible,
   onClose,
   onConfirm,
+  title,
+  confirmLabel,
+  loading = false,
 }) => {
+  console.log('[BotDifficultyModal] Rendering with visible:', visible);
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
 
   const handleConfirm = () => {
-    onConfirm(selectedDifficulty);
+    if (!loading) {
+      onConfirm(selectedDifficulty);
+    }
   };
 
   const difficulties = [
@@ -43,120 +53,135 @@ export const BotDifficultyModal: React.FC<BotDifficultyModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={[styles.overlay, { backgroundColor: 'rgba(0, 0, 0, 0.7)' }]}>
-        <View
+        <Pressable
+          style={styles.overlayPressable}
+          onPress={onClose}
+        >
+        <Pressable
           style={[
             styles.modalContainer,
             {
-              backgroundColor: isDark ? '#000000' : '#ffffff',
+              backgroundColor: isDark ? '#1a1a1a' : '#ffffff',
               borderColor: isDark ? 'rgba(240,180,41,0.3)' : 'rgba(97,37,201,0.3)',
             },
           ]}
+          onPress={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <Text
-            style={[
-              styles.title,
-              {
-                color: colors.textPrimary,
-              },
-            ]}
-          >
-            🤖 {t('lobby.selectDifficulty')}
-          </Text>
+        {/* Header */}
+        <Text
+          style={[
+            styles.title,
+            {
+              color: colors.textPrimary,
+            },
+          ]}
+        >
+          {title || `🤖 ${t('lobby.selectDifficulty')}`}
+        </Text>
 
-          {/* Difficulty Options */}
-          <View style={styles.optionsContainer}>
-            {difficulties.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  styles.optionRow,
-                  {
-                    backgroundColor:
-                      selectedDifficulty === option.value
-                        ? `${option.color}20`
-                        : 'transparent',
-                    borderColor:
-                      selectedDifficulty === option.value
-                        ? option.color
-                        : colors.cardBorder,
-                  },
-                ]}
-                onPress={() => setSelectedDifficulty(option.value)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.radioCircle, { borderColor: isDark ? '#555' : '#d1d5db' }]}>
-                  {selectedDifficulty === option.value && (
-                    <View
-                      style={[
-                        styles.radioInner,
-                        { backgroundColor: option.color },
-                      ]}
-                    />
-                  )}
-                </View>
-                <Text
-                  style={[
-                    styles.optionLabel,
-                    {
-                      color: colors.textPrimary,
-                    },
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Buttons */}
-          <View style={styles.buttonsContainer}>
+        {/* Difficulty Options */}
+        <View style={styles.optionsContainer}>
+          {difficulties.map((option) => (
             <TouchableOpacity
+              key={option.value}
               style={[
-                styles.button,
-                styles.cancelButton,
+                styles.optionRow,
                 {
-                  backgroundColor: isDark ? '#1a1a1a' : '#f3f4f6',
-                  borderColor: isDark ? 'rgba(240,180,41,0.3)' : 'rgba(97,37,201,0.3)',
+                  backgroundColor:
+                    selectedDifficulty === option.value
+                      ? `${option.color}20`
+                      : 'transparent',
+                  borderColor:
+                    selectedDifficulty === option.value
+                      ? option.color
+                      : colors.cardBorder,
                 },
               ]}
-              onPress={onClose}
+              onPress={() => setSelectedDifficulty(option.value)}
               activeOpacity={0.7}
             >
+              <View style={[styles.radioCircle, { borderColor: isDark ? '#555' : '#d1d5db' }]}>
+                {selectedDifficulty === option.value && (
+                  <View
+                    style={[
+                      styles.radioInner,
+                      { backgroundColor: option.color },
+                    ]}
+                  />
+                )}
+              </View>
               <Text
                 style={[
-                  styles.buttonText,
+                  styles.optionLabel,
                   {
-                    color: isDark ? colors.textSecondary : '#000000',
+                    color: colors.textPrimary,
                   },
                 ]}
               >
-                {t('lobby.cancel')}
+                {option.label}
               </Text>
             </TouchableOpacity>
+          ))}
+        </View>
 
-            <TouchableOpacity
+        {/* Buttons */}
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              styles.cancelButton,
+              {
+                backgroundColor: isDark ? '#1a1a1a' : '#f3f4f6',
+                borderColor: isDark ? 'rgba(240,180,41,0.3)' : 'rgba(97,37,201,0.3)',
+              },
+            ]}
+            onPress={onClose}
+            activeOpacity={0.7}
+          >
+            <Text
               style={[
-                styles.button,
-                styles.confirmButton,
+                styles.buttonText,
                 {
-                  backgroundColor: colors.accentPrimary,
+                  color: isDark ? colors.textSecondary : '#000000',
                 },
               ]}
-              onPress={handleConfirm}
-              activeOpacity={0.7}
             >
-              <Text style={[styles.confirmButtonText, { color: isDark ? '#000' : '#fff' }]}>{t('lobby.addBot')}</Text>
-            </TouchableOpacity>
-          </View>
+              {t('lobby.cancel')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.button,
+              styles.confirmButton,
+              {
+                backgroundColor: colors.accentPrimary,
+                opacity: loading ? 0.6 : 1,
+              },
+            ]}
+            onPress={handleConfirm}
+            activeOpacity={0.7}
+            disabled={loading}
+          >
+            <Text style={[styles.confirmButtonText, { color: isDark ? '#000' : '#fff' }]}>
+              {confirmLabel || t('lobby.addBot')}
+            </Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </Pressable>
+    </Pressable>
+    </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
   overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overlayPressable: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
