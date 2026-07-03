@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   useWindowDimensions,
   ScrollView,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGameStore } from '../store/game.store';
@@ -16,6 +17,7 @@ import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { getCardImagePath } from '../utils/cardImageMapper';
 import { DealingOverlay } from '../components/DealingOverlay';
 import { TimeoutModal } from '../components/TimeoutModal';
 import { GameEndedScreen } from '../components/GameEndedScreen';
@@ -356,31 +358,44 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                 📚 TABLE CARDS ({gameStore.playedCards.length})
               </Text>
               <View style={styles.cardStack}>
-                {gameStore.playedCards.slice(-3).map((card, i) => (
-                  <View
-                    key={`${card.suit}-${card.value}-${i}`}
-                    style={[
-                      styles.stackedCard,
-                      {
-                        transform: [
-                          { translateX: i * 4 },
-                          { translateY: i * 4 },
-                        ],
-                      }
-                    ]}
-                  >
-                    <Text style={[styles.stackedCardRank, {
-                      color: card.suit?.includes('heart') || card.suit?.includes('diamond') ? '#ef4444' : '#000'
-                    }]}>
-                      {getCardSymbol(card.value)}
-                    </Text>
-                    <Text style={[styles.stackedCardSuit, {
-                      color: card.suit?.includes('heart') || card.suit?.includes('diamond') ? '#ef4444' : '#000'
-                    }]}>
-                      {getSuitSymbol(card.suit)}
-                    </Text>
-                  </View>
-                ))}
+                {gameStore.playedCards.slice(-3).map((card, i) => {
+                  const cardImage = getCardImagePath(card.suit, card.value);
+                  return (
+                    <View
+                      key={`${card.suit}-${card.value}-${i}`}
+                      style={[
+                        styles.stackedCard,
+                        {
+                          transform: [
+                            { translateX: i * 4 },
+                            { translateY: i * 4 },
+                          ],
+                        }
+                      ]}
+                    >
+                      {cardImage ? (
+                        <Image
+                          source={cardImage}
+                          style={styles.stackedCardImage}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <>
+                          <Text style={[styles.stackedCardRank, {
+                            color: card.suit?.includes('heart') || card.suit?.includes('diamond') ? '#ef4444' : '#000'
+                          }]}>
+                            {getCardSymbol(card.value)}
+                          </Text>
+                          <Text style={[styles.stackedCardSuit, {
+                            color: card.suit?.includes('heart') || card.suit?.includes('diamond') ? '#ef4444' : '#000'
+                          }]}>
+                            {getSuitSymbol(card.suit)}
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                  );
+                })}
               </View>
             </>
           ) : (
@@ -401,9 +416,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             data={gameStore.myHand}
             horizontal
             renderItem={({ item }) => {
-              const isRed = item.suit?.toLowerCase().includes('heart') || item.suit?.toLowerCase().includes('diamond');
               const isPlayable = playableCards.has(item.id);
               const isNonPlayable = gameStore.ledSuit && !playableCards.has(item.id);
+              const cardImage = getCardImagePath(item.suit, item.value);
               return (
                 <TouchableOpacity
                   style={[
@@ -411,25 +426,26 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                     selectedCard === item.id && styles.handCardSelected,
                     isNonPlayable && styles.handCardNonPlayable,
                     {
-                      backgroundColor: selectedCard === item.id
-                        ? 'rgba(240, 180, 41, 0.3)'
-                        : isNonPlayable ? 'rgba(30, 40, 60, 0.4)' : 'rgba(30, 40, 60, 0.8)',
-                      borderColor: selectedCard === item.id ? '#f0b429' : isNonPlayable ? 'rgba(100, 100, 100, 0.4)' : 'rgba(240, 180, 41, 0.4)',
+                      borderColor: selectedCard === item.id ? '#f0b429' : 'rgba(240, 180, 41, 0.2)',
+                      borderWidth: selectedCard === item.id ? 3 : 1,
+                      opacity: isNonPlayable ? 0.5 : 1,
                     }
                   ]}
                   onPress={() => isMyTurn && isPlayable && setSelectedCard(item.id)}
                   disabled={isNonPlayable}
                 >
-                  <Text style={[styles.cardValue, {
-                    color: selectedCard === item.id ? '#f0b429' : isNonPlayable ? 'rgba(100, 100, 100, 0.6)' : (isRed ? '#ef4444' : '#000'),
-                  }]}>
-                    {getCardSymbol(item.value)}
-                  </Text>
-                  <Text style={[styles.cardSuit, {
-                    color: selectedCard === item.id ? '#f0b429' : isNonPlayable ? 'rgba(100, 100, 100, 0.6)' : (isRed ? '#ef4444' : '#000'),
-                  }]}>
-                    {getSuitSymbol(item.suit)}
-                  </Text>
+                  {cardImage ? (
+                    <Image
+                      source={cardImage}
+                      style={styles.cardImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <>
+                      <Text style={styles.cardValue}>{getCardSymbol(item.value)}</Text>
+                      <Text style={styles.cardSuit}>{getSuitSymbol(item.suit)}</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               );
             }}
@@ -525,6 +541,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#021a16',
     zIndex: -1,
+    // Note: React Native doesn't support radial gradients directly
+    // The background gradient will be approximated with a solid dark green color
+    // matching the web app's dominant color (#021a16)
   },
   loadingContainer: {
     flex: 1,
@@ -720,6 +739,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
+    overflow: 'hidden',
+  },
+  stackedCardImage: {
+    width: '100%',
+    height: '100%',
   },
   stackedCardRank: {
     fontSize: 16,
@@ -747,8 +771,8 @@ const styles = StyleSheet.create({
   handCard: {
     width: 60,
     height: 90,
-    borderRadius: 10,
-    borderWidth: 2,
+    borderRadius: 8,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -756,21 +780,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
+    backgroundColor: 'transparent',
+    overflow: 'hidden',
   },
   handCardSelected: {
     borderColor: '#f0b429',
-    backgroundColor: 'rgba(240, 180, 41, 0.3)',
+    shadowOpacity: 0.6,
   },
   handCardNonPlayable: {
     opacity: 0.5,
   },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
   cardValue: {
     fontSize: 20,
     fontWeight: '700',
+    color: '#000',
   },
   cardSuit: {
     fontSize: 14,
     marginTop: 4,
+    color: '#000',
   },
   controlsSection: {
     flexDirection: 'row',
