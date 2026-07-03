@@ -18,6 +18,7 @@ import { useUserStore } from './src/store/user.store';
 import { AnimatedBackground } from './src/components/AnimatedBackground';
 import { useTranslation } from './src/hooks/useTranslation';
 import { useGameStore } from './src/store/game.store';
+import { useAuthStore } from './src/store/auth.store';
 
 type AppState = 'loading' | 'landing' | 'auth' | 'register' | 'lobby' | 'lobby-room' | 'game' | 'results' | 'leaderboard' | 'profile' | 'settings';
 
@@ -58,6 +59,9 @@ export default function App() {
 
           if (userData?.id) {
             setUserId(storedUserId);
+            // Also update auth store
+            const authStore = useAuthStore.getState();
+            authStore.setUserId(storedUserId);
             setUser({
               userId: userData.id,
               username: userData.username,

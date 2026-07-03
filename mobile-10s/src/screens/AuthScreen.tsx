@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { authService } from '../services/auth.service';
 import { useThemeStore } from '../store/theme.store';
 import { useUserStore } from '../store/user.store';
+import { useAuthStore } from '../store/auth.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { StrengthIndicator } from '../components/StrengthIndicator';
@@ -44,6 +45,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 }) => {
   const { mode } = useThemeStore();
   const { setUser } = useUserStore();
+  const { setUserId } = useAuthStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
@@ -175,7 +177,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         user: response?.user ? 'EXISTS' : 'MISSING',
       });
 
-      // Store user data in user store
+      // Store user data in user store and auth store
       if (response?.user) {
         setUser({
           userId: response.user.id,
@@ -184,6 +186,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           isPremium: response.user.is_premium || false,
           avatarUrl: response.user.avatar_url || null,
         });
+        setUserId(response.user.id);
       }
 
       onLoginSuccess();

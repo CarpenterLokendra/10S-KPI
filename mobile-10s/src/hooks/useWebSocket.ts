@@ -11,13 +11,15 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
   const MAX_RECONNECT_ATTEMPTS = 5;
 
   useEffect(() => {
+    let finalUserId: string | null = null;
+
     const connectWebSocket = async () => {
       try {
         // Get token and userId from auth service
         const { authService } = await import('../services/auth.service');
         const token = await authService.getStoredToken();
         const storedUserId = await authService.getStoredUserId();
-        const finalUserId = userId || storedUserId;
+        finalUserId = userId || storedUserId;
 
         console.log('[useWebSocket] Connection info:', {
           gameId,
@@ -97,7 +99,7 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
         case 'game-state':
           // Full game state update
           if (message.payload) {
-            handleGameStateUpdate(message.payload, userId);
+            handleGameStateUpdate(message.payload, finalUserId || undefined);
           }
           break;
 

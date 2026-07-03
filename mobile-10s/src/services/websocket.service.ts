@@ -125,38 +125,36 @@ export const handleGameStateUpdate = (gameData: any, myUserId?: string) => {
     // Update players
     if (gameData.players && gameData.players.length > 0) {
       const players = gameData.players.map((p: any) => ({
-        id: p.user_id,
-        user_id: p.user_id,
-        username: p.user?.username || p.username || 'Unknown',
+        id: p.id,
+        user_id: p.id,
+        username: p.username || 'Unknown',
         position: p.position || 0,
         status: 'active' as const,
-        handSize: p.hand?.length || 0,
-        hand: p.hand || [],
+        handSize: p.handSize || 0,
+        hand: [],
         score: p.score || 0,
         final_score: p.final_score || 0,
-        caughtTens: p.caught_10s || [],
-        isBot: p.is_bot || false,
+        caughtTens: p.caughtTens || [],
+        isBot: p.isBot || false,
         difficulty: p.difficulty || undefined,
-        is_current_player: p.is_current_player || false,
         avatar_url: p.avatar_url || undefined,
       }));
 
       console.log('[Game State] Setting', players.length, 'players');
       store.setPlayers(players);
+    }
 
-      // Set current player's hand - find by userId from auth
-      if (myUserId) {
-        const myPlayer = players.find((p: any) => p.user_id === myUserId);
-
-        if (myPlayer) {
-          console.log('[Game State] Found my player:', myPlayer.username, 'with', myPlayer.hand?.length || 0, 'cards');
-          if (myPlayer.hand && myPlayer.hand.length > 0) {
-            console.log('[Game State] Setting hand with', myPlayer.hand.length, 'cards');
-            store.setMyHand(myPlayer.hand);
-          }
-        } else {
-          console.warn('[Game State] Could not find my player. My userId:', myUserId, 'Available players:', players.map((p: any) => p.user_id));
-        }
+    // Set current player's hand from top-level field
+    const myHand = gameData.current_player_hand ?? gameData.hand ?? [];
+    if (myHand && myHand.length > 0) {
+      console.log('[Game State] Setting hand with', myHand.length, 'cards');
+      store.setMyHand(myHand);
+    } else if (myUserId && gameData.players) {
+      const myPlayer = gameData.players.find((p: any) => p.id === myUserId);
+      if (myPlayer) {
+        console.log('[Game State] Found my player:', myPlayer.username);
+      } else {
+        console.warn('[Game State] Could not find my player. My userId:', myUserId, 'Available players:', gameData.players.map((p: any) => p.id));
       }
     }
 
@@ -165,8 +163,8 @@ export const handleGameStateUpdate = (gameData: any, myUserId?: string) => {
       store.setCurrentRound(gameData.current_round);
     }
 
-    if (gameData.current_player_id) {
-      store.setCurrentTurn(gameData.current_player_id);
+    if (gameData.current_turn) {
+      store.setCurrentTurn(gameData.current_turn);
     }
 
     if (gameData.current_trump_suit) {

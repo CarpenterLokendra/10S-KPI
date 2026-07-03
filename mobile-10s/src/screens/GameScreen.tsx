@@ -31,12 +31,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
   // Get game store and auth
   const gameStore = useGameStore();
-  const { user } = useAuthStore();
+  const { userId } = useAuthStore();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [isPlayingCard, setIsPlayingCard] = useState(false);
 
   // Initialize WebSocket connection
-  const { playCard: wsPlayCard, passTurn, isConnected } = useWebSocket(gameId, user?.userId || null);
+  const { playCard: wsPlayCard, passTurn, isConnected } = useWebSocket(gameId, userId || null);
 
   // Monitor game state changes
   useEffect(() => {
@@ -109,8 +109,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
     return rankMap[value] || String(value);
   };
 
-  const isMyTurn = gameStore.currentTurn === user?.userId;
-  const currentPlayer = gameStore.players.find(p => p.id === user?.userId);
+  const isMyTurn = gameStore.currentTurn === userId;
+  const currentPlayer = gameStore.players.find(p => p.id === userId);
 
   // Loading state
   if (gameStore.players.length === 0 || !currentPlayer) {
