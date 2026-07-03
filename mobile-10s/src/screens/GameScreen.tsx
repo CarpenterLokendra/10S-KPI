@@ -111,6 +111,81 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
   const isMyTurn = gameStore.currentTurn === userId;
   const currentPlayer = gameStore.players.find(p => p.id === userId);
+  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number>(60);
+  const [showTrumpBanner, setShowTrumpBanner] = useState(false);
+  const [showRoundWinnerBanner, setShowRoundWinnerBanner] = useState(false);
+  const [showTensCaughtBanner, setShowTensCaughtBanner] = useState(false);
+  const [bannerMessage, setBannerMessage] = useState('');
+
+  // Get playable card indices based on led suit
+  const getPlayableIndices = (): Set<string> => {
+    if (!gameStore.ledSuit || !gameStore.myHand || gameStore.myHand.length === 0) {
+      return new Set(gameStore.myHand?.map(c => c.id) || []);
+    }
+
+    const cardsOfLedSuit = gameStore.myHand.filter(c => c.suit?.toLowerCase() === gameStore.ledSuit?.toLowerCase());
+    if (cardsOfLedSuit.length > 0) {
+      return new Set(cardsOfLedSuit.map(c => c.id));
+    }
+    return new Set(gameStore.myHand.map(c => c.id));
+  };
+
+  const playableCards = getPlayableIndices();
+
+  // Turn timer effect
+  useEffect(() => {
+    if (!isMyTurn) {
+      setTurnTimeRemaining(60);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTurnTimeRemaining(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isMyTurn]);
+
+  // Trump reveal banner
+  const [lastTrumpSuit, setLastTrumpSuit] = useState(gameStore.trumpSuit);
+  useEffect(() => {
+    if (gameStore.trumpSuit && gameStore.trumpSuit !== lastTrumpSuit) {
+      setShowTrumpBanner(true);
+      setBannerMessage(`${getSuitSymbol(gameStore.trumpSuit)} Trump ${gameStore.trumpSuit?.toUpperCase() || ''}`);
+      setLastTrumpSuit(gameStore.trumpSuit);
+      const timer = setTimeout(() => setShowTrumpBanner(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [gameStore.trumpSuit, lastTrumpSuit]);
+
+  // Round winner banner
+  const [lastRoundWinner, setLastRoundWinner] = useState(gameStore.roundWinner);
+  useEffect(() => {
+    if (gameStore.roundWinner && gameStore.roundWinner !== lastRoundWinner) {
+      const winner = gameStore.players.find(p => p.user_id === gameStore.roundWinner);
+      if (winner) {
+        setShowRoundWinnerBanner(true);
+        setBannerMessage(`👑 ${winner.username} won the round!`);
+        setLastRoundWinner(gameStore.roundWinner);
+        const timer = setTimeout(() => setShowRoundWinnerBanner(false), 4000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [gameStore.roundWinner, lastRoundWinner, gameStore.players]);
+
+  // 10s caught banner
+  const [lastCaughtTens, setLastCaughtTens] = useState<string>(gameStore.playedCards?.length.toString() || '0');
+  useEffect(() => {
+    if (gameStore.playedCards?.length === 0 && lastCaughtTens !== '0') {
+      setShowTensCaughtBanner(true);
+      setBannerMessage('🎉 10S CAUGHT! Score updated!');
+      const timer = setTimeout(() => setShowTensCaughtBanner(false), 4000);
+      setLastCaughtTens('0');
+      return () => clearTimeout(timer);
+    } else if (gameStore.playedCards?.length) {
+      setLastCaughtTens(gameStore.playedCards.length.toString());
+    }
+  }, [gameStore.playedCards?.length, lastCaughtTens]);
 
   // Loading state
   if (gameStore.players.length === 0 || !currentPlayer) {
@@ -134,6 +209,27 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       {/* Background */}
       <View style={styles.backgroundGradient} />
 
+      {/* Trump Banner */}
+      {showTrumpBanner && (
+        <View style={[styles.banner, { backgroundColor: 'rgba(168, 85, 247, 0.9)' }]}>
+          <Text style={styles.bannerText}>🃏 {bannerMessage}</Text>
+        </View>
+      )}
+
+      {/* Round Winner Banner */}
+      {showRoundWinnerBanner && (
+        <View style={[styles.banner, { backgroundColor: 'rgba(34, 197, 94, 0.9)' }]}>
+          <Text style={styles.bannerText}>{bannerMessage}</Text>
+        </View>
+      )}
+
+      {/* 10s Caught Banner */}
+      {showTensCaughtBanner && (
+        <View style={[styles.banner, { backgroundColor: 'rgba(240, 180, 41, 0.9)' }]}>
+          <Text style={styles.bannerText}>{bannerMessage}</Text>
+        </View>
+      )}
+
       {/* Top Bar */}
       <View style={[
         styles.topBar,
@@ -151,9 +247,23 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
           <Text style={[styles.roundCounter, { color: colors.textPrimary }]}>
             Round {gameStore.currentRound}/13
           </Text>
-          <Text style={[styles.turnIndicator, { color: isMyTurn ? '#22c55e' : '#f59e0b' }]}>
-            {isMyTurn ? '▶ YOUR TURN' : '⏸ Waiting...'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={[styles.turnIndicator, { color: isMyTurn ? '#22c55e' : '#f59e0b' }]}>
+              {isMyTurn ? '▶ YOUR TURN' : '⏸ Waiting...'}
+            </Text>
+            {isMyTurn && (
+              <View style={{
+                backgroundColor: turnTimeRemaining > 20 ? '#22c55e' : turnTimeRemaining > 10 ? '#f59e0b' : '#ef4444',
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                borderRadius: 6,
+              }}>
+                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>
+                  {turnTimeRemaining}s
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
         <View style={styles.topBarRight}>
           <TouchableOpacity
@@ -284,27 +394,31 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             horizontal
             renderItem={({ item }) => {
               const isRed = item.suit?.toLowerCase().includes('heart') || item.suit?.toLowerCase().includes('diamond');
+              const isPlayable = playableCards.has(item.id);
+              const isNonPlayable = gameStore.ledSuit && !playableCards.has(item.id);
               return (
                 <TouchableOpacity
                   style={[
                     styles.handCard,
                     selectedCard === item.id && styles.handCardSelected,
+                    isNonPlayable && styles.handCardNonPlayable,
                     {
                       backgroundColor: selectedCard === item.id
                         ? 'rgba(240, 180, 41, 0.3)'
-                        : 'rgba(30, 40, 60, 0.8)',
-                      borderColor: selectedCard === item.id ? '#f0b429' : 'rgba(240, 180, 41, 0.4)',
+                        : isNonPlayable ? 'rgba(30, 40, 60, 0.4)' : 'rgba(30, 40, 60, 0.8)',
+                      borderColor: selectedCard === item.id ? '#f0b429' : isNonPlayable ? 'rgba(100, 100, 100, 0.4)' : 'rgba(240, 180, 41, 0.4)',
                     }
                   ]}
-                  onPress={() => isMyTurn && setSelectedCard(item.id)}
+                  onPress={() => isMyTurn && isPlayable && setSelectedCard(item.id)}
+                  disabled={isNonPlayable}
                 >
                   <Text style={[styles.cardValue, {
-                    color: selectedCard === item.id ? '#f0b429' : (isRed ? '#ef4444' : '#000'),
+                    color: selectedCard === item.id ? '#f0b429' : isNonPlayable ? 'rgba(100, 100, 100, 0.6)' : (isRed ? '#ef4444' : '#000'),
                   }]}>
                     {getCardSymbol(item.value)}
                   </Text>
                   <Text style={[styles.cardSuit, {
-                    color: selectedCard === item.id ? '#f0b429' : (isRed ? '#ef4444' : '#000'),
+                    color: selectedCard === item.id ? '#f0b429' : isNonPlayable ? 'rgba(100, 100, 100, 0.6)' : (isRed ? '#ef4444' : '#000'),
                   }]}>
                     {getSuitSymbol(item.suit)}
                   </Text>
@@ -405,6 +519,20 @@ const styles = StyleSheet.create({
   connectionStatus: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  banner: {
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  bannerText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   topBar: {
     flexDirection: 'row',
@@ -612,6 +740,9 @@ const styles = StyleSheet.create({
   handCardSelected: {
     borderColor: '#f0b429',
     backgroundColor: 'rgba(240, 180, 41, 0.3)',
+  },
+  handCardNonPlayable: {
+    opacity: 0.5,
   },
   cardValue: {
     fontSize: 20,
