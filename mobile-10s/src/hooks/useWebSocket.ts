@@ -262,5 +262,6 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
     decideTrump,
     disconnect,
     isConnected: wsRef.current?.readyState === WebSocket.OPEN,
+    reconnectAttempts: reconnectAttemptsRef.current,
   };
 };

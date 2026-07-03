@@ -20,6 +20,7 @@ import { DealingOverlay } from '../components/DealingOverlay';
 import { TimeoutModal } from '../components/TimeoutModal';
 import { GameEndedScreen } from '../components/GameEndedScreen';
 import { GameCompletedScreen } from '../components/GameCompletedScreen';
+import { soundService } from '../services/sound.service';
 
 interface GameScreenProps {
   gameId: string;
@@ -40,7 +41,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   const [isPlayingCard, setIsPlayingCard] = useState(false);
 
   // Initialize WebSocket connection
-  const { playCard: wsPlayCard, passTurn, isConnected } = useWebSocket(gameId, userId || null);
+  const { playCard: wsPlayCard, passTurn, isConnected, reconnectAttempts } = useWebSocket(gameId, userId || null);
 
   // Monitor game state changes
   useEffect(() => {
@@ -157,6 +158,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       setShowTrumpBanner(true);
       setBannerMessage(`${getSuitSymbol(gameStore.trumpSuit)} Trump ${gameStore.trumpSuit?.toUpperCase() || ''}`);
       setLastTrumpSuit(gameStore.trumpSuit);
+      soundService.trumpRevealed().catch(err => console.warn('[Sound] Trump reveal failed:', err));
       const timer = setTimeout(() => setShowTrumpBanner(false), 4000);
       return () => clearTimeout(timer);
     }
@@ -171,6 +173,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         setShowRoundWinnerBanner(true);
         setBannerMessage(`👑 ${winner.username} won the round!`);
         setLastRoundWinner(gameStore.roundWinner);
+        soundService.roundWon().catch(err => console.warn('[Sound] Round won failed:', err));
         const timer = setTimeout(() => setShowRoundWinnerBanner(false), 4000);
         return () => clearTimeout(timer);
       }
@@ -183,6 +186,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
     if (gameStore.playedCards?.length === 0 && lastCaughtTens !== '0') {
       setShowTensCaughtBanner(true);
       setBannerMessage('🎉 10S CAUGHT! Score updated!');
+      soundService.tensCaught().catch(err => console.warn('[Sound] Tens caught failed:', err));
       const timer = setTimeout(() => setShowTensCaughtBanner(false), 4000);
       setLastCaughtTens('0');
       return () => clearTimeout(timer);
@@ -488,7 +492,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       {!isConnected && (
         <View style={[styles.connectionBanner, { backgroundColor: 'rgba(239, 68, 68, 0.2)' }]}>
           <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600' }}>
-            ⚠️ Connection lost
+            ⚠️ Connection lost {reconnectAttempts > 0 && `(Reconnect attempt ${reconnectAttempts}/5)`}
           </Text>
         </View>
       )}
