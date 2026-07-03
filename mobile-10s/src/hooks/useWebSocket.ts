@@ -163,7 +163,7 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
         case 'player-disconnected':
           // Player disconnected
           if (message.payload?.player_id) {
-            const players = store.players.map((p) =>
+            const players = useGameStore.getState().players.map((p) =>
               p.user_id === message.payload.player_id
                 ? { ...p, status: 'disconnected' as const }
                 : p
@@ -180,7 +180,7 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
             // Game completed naturally
           } else if (message.payload?.quitter_id) {
             // Someone quit
-            const quitter = store.players.find(p => p.user_id === message.payload.quitter_id);
+            const quitter = useGameStore.getState().players.find(p => p.user_id === message.payload.quitter_id);
             if (quitter) {
               store.setQuitterUsername(quitter.username);
             }
@@ -191,7 +191,7 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
           // Player timed out
           if (message.payload?.player_id) {
             store.setShowTimeoutModal(true, message.payload.player_id);
-            const timedOutPlayer = store.players.find(p => p.user_id === message.payload.player_id);
+            const timedOutPlayer = useGameStore.getState().players.find(p => p.user_id === message.payload.player_id);
             if (timedOutPlayer) {
               store.setQuitterUsername(`${timedOutPlayer.username} (timed out)`);
             }
@@ -233,7 +233,7 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
         wsRef.current = null;
       }
     };
-  }, [gameId, userId, store]);
+  }, [gameId, userId]);
 
   const playCard = (card: any) => {
     websocketService.playCard(card.id, card.suit, card.value);
