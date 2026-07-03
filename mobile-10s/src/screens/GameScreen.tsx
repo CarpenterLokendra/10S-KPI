@@ -17,6 +17,9 @@ import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { DealingOverlay } from '../components/DealingOverlay';
+import { TimeoutModal } from '../components/TimeoutModal';
+import { GameEndedScreen } from '../components/GameEndedScreen';
+import { GameCompletedScreen } from '../components/GameCompletedScreen';
 
 interface GameScreenProps {
   gameId: string;
@@ -492,6 +495,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
       {/* Dealing/Shuffle Overlay */}
       <DealingOverlay />
+
+      {/* Timeout Modal */}
+      <TimeoutModal onLeave={onHomePress} />
+
+      {/* Game Ended Screen */}
+      <GameEndedScreen onHome={onHomePress || onGameEnd} />
+
+      {/* Game Completed Screen */}
+      <GameCompletedScreen onHome={onHomePress || onGameEnd} />
     </SafeAreaView>
   );
 };
