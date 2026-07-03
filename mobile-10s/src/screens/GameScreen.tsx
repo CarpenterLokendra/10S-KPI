@@ -16,6 +16,7 @@ import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { DealingOverlay } from '../components/DealingOverlay';
 
 interface GameScreenProps {
   gameId: string;
@@ -488,6 +489,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
           </Text>
         </View>
       )}
+
+      {/* Dealing/Shuffle Overlay */}
+      <DealingOverlay />
     </SafeAreaView>
   );
 };
