@@ -482,7 +482,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                   const cardImage = getCardImagePath(card.suit, card.value);
                   return (
                     <View
-                      key={`${card.suit}-${card.value}-${i}`}
+                      key={card.id || `${card.suit}-${card.value}-${i}`}
                       style={[
                         styles.stackedCard,
                         {
