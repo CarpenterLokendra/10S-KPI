@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useGameStore } from '../store/game.store';
 import { useAuthStore } from '../store/auth.store';
 import { useThemeStore } from '../store/theme.store';
@@ -307,23 +308,29 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                 : 'rgba(240, 180, 41, 0.2)',
               borderWidth: isMyTurn && item.user_id === gameStore.currentTurn ? 2 : 1,
             }]}>
-              <View style={[styles.playerAvatar, {
-                backgroundColor: item.isBot ? '#3b82f6' : '#a855f7',
-              }]}>
-                <Text style={styles.playerInitial}>
-                  {item.username?.[0]?.toUpperCase() || '?'}
-                </Text>
-              </View>
+              {item.avatar_url ? (
+                <View style={styles.playerAvatar}>
+                  <Image
+                    source={{ uri: item.avatar_url }}
+                    style={{ width: '100%', height: '100%', borderRadius: 50 }}
+                  />
+                </View>
+              ) : (
+                <LinearGradient
+                  colors={['#f0b429', '#a855f7']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.playerAvatar}
+                >
+                  <Text style={styles.playerInitial}>
+                    {item.username?.[0]?.toUpperCase() || '?'}
+                  </Text>
+                </LinearGradient>
+              )}
               <Text style={styles.playerName} numberOfLines={1}>
                 {item.isBot ? '🤖 ' : ''}{item.username?.split('(')[0].trim() || 'Player'}
               </Text>
-              <View style={styles.scoreContainer}>
-                <Text style={styles.scoreLabel}>Points</Text>
-                <Text style={styles.playerScore}>{item.final_score || 0}</Text>
-              </View>
-              <Text style={[styles.handSizeLabel, { color: 'rgba(240, 180, 41, 0.7)' }]}>
-                {item.handSize} cards
-              </Text>
+              <Text style={styles.playerScore}>{item.final_score || 0}</Text>
             </View>
           )}
           keyExtractor={(item, index) => `${item.user_id}-${index}`}

@@ -14,13 +14,12 @@ import { TopControlsBar } from '../components/TopControlsBar';
 interface Game {
   id: string;
   players: Array<{
+    id: string;
     user_id: string;
+    username: string;
     final_score: number;
     hand?: any[];
     caught_10s?: any[];
-    user: {
-      username: string;
-    };
   }>;
 }
 
@@ -53,8 +52,8 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 
       <View style={[styles.winnerSection, { backgroundColor: '#f0b429' }]}>
         <Text style={[styles.winnerLabel, { color: '#000' }]}>🏆 Winner 🏆</Text>
-        <Text style={[styles.winnerName, { color: '#000' }]}>{winner.user.username}</Text>
-        <Text style={[styles.winnerScore, { color: '#000' }]}>{winner.final_score} Points</Text>
+        <Text style={[styles.winnerName, { color: '#000' }]}>{winner?.username || 'Unknown'}</Text>
+        <Text style={[styles.winnerScore, { color: '#000' }]}>{winner?.final_score || 0} Points</Text>
       </View>
 
       <View style={styles.resultsSection}>
@@ -77,9 +76,9 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
             >
               <Text style={[styles.rank, { color: colors.headingAccent }]}>#{index + 1}</Text>
               <View style={styles.playerInfo}>
-                <Text style={[styles.playerName, { color: colors.textPrimary }]}>{item.user.username}</Text>
+                <Text style={[styles.playerName, { color: colors.textPrimary }]}>{item.username}</Text>
                 <Text style={[styles.playerStats, { color: colors.textSecondary }]}>
-                  {item.hand?.length || 0} cards | {item.caught_10s?.length || 0} 10s caught
+                  {item.final_score} Points
                 </Text>
               </View>
               <Text style={[styles.score, { color: colors.headingAccent }]}>{item.final_score}</Text>
