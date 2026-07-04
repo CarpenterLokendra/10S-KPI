@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
   ScrollView,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -96,6 +97,36 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       'clubs': '♣',
     };
     return suitMap[suit.toLowerCase()] || '-';
+  };
+
+  const handleQuitGame = () => {
+    Alert.alert(
+      'Quit Game?',
+      'Are you sure you want to leave this game?',
+      [
+        { text: 'Cancel', onPress: () => {}, style: 'cancel' },
+        {
+          text: 'Quit',
+          onPress: async () => {
+            try {
+              // Call backend to notify other players
+              if (gameId) {
+                const apiClient = await import('../services/api').then(m => m.default);
+                await apiClient.post(`/games/${gameId}/leave`);
+              }
+            } catch (error) {
+              console.error('Error leaving game:', error);
+            } finally {
+              // Reset game state
+              gameStore.resetGame();
+              // Go back to lobby/landing
+              onHomePress?.();
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
   const getCardSymbol = (value?: number): string => {
@@ -285,7 +316,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         </View>
         <View style={styles.topBarRight}>
           <TouchableOpacity
-            onPress={onGameEnd}
+            onPress={handleQuitGame}
             style={styles.quitButton}
           >
             <Text style={styles.quitButtonText}>Quit</Text>
