@@ -8,7 +8,7 @@ interface DraggableCardProps {
   isSelected: boolean;
   isPlayable: boolean;
   isMyTurn: boolean;
-  onSelect: (cardId: string) => void;
+  onSelect: () => void;
   onPlayCard: (card: Card) => Promise<void>;
   pileLayout: { x: number; y: number; width: number; height: number } | null;
   isPlayingCard?: boolean;
@@ -160,7 +160,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
         activeOpacity={1}
         onPress={() => {
           if (isMyTurn && isPlayable) {
-            onSelect(card.id);
+            onSelect();
           }
         }}
         disabled={!isMyTurn || !isPlayable}

@@ -606,24 +606,23 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             data={gameStore.myHand}
             horizontal
             renderItem={({ item }) => {
-              const isPlayable = playableCards.has(item.id);
-              const isSelected = selectedCard === item.id;
-              console.log(`[DEBUG] Card ID: "${item.id}" | Suit: ${item.suit} | Value: ${item.value} | SelectedCard: "${selectedCard}" | IsSelected: ${isSelected}`);
+              const cardKey = `${item.suit}-${item.value}`;
+              const isPlayable = playableCards.has(item.id || cardKey);
+              const isSelected = selectedCard === cardKey;
               return (
                 <DraggableCard
                   card={item}
-                  isSelected={selectedCard === item.id}
+                  isSelected={isSelected}
                   isPlayable={isPlayable}
                   isMyTurn={isMyTurn}
-                  onSelect={(cardId) => {
-                    console.log('[DEBUG] onSelect called:', { cardId, currentSelectedCard: selectedCard, willToggleTo: selectedCard === cardId ? null : cardId });
-                    setSelectedCard(selectedCard === cardId ? null : cardId);
+                  onSelect={() => {
+                    setSelectedCard(selectedCard === cardKey ? null : cardKey);
                   }}
                   onPlayCard={async (card) => {
                     try {
                       setIsPlayingCard(true);
                       wsPlayCard(card);
-                      gameStore.playCard(card.id);
+                      gameStore.playCard(card);
                       setSelectedCard(null);
                     } catch (err) {
                       console.error('[GameScreen] Failed to play card:', err);
@@ -637,7 +636,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                 />
               );
             }}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => `${item.suit}-${item.value}`}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.handContent}
           />
