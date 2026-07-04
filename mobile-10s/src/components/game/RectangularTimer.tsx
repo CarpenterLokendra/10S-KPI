@@ -51,9 +51,9 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
   const startTimeRef = useRef(Date.now());
 
   const strokeWidth = 3;
-  // Use a large inset (6px) to ensure stroke stays well within card bounds
-  // This accounts for: half-stroke centering (1.5) + safety margin (4.5)
-  const pathInset = 6;
+  // Inset by 2px: enough to prevent stroke clipping, small enough to sit on border
+  // Path at (2,2) means stroke extends to ~(0.5,0.5), sitting essentially on card border
+  const pathInset = 2;
   const pathLength = getPathLength(cardWidth, cardHeight, borderRadius, pathInset);
   const outerPath = createRoundedRectPath(cardWidth, cardHeight, borderRadius, pathInset);
 
