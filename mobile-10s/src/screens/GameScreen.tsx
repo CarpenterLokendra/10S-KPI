@@ -444,7 +444,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
               </View>
             </>
           ) : (
-            <Text style={{ color: colors.textMuted, fontSize: 14 }}>
+            <Text style={{ color: '#fff', fontSize: 14 }}>
               ⏳ No cards played yet
             </Text>
           )}
@@ -499,7 +499,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             contentContainerStyle={styles.handContent}
           />
         ) : (
-          <Text style={{ color: colors.textMuted, fontSize: 12 }}>No cards in hand</Text>
+          <Text style={{ color: '#fff', fontSize: 12 }}>No cards in hand</Text>
         )}
       </View>
 
@@ -543,7 +543,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
       {!isMyTurn && (
         <View style={styles.waitingSection}>
-          <Text style={[styles.waitingText, { color: colors.textSecondary }]}>
+          <Text style={[styles.waitingText, { color: '#fff' }]}>
             Waiting for {gameStore.players.find(p => p.user_id === gameStore.currentTurn)?.username?.split('(')[0] || 'other player'}...
           </Text>
         </View>
