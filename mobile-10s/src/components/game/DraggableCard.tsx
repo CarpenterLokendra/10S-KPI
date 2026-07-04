@@ -155,15 +155,16 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   const cardImage = getCardImagePath(card.suit, card.value);
 
   return (
-    <TouchableOpacity
-      activeOpacity={1}
-      onPress={() => {
-        if (isMyTurn && isPlayable) {
-          onSelect(card.id);
-        }
-      }}
-      disabled={!isMyTurn || !isPlayable}
-    >
+    <View style={{ marginRight: 8 }}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => {
+          if (isMyTurn && isPlayable) {
+            onSelect(card.id);
+          }
+        }}
+        disabled={!isMyTurn || !isPlayable}
+      >
       <Animated.View
         style={[
           {
@@ -208,6 +209,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
           )}
         </View>
       </Animated.View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
   );
 };

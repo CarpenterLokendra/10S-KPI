@@ -608,30 +608,28 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             renderItem={({ item }) => {
               const isPlayable = playableCards.has(item.id);
               return (
-                <View style={{ marginRight: 8 }}>
-                  <DraggableCard
-                    card={item}
-                    isSelected={selectedCard === item.id}
-                    isPlayable={isPlayable}
-                    isMyTurn={isMyTurn}
-                    onSelect={(cardId) => setSelectedCard(selectedCard === cardId ? null : cardId)}
-                    onPlayCard={async (card) => {
-                      try {
-                        setIsPlayingCard(true);
-                        wsPlayCard(card);
-                        gameStore.playCard(card.id);
-                        setSelectedCard(null);
-                      } catch (err) {
-                        console.error('[GameScreen] Failed to play card:', err);
-                        alert('Failed to play card');
-                      } finally {
-                        setIsPlayingCard(false);
-                      }
-                    }}
-                    pileLayout={pileLayout}
-                    isPlayingCard={isPlayingCard}
-                  />
-                </View>
+                <DraggableCard
+                  card={item}
+                  isSelected={selectedCard === item.id}
+                  isPlayable={isPlayable}
+                  isMyTurn={isMyTurn}
+                  onSelect={(cardId) => setSelectedCard(selectedCard === cardId ? null : cardId)}
+                  onPlayCard={async (card) => {
+                    try {
+                      setIsPlayingCard(true);
+                      wsPlayCard(card);
+                      gameStore.playCard(card.id);
+                      setSelectedCard(null);
+                    } catch (err) {
+                      console.error('[GameScreen] Failed to play card:', err);
+                      alert('Failed to play card');
+                    } finally {
+                      setIsPlayingCard(false);
+                    }
+                  }}
+                  pileLayout={pileLayout}
+                  isPlayingCard={isPlayingCard}
+                />
               );
             }}
             keyExtractor={(item) => item.id}
