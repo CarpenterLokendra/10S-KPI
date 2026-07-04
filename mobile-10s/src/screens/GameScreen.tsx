@@ -327,31 +327,26 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         }
       ]}>
         <View style={styles.topBarLeft}>
-          <Text style={[styles.gameID, { color: '#f0b429' }]}>
-            {gameStore.gameId?.slice(0, 8) || 'Game'}
-          </Text>
+          <View style={{
+            backgroundColor: turnTimeRemaining > 20 ? '#22c55e' : turnTimeRemaining > 10 ? '#f59e0b' : '#ef4444',
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 8,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>
+              {turnTimeRemaining}s
+            </Text>
+          </View>
         </View>
         <View style={styles.topBarCenter}>
           <Text style={[styles.roundCounter, { color: '#fff' }]}>
             Round {gameStore.currentRound}/13
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={[styles.turnIndicator, { color: isMyTurn ? '#22c55e' : '#f59e0b' }]}>
-              {isMyTurn ? '▶ YOUR TURN' : '⏸ Waiting...'}
-            </Text>
-            {isMyTurn && (
-              <View style={{
-                backgroundColor: turnTimeRemaining > 20 ? '#22c55e' : turnTimeRemaining > 10 ? '#f59e0b' : '#ef4444',
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                borderRadius: 6,
-              }}>
-                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>
-                  {turnTimeRemaining}s
-                </Text>
-              </View>
-            )}
-          </View>
+          <Text style={[styles.turnIndicator, { color: isMyTurn ? '#22c55e' : '#f59e0b' }]}>
+            {isMyTurn ? '▶ YOUR TURN' : '⏸ Waiting...'}
+          </Text>
         </View>
         <View style={styles.topBarRight}>
           <TouchableOpacity
