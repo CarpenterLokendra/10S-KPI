@@ -5,7 +5,6 @@ import { useAuthStore } from '../store/auth.store';
 
 export const useWebSocket = (gameId: string | null, userId: string | null) => {
   const store = useGameStore();
-  const { user } = useAuthStore();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const MAX_RECONNECT_ATTEMPTS = 5;
@@ -128,15 +127,15 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
           break;
 
         case 'round-changed':
-          // Round transitioned
+          // Round transitioned - DO NOT clear pile here, it persists until 10s are caught
           if (message.payload?.current_round) {
             store.setCurrentRound(message.payload.current_round);
-            store.setPlayedCards([]); // Clear played cards for new round
           }
           break;
 
+        case 'trump-decided':
         case 'trump-declared':
-          // Trump suit was declared
+          // Trump suit was decided/declared
           if (message.payload?.trump_suit) {
             store.setTrumpSuit(message.payload.trump_suit);
             if (message.payload.declared_by) {
@@ -147,26 +146,27 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
 
         case 'round-won':
           // Round winner announced
-          if (message.payload?.winner_id) {
-            store.setRoundWinner(message.payload.winner_id);
-            if (message.payload.username) {
-              store.setRoundWinner(message.payload.username);
-            }
+          if (message.payload?.username) {
+            store.setRoundWinner(message.payload.username);
           }
           break;
 
         case 'tens-caught':
-          // 10s caught by a player
-          if (message.payload?.player_id && message.payload?.points) {
-            store.setTensCaughtPlayer(message.payload.player_id, message.payload.points);
+          // 10s caught - clear pile and show celebration
+          const catcherName = message.payload?.catcher_username || 'Unknown Player';
+          const pilePoints = message.payload?.pile_points || 0;
+          store.setTensCaughtPlayer(catcherName);
+          if (pilePoints) {
+            store.setTensCaughtPilePoints(pilePoints);
           }
+          store.clearPlayedCards();
           break;
 
         case 'player-disconnected':
           // Player disconnected
           if (message.payload?.player_id) {
             const players = useGameStore.getState().players.map((p) =>
-              p.user_id === message.payload.player_id
+              p.id === message.payload.player_id
                 ? { ...p, status: 'disconnected' as const }
                 : p
             );
@@ -175,17 +175,18 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
           break;
 
         case 'game-ended':
-          // Game ended
-          store.setGameEnded(true);
-          store.setGameCompleted(true);
-          if (message.payload?.status === 'completed') {
-            // Game completed naturally
-          } else if (message.payload?.quitter_id) {
-            // Someone quit
-            const quitter = useGameStore.getState().players.find(p => p.user_id === message.payload.quitter_id);
-            if (quitter) {
-              store.setQuitterUsername(quitter.username);
+          // CRITICAL: Distinguish between natural completion and timeout/abandonment
+          if (message.payload?.reason || message.payload?.player_name) {
+            // Game ended due to timeout or player quit
+            store.setGameEnded(true);
+            if (message.payload?.player_name) {
+              store.setQuitterUsername(message.payload.player_name);
+            } else if (message.payload?.reason) {
+              store.setQuitterUsername(`Game ended: ${message.payload.reason}`);
             }
+          } else {
+            // Game completed naturally - show results screen
+            store.setGameCompleted(true);
           }
           break;
 
@@ -198,6 +199,42 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
               store.setQuitterUsername(`${timedOutPlayer.username} (timed out)`);
             }
           }
+          break;
+
+        case 'player-timeout-searching':
+          // Player timed out, searching for replacement
+          const timedOutPlayerId = message.payload?.timed_out_player || message.payload?.player_id;
+          store.setShowTimeoutModal(true);
+          store.setTimedOutPlayerId(timedOutPlayerId);
+          if (message.payload?.timestamp) {
+            store.setPhase2StartedAt(message.payload.timestamp);
+            store.setTurnStartedAt(message.payload.timestamp);
+          }
+          break;
+
+        case 'player-timeout-replaced':
+          // Replacement player joined, game continues
+          store.setShowTimeoutModal(false);
+          store.setTimedOutPlayerId(null);
+          if (message.payload?.timestamp) {
+            store.setTurnStartedAt(message.payload.timestamp);
+            store.setPhase2StartedAt(null);
+          }
+          break;
+
+        case 'distribute-trump-cards':
+        case 'shuffling':
+          // Cards being shuffled/distributed
+          store.setIsDealing(true);
+          break;
+
+        case 'round-starting':
+        case 'hand-update':
+          // Hand was updated with new cards
+          if (message.payload?.hand) {
+            store.setMyHand(message.payload.hand);
+          }
+          store.setIsDealing(false);
           break;
 
         case 'error':

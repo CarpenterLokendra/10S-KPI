@@ -121,9 +121,9 @@ export default function App() {
       setShowQuickMatchModal(false);
       setQuickMatchLoading(false);
 
-      // Initialize game store with the game ID and difficulty
+      // Store difficulty and navigate to game (let GameScreen handle initialization, like web app does)
       const gameStore = useGameStore.getState();
-      gameStore.initGame(data.game_id, difficulty);
+      gameStore.setBotDifficulty(difficulty);
 
       setGameId(data.game_id);
       setAppState('game');

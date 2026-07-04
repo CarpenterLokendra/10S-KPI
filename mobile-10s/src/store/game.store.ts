@@ -84,6 +84,7 @@ export interface GameState {
 
   // Actions
   initGame: (gameId: string, difficulty?: 'easy' | 'medium' | 'hard') => void;
+  setBotDifficulty: (difficulty: 'easy' | 'medium' | 'hard') => void;
   setPlayers: (players: PlayerState[]) => void;
   setMyHand: (hand: Card[]) => void;
   setCurrentTurn: (playerId: string | null) => void;
@@ -92,6 +93,8 @@ export interface GameState {
   setLedSuit: (suit: string | null) => void;
   addPlayedCard: (card: PlayedCard) => void;
   setPlayedCards: (cards: PlayedCard[]) => void;
+  clearPlayedCards: () => void;
+  setTensCaughtPilePoints: (points: number) => void;
   playCard: (cardId: string) => void;
   setGameStatus: (status: 'waiting' | 'in_progress' | 'completed') => void;
   setIsDealing: (isDealing: boolean) => void;
@@ -100,7 +103,7 @@ export interface GameState {
   setDealingAnimationShown: (shown: boolean) => void;
   setDistributingCardMessage: (message: string) => void;
   setRoundWinner: (playerId: string | null) => void;
-  setTensCaughtPlayer: (playerId: string | null, points: number) => void;
+  setTensCaughtPlayer: (playerName: string | null) => void;
   setTrumpDeclaredBy: (playerId: string | null) => void;
   setPhase2StartedAt: (timestamp: string | null) => void;
   setTurnStartedAt: (timestamp: string | null) => void;
@@ -163,6 +166,9 @@ export const useGameStore = create<GameState>((set) => ({
       gameStatus: 'waiting',
     }),
 
+  setBotDifficulty: (difficulty: 'easy' | 'medium' | 'hard') =>
+    set({ botDifficulty: difficulty }),
+
   setPlayers: (players: PlayerState[]) => set({ players }),
 
   setMyHand: (hand: Card[]) => set({ myHand: hand }),
@@ -187,6 +193,15 @@ export const useGameStore = create<GameState>((set) => ({
       cardsPlayedThisRound: cards.length,
     }),
 
+  clearPlayedCards: () =>
+    set({
+      playedCards: [],
+      cardsPlayedThisRound: 0,
+    }),
+
+  setTensCaughtPilePoints: (points: number) =>
+    set({ tensCaughtPilePoints: points }),
+
   playCard: (cardId: string) =>
     set((state) => ({
       myHand: state.myHand.filter((card) => card.id !== cardId),
@@ -210,11 +225,8 @@ export const useGameStore = create<GameState>((set) => ({
 
   setRoundWinner: (playerId: string | null) => set({ roundWinner: playerId }),
 
-  setTensCaughtPlayer: (playerId: string | null, points: number) =>
-    set({
-      tensCaughtPlayer: playerId,
-      tensCaughtPilePoints: points,
-    }),
+  setTensCaughtPlayer: (playerName: string | null) =>
+    set({ tensCaughtPlayer: playerName }),
 
   setTrumpDeclaredBy: (playerId: string | null) =>
     set({ trumpDeclaredBy: playerId }),

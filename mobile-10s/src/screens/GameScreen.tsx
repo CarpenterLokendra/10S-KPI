@@ -170,17 +170,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   const [lastRoundWinner, setLastRoundWinner] = useState(gameStore.roundWinner);
   useEffect(() => {
     if (gameStore.roundWinner && gameStore.roundWinner !== lastRoundWinner) {
-      const winner = gameStore.players.find(p => p.user_id === gameStore.roundWinner);
-      if (winner) {
-        setShowRoundWinnerBanner(true);
-        setBannerMessage(`👑 ${winner.username} won the round!`);
-        setLastRoundWinner(gameStore.roundWinner);
-        soundService.roundWon().catch(err => console.warn('[Sound] Round won failed:', err));
-        const timer = setTimeout(() => setShowRoundWinnerBanner(false), 4000);
-        return () => clearTimeout(timer);
-      }
+      setShowRoundWinnerBanner(true);
+      setBannerMessage(`👑 ${gameStore.roundWinner} won the round!`);
+      setLastRoundWinner(gameStore.roundWinner);
+      soundService.roundWon().catch(err => console.warn('[Sound] Round won failed:', err));
+      const timer = setTimeout(() => setShowRoundWinnerBanner(false), 4000);
+      return () => clearTimeout(timer);
     }
-  }, [gameStore.roundWinner, lastRoundWinner, gameStore.players]);
+  }, [gameStore.roundWinner, lastRoundWinner]);
 
   // 10s caught banner
   const [lastCaughtTens, setLastCaughtTens] = useState<string>(gameStore.playedCards?.length.toString() || '0');
