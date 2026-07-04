@@ -337,7 +337,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       {/* Opponent Players Row */}
       <View style={styles.opponentRow}>
         <FlatList
-          data={gameStore.players.slice(1)}
+          data={gameStore.players.filter(p => p.user_id !== userId)}
           horizontal
           renderItem={({ item, index }) => {
             // Detect bots by either isBot flag OR username match (fallback for backend inconsistency)
