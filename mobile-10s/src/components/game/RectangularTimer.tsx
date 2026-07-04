@@ -101,19 +101,19 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
     <View
       style={{
         position: 'absolute',
-        top: -gap,
-        left: -gap,
-        width: fullWidth,
-        height: fullHeight,
+        top: 0,
+        left: 0,
+        width: cardWidth,
+        height: cardHeight,
       }}
       pointerEvents="none"
     >
-      <Svg width={fullWidth} height={fullHeight} viewBox={`0 0 ${fullWidth} ${fullHeight}`}>
+      <Svg width={cardWidth} height={cardHeight} viewBox={`0 0 ${cardWidth} ${cardHeight}`}>
         {/* Background path */}
         <Path
-          d={outerPath}
+          d={createRoundedRectPath(cardWidth, cardHeight, borderRadius)}
           stroke="rgba(34, 197, 94, 0.15)"
-          strokeWidth={2}
+          strokeWidth={3}
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -125,19 +125,21 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
             position: 'absolute',
             top: 0,
             left: 0,
-            width: fullWidth,
-            height: fullHeight,
+            width: cardWidth,
+            height: cardHeight,
             opacity: blinkOpacityRef.current,
           }}
         >
-          <Svg width={fullWidth} height={fullHeight} viewBox={`0 0 ${fullWidth} ${fullHeight}`}>
+          <Svg width={cardWidth} height={cardHeight} viewBox={`0 0 ${cardWidth} ${cardHeight}`}>
             <Path
-              d={outerPath}
+              d={createRoundedRectPath(cardWidth, cardHeight, borderRadius)}
               stroke={timerColor}
-              strokeWidth={2}
+              strokeWidth={3}
               fill="none"
-              strokeDasharray={pathLength}
-              strokeDashoffset={strokeDashoffset}
+              strokeDasharray={getPathLength(cardWidth, cardHeight, borderRadius)}
+              strokeDashoffset={
+                (getPathLength(cardWidth, cardHeight, borderRadius) * (100 - progressPercentage)) / 100
+              }
               strokeLinecap="round"
               strokeLinejoin="round"
               style={{

@@ -372,17 +372,43 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             // Detect bots by either isBot flag OR username match (fallback for backend inconsistency)
             const baseUsername = item.username?.split('(')[0].trim() || '';
             const isBotPlayer = item.isBot || BOT_NAMES.includes(baseUsername);
+            const isCurrentTurnPlayer = item.user_id === gameStore.currentTurn;
+            const cardKey = `${item.user_id}-${index}`;
+            const cardDimensions = cardDimensionsRef.current[cardKey] || { width: 64, height: 100 };
 
             return (
-            <View key={`${item.user_id}-${index}`} style={[styles.playerCard, {
-              backgroundColor: isMyTurn && item.user_id === gameStore.currentTurn
-                ? 'rgba(34, 197, 94, 0.25)'
-                : 'rgba(20, 30, 45, 0.7)',
-              borderColor: isMyTurn && item.user_id === gameStore.currentTurn
-                ? 'rgba(34, 197, 94, 0.6)'
-                : 'rgba(240, 180, 41, 0.2)',
-              borderWidth: isMyTurn && item.user_id === gameStore.currentTurn ? 2 : 1,
-            }]}>
+            <Animated.View
+              key={cardKey}
+              style={[
+                styles.playerCard,
+                isCurrentTurnPlayer && { opacity: blinkOpacityRef.current },
+                {
+                  backgroundColor: isCurrentTurnPlayer
+                    ? 'rgba(34, 197, 94, 0.25)'
+                    : 'rgba(20, 30, 45, 0.7)',
+                  borderColor: isCurrentTurnPlayer
+                    ? 'rgba(34, 197, 94, 0.6)'
+                    : 'rgba(240, 180, 41, 0.2)',
+                  borderWidth: isCurrentTurnPlayer ? 2 : 1,
+                }
+              ]}
+              onLayout={(e) => {
+                cardDimensionsRef.current[cardKey] = {
+                  width: e.nativeEvent.layout.width,
+                  height: e.nativeEvent.layout.height,
+                };
+              }}
+            >
+              {isCurrentTurnPlayer && gameStore.currentTurn && (
+                <RectangularTimer
+                  remainingSeconds={activeTurnRemaining}
+                  totalSeconds={gameStore.turnTimeoutSeconds || 60}
+                  cardWidth={cardDimensions.width}
+                  cardHeight={cardDimensions.height}
+                  borderRadius={8}
+                  gap={2}
+                />
+              )}
               {isBotPlayer ? (
                 <View style={styles.playerAvatar}>
                   <BotAvatar botName={baseUsername || 'Bob'} size={32} />
@@ -410,7 +436,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                 {isBotPlayer ? '🤖 ' : ''}{baseUsername || 'Player'}
               </Text>
               <Text style={styles.playerScore}>{item.final_score || 0}</Text>
-            </View>
+            </Animated.View>
             );
           }}
           keyExtractor={(item, index) => `${item.user_id}-${index}`}
@@ -504,10 +530,33 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       <View style={styles.handSection}>
         {/* Current Player Card */}
         {currentPlayer && (
-          <View style={[styles.myPlayerCard, {
-            backgroundColor: isMyTurn ? 'rgba(34, 197, 94, 0.15)' : 'rgba(20, 30, 45, 0.7)',
-            borderColor: isMyTurn ? 'rgba(34, 197, 94, 0.6)' : 'rgba(240, 180, 41, 0.2)',
-          }]}>
+          <Animated.View
+            style={[
+              styles.myPlayerCard,
+              isMyTurn && { opacity: blinkOpacityRef.current },
+              {
+                backgroundColor: isMyTurn ? 'rgba(34, 197, 94, 0.15)' : 'rgba(20, 30, 45, 0.7)',
+                borderColor: isMyTurn ? 'rgba(34, 197, 94, 0.6)' : 'rgba(240, 180, 41, 0.2)',
+              },
+            ]}
+            onLayout={(e) => {
+              const myCardKey = `my-player-${userId}`;
+              cardDimensionsRef.current[myCardKey] = {
+                width: e.nativeEvent.layout.width,
+                height: e.nativeEvent.layout.height,
+              };
+            }}
+          >
+            {isMyTurn && gameStore.currentTurn === userId && (
+              <RectangularTimer
+                remainingSeconds={activeTurnRemaining}
+                totalSeconds={gameStore.turnTimeoutSeconds || 60}
+                cardWidth={cardDimensionsRef.current[`my-player-${userId}`]?.width || 80}
+                cardHeight={cardDimensionsRef.current[`my-player-${userId}`]?.height || 120}
+                borderRadius={8}
+                gap={2}
+              />
+            )}
             {currentPlayer.isBot ? (
               <View style={styles.myPlayerAvatar}>
                 <BotAvatar botName={currentPlayer.username?.split('(')[0].trim() || 'Bob'} size={40} />
@@ -539,7 +588,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                 Score: {currentPlayer.score || 0}
               </Text>
             </View>
-          </View>
+          </Animated.View>
         )}
 
         {/* Hand Label */}
