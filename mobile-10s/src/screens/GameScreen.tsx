@@ -24,6 +24,7 @@ import { DealingOverlay } from '../components/DealingOverlay';
 import { TimeoutModal } from '../components/TimeoutModal';
 import { GameEndedScreen } from '../components/GameEndedScreen';
 import { GameCompletedScreen } from '../components/GameCompletedScreen';
+import { BotAvatar } from '../components/BotAvatar';
 import { soundService } from '../services/sound.service';
 
 interface GameScreenProps {
@@ -339,7 +340,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                 : 'rgba(240, 180, 41, 0.2)',
               borderWidth: isMyTurn && item.user_id === gameStore.currentTurn ? 2 : 1,
             }]}>
-              {item.avatar_url ? (
+              {item.isBot ? (
+                <View style={styles.playerAvatar}>
+                  <BotAvatar botName={item.username?.split('(')[0].trim() || 'Bot'} size={50} />
+                </View>
+              ) : item.avatar_url ? (
                 <View style={styles.playerAvatar}>
                   <Image
                     source={{ uri: item.avatar_url }}
