@@ -9,6 +9,7 @@ interface RectangularTimerProps {
   cardHeight?: number;
   borderRadius?: number;
   gap?: number;
+  padding?: number;
 }
 
 const createRoundedRectPath = (
@@ -40,6 +41,7 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
   cardHeight = 120,
   borderRadius = 8,
   gap = 2,
+  padding = 0,
 }) => {
   const [displaySeconds, setDisplaySeconds] = useState(remainingSeconds);
   const [timerColor, setTimerColor] = useState('#22c55e');
@@ -49,9 +51,11 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
   const startTimeRef = useRef(Date.now());
 
   const strokeWidth = 3;
-  const inset = strokeWidth; // Inset path by full stroke width to keep it well within bounds
-  const pathLength = getPathLength(cardWidth, cardHeight, borderRadius, inset);
-  const outerPath = createRoundedRectPath(cardWidth, cardHeight, borderRadius, inset);
+  // Use a large inset (6px) to ensure stroke stays well within card bounds
+  // This accounts for: half-stroke centering (1.5) + safety margin (4.5)
+  const pathInset = 6;
+  const pathLength = getPathLength(cardWidth, cardHeight, borderRadius, pathInset);
+  const outerPath = createRoundedRectPath(cardWidth, cardHeight, borderRadius, pathInset);
 
   // Update timer every 100ms
   useEffect(() => {
@@ -77,7 +81,7 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
     return () => clearInterval(interval);
   }, [remainingSeconds, totalSeconds]);
 
-  // Blink animation (< 10%)
+  // Card-level blink animation (< 10%)
   useEffect(() => {
     if (shouldBlink) {
       Animated.loop(
@@ -103,18 +107,24 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
   const strokeDashoffset = (pathLength * (100 - progressPercentage)) / 100;
 
   return (
-    <View
+    <Animated.View
       style={{
         position: 'absolute',
-        top: 0,
-        left: 0,
-        width: cardWidth,
-        height: cardHeight,
+        top: -padding,
+        left: -padding,
+        width: cardWidth + (padding * 2),
+        height: cardHeight + (padding * 2),
         overflow: 'hidden',
+        opacity: blinkOpacityRef.current,
       }}
       pointerEvents="none"
     >
-      <Svg width={cardWidth} height={cardHeight} viewBox={`0 0 ${cardWidth} ${cardHeight}`}>
+      <Svg
+        width={cardWidth}
+        height={cardHeight}
+        viewBox={`0 0 ${cardWidth} ${cardHeight}`}
+        style={{ marginTop: padding, marginLeft: padding }}
+      >
         {/* Background path */}
         <Path
           d={outerPath}
@@ -125,36 +135,21 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
           strokeLinejoin="round"
         />
 
-        {/* Animated progress path */}
-        <Animated.View
+        {/* Animated progress path - renderered directly in SVG, not nested View */}
+        <Path
+          d={outerPath}
+          stroke={timerColor}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeDasharray={pathLength}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          strokeLinejoin="round"
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: cardWidth,
-            height: cardHeight,
-            opacity: blinkOpacityRef.current,
+            transition: 'stroke-dashoffset 0.05s linear, stroke 0.15s ease',
           }}
-        >
-          <Svg width={cardWidth} height={cardHeight} viewBox={`0 0 ${cardWidth} ${cardHeight}`}>
-            <Path
-              d={outerPath}
-              stroke={timerColor}
-              strokeWidth={strokeWidth}
-              fill="none"
-              strokeDasharray={pathLength}
-              strokeDashoffset={
-                (pathLength * (100 - progressPercentage)) / 100
-              }
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{
-                transition: 'stroke-dashoffset 0.05s linear, stroke 0.15s ease',
-              }}
-            />
-          </Svg>
-        </Animated.View>
+        />
       </Svg>
-    </View>
+    </Animated.View>
   );
 };

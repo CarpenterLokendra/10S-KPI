@@ -555,6 +555,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                 cardHeight={cardDimensionsRef.current[`my-player-${userId}`]?.height || 120}
                 borderRadius={8}
                 gap={2}
+                padding={8}
               />
             )}
             {currentPlayer.isBot ? (

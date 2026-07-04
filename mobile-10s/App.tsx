@@ -105,7 +105,7 @@ export default function App() {
       console.error('Failed to get stored userId:', err);
     }
     setIsAuthenticated(true);
-    setAppState('lobby');
+    setAppState('landing');
   };
 
   const handlePlayNow = () => {
