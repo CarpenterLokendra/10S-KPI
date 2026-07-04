@@ -14,17 +14,22 @@ interface RectangularTimerProps {
 const createRoundedRectPath = (
   width: number,
   height: number,
-  borderRadius: number
+  borderRadius: number,
+  inset: number = 0
 ): string => {
   const r = borderRadius;
-  const w = width;
-  const h = height;
-  return `M ${r},0 L ${w - r},0 Q ${w},0 ${w},${r} L ${w},${h - r} Q ${w},${h} ${w - r},${h} L ${r},${h} Q 0,${h} 0,${h - r} L 0,${r} Q 0,0 ${r},0 Z`;
+  const w = width - inset * 2;
+  const h = height - inset * 2;
+  const x = inset;
+  const y = inset;
+  return `M ${x + r},${y} L ${x + w - r},${y} Q ${x + w},${y} ${x + w},${y + r} L ${x + w},${y + h - r} Q ${x + w},${y + h} ${x + w - r},${y + h} L ${x + r},${y + h} Q ${x},${y + h} ${x},${y + h - r} L ${x},${y + r} Q ${x},${y} ${x + r},${y} Z`;
 };
 
-const getPathLength = (width: number, height: number, borderRadius: number): number => {
+const getPathLength = (width: number, height: number, borderRadius: number, inset: number = 0): number => {
   const r = borderRadius;
-  const perimeter = 2 * (width - 2 * r) + 2 * (height - 2 * r) + Math.PI * 2 * r;
+  const w = width - inset * 2;
+  const h = height - inset * 2;
+  const perimeter = 2 * (w - 2 * r) + 2 * (h - 2 * r) + Math.PI * 2 * r;
   return perimeter;
 };
 
@@ -43,10 +48,10 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
   const lastUpdateRef = useRef(Date.now());
   const startTimeRef = useRef(Date.now());
 
-  const fullWidth = cardWidth + gap * 2;
-  const fullHeight = cardHeight + gap * 2;
-  const pathLength = getPathLength(fullWidth, fullHeight, borderRadius);
-  const outerPath = createRoundedRectPath(fullWidth, fullHeight, borderRadius);
+  const strokeWidth = 3;
+  const inset = strokeWidth; // Inset path by full stroke width to keep it well within bounds
+  const pathLength = getPathLength(cardWidth, cardHeight, borderRadius, inset);
+  const outerPath = createRoundedRectPath(cardWidth, cardHeight, borderRadius, inset);
 
   // Update timer every 100ms
   useEffect(() => {
@@ -105,15 +110,16 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
         left: 0,
         width: cardWidth,
         height: cardHeight,
+        overflow: 'hidden',
       }}
       pointerEvents="none"
     >
       <Svg width={cardWidth} height={cardHeight} viewBox={`0 0 ${cardWidth} ${cardHeight}`}>
         {/* Background path */}
         <Path
-          d={createRoundedRectPath(cardWidth, cardHeight, borderRadius)}
+          d={outerPath}
           stroke="rgba(34, 197, 94, 0.15)"
-          strokeWidth={3}
+          strokeWidth={strokeWidth}
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -132,13 +138,13 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
         >
           <Svg width={cardWidth} height={cardHeight} viewBox={`0 0 ${cardWidth} ${cardHeight}`}>
             <Path
-              d={createRoundedRectPath(cardWidth, cardHeight, borderRadius)}
+              d={outerPath}
               stroke={timerColor}
-              strokeWidth={3}
+              strokeWidth={strokeWidth}
               fill="none"
-              strokeDasharray={getPathLength(cardWidth, cardHeight, borderRadius)}
+              strokeDasharray={pathLength}
               strokeDashoffset={
-                (getPathLength(cardWidth, cardHeight, borderRadius) * (100 - progressPercentage)) / 100
+                (pathLength * (100 - progressPercentage)) / 100
               }
               strokeLinecap="round"
               strokeLinejoin="round"
