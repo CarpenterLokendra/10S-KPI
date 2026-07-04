@@ -24,7 +24,7 @@ import { DealingOverlay } from '../components/DealingOverlay';
 import { TimeoutModal } from '../components/TimeoutModal';
 import { GameEndedScreen } from '../components/GameEndedScreen';
 import { GameCompletedScreen } from '../components/GameCompletedScreen';
-import { BotAvatar } from '../components/BotAvatar';
+import { BOT_AVATARS } from '../utils/botAvatars';
 import { soundService } from '../services/sound.service';
 
 interface GameScreenProps {
@@ -342,7 +342,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             }]}>
               {item.isBot ? (
                 <View style={styles.playerAvatar}>
-                  <BotAvatar botName={item.username?.split('(')[0].trim() || 'Bot'} size={50} />
+                  <Image
+                    source={{ uri: BOT_AVATARS[item.username?.split('(')[0].trim() as keyof typeof BOT_AVATARS] || BOT_AVATARS.Bob }}
+                    style={{ width: '100%', height: '100%', borderRadius: 50 }}
+                  />
                 </View>
               ) : item.avatar_url ? (
                 <View style={styles.playerAvatar}>
