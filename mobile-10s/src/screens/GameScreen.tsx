@@ -242,7 +242,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#f0b429" />
-          <Text style={[styles.loadingText, { color: colors.textPrimary }]}>
+          <Text style={[styles.loadingText, { color: '#fff' }]}>
             Initializing game...
           </Text>
           <Text style={[styles.connectionStatus, { color: isConnected ? '#22c55e' : '#ef4444' }]}>
@@ -293,7 +293,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
           </Text>
         </View>
         <View style={styles.topBarCenter}>
-          <Text style={[styles.roundCounter, { color: colors.textPrimary }]}>
+          <Text style={[styles.roundCounter, { color: '#fff' }]}>
             Round {gameStore.currentRound}/13
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
