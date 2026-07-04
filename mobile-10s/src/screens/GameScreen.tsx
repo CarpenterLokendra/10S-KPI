@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ScrollView,
   Image,
   Alert,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,6 +27,7 @@ import { GameEndedScreen } from '../components/GameEndedScreen';
 import { GameCompletedScreen } from '../components/GameCompletedScreen';
 import { BotAvatar } from '../components/BotAvatar';
 import { BOT_NAMES } from '../utils/botAvatars';
+import { RectangularTimer } from '../components/game/RectangularTimer';
 import { soundService } from '../services/sound.service';
 
 interface GameScreenProps {
@@ -45,6 +47,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   const { userId } = useAuthStore();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [isPlayingCard, setIsPlayingCard] = useState(false);
+  const [activeTurnRemaining, setActiveTurnRemaining] = useState<number>(gameStore.turnTimeoutSeconds || 60);
+  const blinkOpacityRef = useRef(new Animated.Value(1));
+  const cardDimensionsRef = useRef<{ [key: string]: { width: number; height: number } }>({});
 
   // Reset stale game state if navigating to a different game (matches GameTable.tsx:277-282)
   useEffect(() => {
@@ -181,10 +186,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
   const playableCards = getPlayableIndices();
 
-  // Turn timer effect - use timestamp-based calculation like web app
+  // Turn timer effect - track any active turn (not just self), update every 100ms like web app
   useEffect(() => {
-    if (!isMyTurn || !gameStore.turnStartedAt) {
-      setTurnTimeRemaining(60);
+    if (!gameStore.currentTurn || !gameStore.turnStartedAt) {
+      setActiveTurnRemaining(gameStore.turnTimeoutSeconds || 60);
       return;
     }
 
@@ -193,17 +198,41 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         const turnStartTime = new Date(gameStore.turnStartedAt).getTime();
         const currentTime = Date.now();
         const elapsedMs = currentTime - turnStartTime;
-        const remainingMs = Math.max(0, 60000 - elapsedMs);
+        const timeoutMs = (gameStore.turnTimeoutSeconds || 60) * 1000;
+        const remainingMs = Math.max(0, timeoutMs - elapsedMs);
         const remainingSeconds = Math.ceil(remainingMs / 1000);
-        setTurnTimeRemaining(remainingSeconds);
+        setActiveTurnRemaining(remainingSeconds);
       } catch (err) {
         // Fallback to simple countdown if timestamp parsing fails
-        setTurnTimeRemaining(prev => (prev > 0 ? prev - 1 : 0));
+        setActiveTurnRemaining(prev => (prev > 0 ? prev - 1 : 0));
       }
-    }, 100); // Update more frequently like web app (100ms vs 1s)
+    }, 100);
 
     return () => clearInterval(timer);
-  }, [isMyTurn, gameStore.turnStartedAt]);
+  }, [gameStore.currentTurn, gameStore.turnStartedAt, gameStore.turnTimeoutSeconds]);
+
+  // Blink animation for current turn player
+  useEffect(() => {
+    const isCurrentTurn = gameStore.currentTurn === userId || gameStore.currentTurn === (currentPlayer?.user_id);
+    if (isCurrentTurn && gameStore.currentTurn) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(blinkOpacityRef.current, {
+            toValue: 0.5,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(blinkOpacityRef.current, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      blinkOpacityRef.current.setValue(1);
+    }
+  }, [gameStore.currentTurn, userId, currentPlayer?.user_id]);
 
   // Trump reveal banner
   const [lastTrumpSuit, setLastTrumpSuit] = useState(gameStore.trumpSuit);
