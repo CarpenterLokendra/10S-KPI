@@ -29,6 +29,7 @@ import { BotAvatar } from '../components/BotAvatar';
 import { BOT_NAMES } from '../utils/botAvatars';
 import { RectangularTimer } from '../components/game/RectangularTimer';
 import { soundService } from '../services/sound.service';
+import { DraggableCard } from '../components/game/DraggableCard';
 
 interface GameScreenProps {
   gameId: string;
@@ -48,6 +49,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [isPlayingCard, setIsPlayingCard] = useState(false);
   const [activeTurnRemaining, setActiveTurnRemaining] = useState<number>(gameStore.turnTimeoutSeconds || 60);
+  const [pileLayout, setPileLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const blinkOpacityRef = useRef(new Animated.Value(1));
   const cardDimensionsRef = useRef<{ [key: string]: { width: number; height: number } }>({});
 
@@ -466,7 +468,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         <View style={[styles.cardPile, {
           backgroundColor: 'rgba(20, 30, 45, 0.4)',
           borderColor: 'rgba(34, 197, 94, 0.5)',
-        }]}>
+        }]}
+        onLayout={(e) => {
+          setPileLayout({
+            x: e.nativeEvent.layout.x,
+            y: e.nativeEvent.layout.y,
+            width: e.nativeEvent.layout.width,
+            height: e.nativeEvent.layout.height,
+          });
+        }}>
           {gameStore.playedCards && gameStore.playedCards.length > 0 ? (
             <>
               <Text style={[styles.cardPileLabel, { color: '#f0b429' }]}>
@@ -597,36 +607,31 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             horizontal
             renderItem={({ item }) => {
               const isPlayable = playableCards.has(item.id);
-              const isNonPlayable = gameStore.ledSuit && !playableCards.has(item.id);
-              const cardImage = getCardImagePath(item.suit, item.value);
               return (
-                <TouchableOpacity
-                  style={[
-                    styles.handCard,
-                    selectedCard === item.id && styles.handCardSelected,
-                    isNonPlayable && styles.handCardNonPlayable,
-                    {
-                      borderColor: selectedCard === item.id ? '#f0b429' : 'rgba(240, 180, 41, 0.2)',
-                      borderWidth: selectedCard === item.id ? 3 : 1,
-                      opacity: isNonPlayable ? 0.5 : 1,
-                    }
-                  ]}
-                  onPress={() => isMyTurn && isPlayable && setSelectedCard(item.id)}
-                  disabled={isNonPlayable}
-                >
-                  {cardImage ? (
-                    <Image
-                      source={cardImage}
-                      style={styles.cardImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <>
-                      <Text style={styles.cardValue}>{getCardSymbol(item.value)}</Text>
-                      <Text style={styles.cardSuit}>{getSuitSymbol(item.suit)}</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                <View style={{ marginRight: 8 }}>
+                  <DraggableCard
+                    card={item}
+                    isSelected={selectedCard === item.id}
+                    isPlayable={isPlayable}
+                    isMyTurn={isMyTurn}
+                    onSelect={(cardId) => setSelectedCard(selectedCard === cardId ? null : cardId)}
+                    onPlayCard={async (card) => {
+                      try {
+                        setIsPlayingCard(true);
+                        wsPlayCard(card);
+                        gameStore.playCard(card.id);
+                        setSelectedCard(null);
+                      } catch (err) {
+                        console.error('[GameScreen] Failed to play card:', err);
+                        alert('Failed to play card');
+                      } finally {
+                        setIsPlayingCard(false);
+                      }
+                    }}
+                    pileLayout={pileLayout}
+                    isPlayingCard={isPlayingCard}
+                  />
+                </View>
               );
             }}
             keyExtractor={(item) => item.id}
