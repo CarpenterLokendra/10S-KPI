@@ -25,6 +25,7 @@ import { TimeoutModal } from '../components/TimeoutModal';
 import { GameEndedScreen } from '../components/GameEndedScreen';
 import { GameCompletedScreen } from '../components/GameCompletedScreen';
 import { BotAvatar } from '../components/BotAvatar';
+import { BOT_NAMES } from '../utils/botAvatars';
 import { soundService } from '../services/sound.service';
 
 interface GameScreenProps {
@@ -338,7 +339,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         <FlatList
           data={gameStore.players.slice(1)}
           horizontal
-          renderItem={({ item, index }) => (
+          renderItem={({ item, index }) => {
+            // Detect bots by either isBot flag OR username match (fallback for backend inconsistency)
+            const baseUsername = item.username?.split('(')[0].trim() || '';
+            const isBotPlayer = item.isBot || BOT_NAMES.includes(baseUsername);
+
+            return (
             <View key={`${item.user_id}-${index}`} style={[styles.playerCard, {
               backgroundColor: isMyTurn && item.user_id === gameStore.currentTurn
                 ? 'rgba(34, 197, 94, 0.25)'
@@ -348,9 +354,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                 : 'rgba(240, 180, 41, 0.2)',
               borderWidth: isMyTurn && item.user_id === gameStore.currentTurn ? 2 : 1,
             }]}>
-              {item.isBot ? (
+              {isBotPlayer ? (
                 <View style={styles.playerAvatar}>
-                  <BotAvatar botName={item.username?.split('(')[0].trim() || 'Bob'} size={24} />
+                  <BotAvatar botName={baseUsername || 'Bob'} size={32} />
                 </View>
               ) : item.avatar_url ? (
                 <View style={styles.playerAvatar}>
@@ -372,11 +378,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                 </LinearGradient>
               )}
               <Text style={styles.playerName} numberOfLines={1}>
-                {item.isBot ? '🤖 ' : ''}{item.username?.split('(')[0].trim() || 'Player'}
+                {isBotPlayer ? '🤖 ' : ''}{baseUsername || 'Player'}
               </Text>
               <Text style={styles.playerScore}>{item.final_score || 0}</Text>
             </View>
-          )}
+            );
+          }}
           keyExtractor={(item, index) => `${item.user_id}-${index}`}
           scrollEnabled={true}
           showsHorizontalScrollIndicator={false}
@@ -697,11 +704,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   playerAvatar: {
-    width: 24,
-    height: 24,
+    width: 32,
+    height: 32,
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   playerInitial: {
     fontSize: 10,
