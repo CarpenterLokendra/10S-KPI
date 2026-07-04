@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Animated } from 'react-native';
-import { Svg, Path } from 'react-native-svg';
+import { Svg, Path, Defs, ClipPath, Rect, G } from 'react-native-svg';
 
 interface RectangularTimerProps {
   remainingSeconds: number;
@@ -50,10 +50,9 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
   const lastUpdateRef = useRef(Date.now());
   const startTimeRef = useRef(Date.now());
 
-  const strokeWidth = 3;
-  // Inset by 2px: enough to prevent stroke clipping, small enough to sit on border
-  // Path at (2,2) means stroke extends to ~(0.5,0.5), sitting essentially on card border
-  const pathInset = 2;
+  const strokeWidth = 6;
+  // Inset by 4px: accommodates 6px stroke with safety margin
+  const pathInset = 4;
   const pathLength = getPathLength(cardWidth, cardHeight, borderRadius, pathInset);
   const outerPath = createRoundedRectPath(cardWidth, cardHeight, borderRadius, pathInset);
 
@@ -125,30 +124,37 @@ export const RectangularTimer: React.FC<RectangularTimerProps> = ({
         viewBox={`0 0 ${cardWidth} ${cardHeight}`}
         style={{ marginTop: padding, marginLeft: padding }}
       >
-        {/* Background path */}
-        <Path
-          d={outerPath}
-          stroke="rgba(34, 197, 94, 0.15)"
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <Defs>
+          <ClipPath id="timerClip">
+            <Rect x="0" y="0" width={cardWidth} height={cardHeight} />
+          </ClipPath>
+        </Defs>
+        <G clipPath="url(#timerClip)">
+          {/* Background path */}
+          <Path
+            d={outerPath}
+            stroke="rgba(34, 197, 94, 0.15)"
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
 
-        {/* Animated progress path - renderered directly in SVG, not nested View */}
-        <Path
-          d={outerPath}
-          stroke={timerColor}
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray={pathLength}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{
-            transition: 'stroke-dashoffset 0.05s linear, stroke 0.15s ease',
-          }}
-        />
+          {/* Animated progress path - clipped to SVG bounds */}
+          <Path
+            d={outerPath}
+            stroke={timerColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeDasharray={pathLength}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              transition: 'stroke-dashoffset 0.05s linear, stroke 0.15s ease',
+            }}
+          />
+        </G>
       </Svg>
     </Animated.View>
   );
