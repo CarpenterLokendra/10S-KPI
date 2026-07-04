@@ -139,19 +139,29 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
   const playableCards = getPlayableIndices();
 
-  // Turn timer effect
+  // Turn timer effect - use timestamp-based calculation like web app
   useEffect(() => {
-    if (!isMyTurn) {
+    if (!isMyTurn || !gameStore.turnStartedAt) {
       setTurnTimeRemaining(60);
       return;
     }
 
     const timer = setInterval(() => {
-      setTurnTimeRemaining(prev => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
+      try {
+        const turnStartTime = new Date(gameStore.turnStartedAt).getTime();
+        const currentTime = Date.now();
+        const elapsedMs = currentTime - turnStartTime;
+        const remainingMs = Math.max(0, 60000 - elapsedMs);
+        const remainingSeconds = Math.ceil(remainingMs / 1000);
+        setTurnTimeRemaining(remainingSeconds);
+      } catch (err) {
+        // Fallback to simple countdown if timestamp parsing fails
+        setTurnTimeRemaining(prev => (prev > 0 ? prev - 1 : 0));
+      }
+    }, 100); // Update more frequently like web app (100ms vs 1s)
 
     return () => clearInterval(timer);
-  }, [isMyTurn]);
+  }, [isMyTurn, gameStore.turnStartedAt]);
 
   // Trump reveal banner
   const [lastTrumpSuit, setLastTrumpSuit] = useState(gameStore.trumpSuit);
