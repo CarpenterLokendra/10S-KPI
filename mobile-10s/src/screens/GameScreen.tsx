@@ -607,13 +607,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             horizontal
             renderItem={({ item }) => {
               const isPlayable = playableCards.has(item.id);
+              console.log('[DEBUG] Card:', { cardId: item.id, suit: item.suit, value: item.value, selectedCard, isSelected: selectedCard === item.id });
               return (
                 <DraggableCard
                   card={item}
                   isSelected={selectedCard === item.id}
                   isPlayable={isPlayable}
                   isMyTurn={isMyTurn}
-                  onSelect={(cardId) => setSelectedCard(selectedCard === cardId ? null : cardId)}
+                  onSelect={(cardId) => {
+                    console.log('[DEBUG] onSelect called:', { cardId, currentSelectedCard: selectedCard, willToggleTo: selectedCard === cardId ? null : cardId });
+                    setSelectedCard(selectedCard === cardId ? null : cardId);
+                  }}
                   onPlayCard={async (card) => {
                     try {
                       setIsPlayingCard(true);
