@@ -471,9 +471,50 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         </View>
       </View>
 
-      {/* Player Hand */}
+      {/* My Player Card + Hand Section */}
       <View style={styles.handSection}>
-        <Text style={[styles.handLabel, { color: '#22c55e' }]}>
+        {/* Current Player Card */}
+        {currentPlayer && (
+          <View style={[styles.myPlayerCard, {
+            backgroundColor: isMyTurn ? 'rgba(34, 197, 94, 0.15)' : 'rgba(20, 30, 45, 0.7)',
+            borderColor: isMyTurn ? 'rgba(34, 197, 94, 0.6)' : 'rgba(240, 180, 41, 0.2)',
+          }]}>
+            {currentPlayer.isBot ? (
+              <View style={styles.myPlayerAvatar}>
+                <BotAvatar botName={currentPlayer.username?.split('(')[0].trim() || 'Bob'} size={40} />
+              </View>
+            ) : currentPlayer.avatar_url ? (
+              <View style={styles.myPlayerAvatar}>
+                <Image
+                  source={{ uri: currentPlayer.avatar_url }}
+                  style={{ width: '100%', height: '100%', borderRadius: 20 }}
+                />
+              </View>
+            ) : (
+              <LinearGradient
+                colors={['#f0b429', '#a855f7']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.myPlayerAvatar}
+              >
+                <Text style={styles.myPlayerInitial}>
+                  {currentPlayer.username?.[0]?.toUpperCase() || '?'}
+                </Text>
+              </LinearGradient>
+            )}
+            <View style={styles.myPlayerInfo}>
+              <Text style={[styles.myPlayerName, { color: '#fff' }]} numberOfLines={1}>
+                {currentPlayer.isBot ? '🤖 ' : ''}{currentPlayer.username?.split('(')[0].trim() || 'Player'}
+              </Text>
+              <Text style={[styles.myPlayerScore, { color: '#f0b429' }]}>
+                Score: {currentPlayer.score || 0}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Hand Label */}
+        <Text style={[styles.handLabel, { color: '#22c55e', marginTop: 12 }]}>
           YOUR HAND ({gameStore.myHand?.length || 0})
         </Text>
         {gameStore.myHand && gameStore.myHand.length > 0 ? (
@@ -523,51 +564,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         )}
       </View>
 
-      {/* Controls */}
-      {isMyTurn && (
-        <View style={styles.controlsSection}>
-          <TouchableOpacity
-            style={[
-              styles.controlButton,
-              !selectedCard && styles.controlButtonDisabled,
-              { backgroundColor: selectedCard ? '#6125c9' : 'rgba(97, 37, 201, 0.5)' }
-            ]}
-            onPress={handlePlayCard}
-            disabled={!selectedCard || isPlayingCard}
-          >
-            {isPlayingCard ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.controlButtonText}>Play Card</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.controlButton,
-              {
-                backgroundColor: 'transparent',
-                borderWidth: 2,
-                borderColor: '#6125c9'
-              }
-            ]}
-            onPress={handlePassTurn}
-            disabled={isPlayingCard}
-          >
-            <Text style={[styles.controlButtonText, { color: '#6125c9' }]}>
-              Pass Turn
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {!isMyTurn && (
-        <View style={styles.waitingSection}>
-          <Text style={[styles.waitingText, { color: '#fff' }]}>
-            Waiting for {gameStore.players.find(p => p.user_id === gameStore.currentTurn)?.username?.split('(')[0] || 'other player'}...
-          </Text>
-        </View>
-      )}
 
       {/* Connection Status */}
       {!isConnected && (
@@ -822,7 +818,7 @@ const styles = StyleSheet.create({
   handSection: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    height: 130,
+    height: 220,
   },
   handLabel: {
     fontSize: 11,
@@ -833,6 +829,43 @@ const styles = StyleSheet.create({
   handContent: {
     gap: 6,
     paddingHorizontal: 4,
+  },
+  myPlayerCard: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 6,
+    alignSelf: 'center',
+    width: 80,
+  },
+  myPlayerAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  myPlayerInitial: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  myPlayerInfo: {
+    alignItems: 'center',
+  },
+  myPlayerName: {
+    fontSize: 9,
+    fontWeight: '700',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  myPlayerScore: {
+    fontSize: 8,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   handCard: {
     width: 60,
