@@ -523,38 +523,40 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
           </Text>
 
           {/* Lobbies List or Loading/Empty State */}
-          {isLoading && lobbies.length === 0 ? (
-            <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color="#f0b429" />
-              <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-                {t('lobby.loading')}
-              </Text>
-            </View>
-          ) : error || lobbies.length === 0 ? (
-            <View style={styles.centerContainer}>
-              {error ? (
-                <Text style={[styles.errorText, { color: '#ef4444' }]}>{error}</Text>
-              ) : (
-                <>
-                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                    {t('lobby.noLobbies')}
-                  </Text>
-                  <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
-                    {t('lobby.firstCreate')}
-                  </Text>
-                </>
-              )}
-            </View>
-          ) : (
-            <FlatList
-              ref={lobbiesListRef}
-              data={lobbies}
-              renderItem={renderLobbyItem}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-              contentContainerStyle={styles.listContent}
-            />
-          )}
+          <View>
+            {isLoading && lobbies.length === 0 ? (
+              <View style={styles.centerContainer}>
+                <ActivityIndicator size="large" color="#f0b429" />
+                <Text style={[styles.loadingText, { color: colors.textMuted }]}>
+                  {t('lobby.loading')}
+                </Text>
+              </View>
+            ) : error || lobbies.length === 0 ? (
+              <View style={styles.centerContainer}>
+                {error ? (
+                  <Text style={[styles.errorText, { color: '#ef4444' }]}>{error}</Text>
+                ) : (
+                  <>
+                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                      {t('lobby.noLobbies')}
+                    </Text>
+                    <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
+                      {t('lobby.firstCreate')}
+                    </Text>
+                  </>
+                )}
+              </View>
+            ) : (
+              <FlatList
+                ref={lobbiesListRef}
+                data={lobbies}
+                renderItem={renderLobbyItem}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                contentContainerStyle={styles.listContent}
+              />
+            )}
+          </View>
         </ScrollView>
       </SafeAreaView>
 
