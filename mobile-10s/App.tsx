@@ -121,9 +121,23 @@ export default function App() {
       setShowQuickMatchModal(false);
       setQuickMatchLoading(false);
 
-      // Store difficulty and navigate to game (let GameScreen handle initialization, like web app does)
+      // Store initial game data from quick-start response (includes all 3 players with isBot field)
       const gameStore = useGameStore.getState();
       gameStore.setBotDifficulty(difficulty);
+
+      // Store all initial data from quick-start response
+      if (data.players) {
+        gameStore.setPlayers(data.players);
+      }
+      if (data.hand) {
+        gameStore.setMyHand(data.hand);
+      }
+      if (data.current_round) {
+        gameStore.setCurrentRound(data.current_round);
+      }
+      if (data.current_turn) {
+        gameStore.setCurrentTurn(data.current_turn);
+      }
 
       setGameId(data.game_id);
       setAppState('game');
