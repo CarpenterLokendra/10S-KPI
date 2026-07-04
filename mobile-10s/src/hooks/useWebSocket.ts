@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/auth.store';
 export const useWebSocket = (gameId: string | null, userId: string | null) => {
   const store = useGameStore();
   const wsRef = useRef<WebSocket | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const MAX_RECONNECT_ATTEMPTS = 5;
 
@@ -62,7 +63,7 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
         // Start polling if WebSocket failed
         if (!wsRef.current) {
           console.log('[useWebSocket] Starting polling for game updates every 2 seconds');
-          const pollInterval = setInterval(async () => {
+          pollIntervalRef.current = setInterval(async () => {
             try {
               const gameData = await initializeGameFromAPI(gameId);
               handleGameStateUpdate(gameData, finalUserId);
@@ -70,10 +71,6 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
               console.warn('[useWebSocket] Poll failed:', error);
             }
           }, 2000);
-
-          return () => {
-            clearInterval(pollInterval);
-          };
         }
 
         // Set up message handler
@@ -264,12 +261,16 @@ export const useWebSocket = (gameId: string | null, userId: string | null) => {
     // Connect to WebSocket
     connectWebSocket();
 
-    // Cleanup on unmount
+    // Cleanup on unmount or gameId change
     return () => {
-      console.log('[useWebSocket] Cleaning up WebSocket connection');
+      console.log('[useWebSocket] Cleaning up WebSocket connection and polling');
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
       }
     };
   }, [gameId, userId]);

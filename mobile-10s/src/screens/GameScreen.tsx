@@ -45,6 +45,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [isPlayingCard, setIsPlayingCard] = useState(false);
 
+  // Reset stale game state if navigating to a different game (matches GameTable.tsx:277-282)
+  useEffect(() => {
+    if (gameStore.gameId && gameStore.gameId !== gameId) {
+      console.log('[GameScreen] Stale gameId detected, resetting store:', { old: gameStore.gameId, new: gameId });
+      gameStore.resetGame();
+    }
+  }, [gameId, gameStore.gameId, gameStore]);
+
   // Initialize WebSocket connection
   const { playCard: wsPlayCard, passTurn, isConnected, reconnectAttempts } = useWebSocket(gameId, userId || null);
 

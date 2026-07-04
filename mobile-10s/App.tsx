@@ -97,6 +97,9 @@ export default function App() {
       const storedUserId = await authService.getStoredUserId();
       if (storedUserId) {
         setUserId(storedUserId);
+        // Also update the auth store (matches web's pattern for same-session login)
+        const authStore = useAuthStore.getState();
+        authStore.setUserId(storedUserId);
       }
     } catch (err) {
       console.error('Failed to get stored userId:', err);
@@ -121,23 +124,10 @@ export default function App() {
       setShowQuickMatchModal(false);
       setQuickMatchLoading(false);
 
-      // Store initial game data from quick-start response (includes all 3 players with isBot field)
+      // Store difficulty only (matches web app's QuickMatch.tsx:29)
+      // Let GameScreen's useWebSocket handle all other initialization (web app pattern)
       const gameStore = useGameStore.getState();
       gameStore.setBotDifficulty(difficulty);
-
-      // Store all initial data from quick-start response
-      if (data.players) {
-        gameStore.setPlayers(data.players);
-      }
-      if (data.hand) {
-        gameStore.setMyHand(data.hand);
-      }
-      if (data.current_round) {
-        gameStore.setCurrentRound(data.current_round);
-      }
-      if (data.current_turn) {
-        gameStore.setCurrentTurn(data.current_turn);
-      }
 
       setGameId(data.game_id);
       setAppState('game');
