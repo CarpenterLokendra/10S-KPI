@@ -607,7 +607,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             horizontal
             renderItem={({ item }) => {
               const isPlayable = playableCards.has(item.id);
-              console.log('[DEBUG] Card:', { cardId: item.id, suit: item.suit, value: item.value, selectedCard, isSelected: selectedCard === item.id });
+              const isSelected = selectedCard === item.id;
+              console.log(`[DEBUG] Card ID: "${item.id}" | Suit: ${item.suit} | Value: ${item.value} | SelectedCard: "${selectedCard}" | IsSelected: ${isSelected}`);
               return (
                 <DraggableCard
                   card={item}
