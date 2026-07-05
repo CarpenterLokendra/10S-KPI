@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useCallback } from 'react';
-import { View, Animated, PanResponder, Image, LayoutChangeEvent, Text, TouchableOpacity } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Animated, PanResponder, Image, Text } from 'react-native';
 import { Card } from '../../store/game.store';
 import { getCardImagePath } from '../../utils/cardImageMapper';
 
@@ -12,6 +12,8 @@ interface DraggableCardProps {
   onPlayCard: (card: Card) => Promise<void>;
   pileLayout: { x: number; y: number; width: number; height: number } | null;
   isPlayingCard?: boolean;
+  flatListScrollOffset?: number;
+  onCardDragStateChange?: (state: { isOverPile: boolean }) => void;
 }
 
 export const DraggableCard: React.FC<DraggableCardProps> = ({
@@ -23,66 +25,129 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   onPlayCard,
   pileLayout,
   isPlayingCard = false,
+  flatListScrollOffset = 0,
+  onCardDragStateChange,
 }) => {
+  const cardKey = `${card.suit}-${card.value}`;
   const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const scale = useRef(new Animated.Value(1)).current;
   const shadowOpacity = useRef(new Animated.Value(0.3)).current;
-  const cardStartPosRef = useRef({ x: 0, y: 0 });
+  const cardStartPosRef = useRef({ x: 0, y: 0, screenX: 0, screenY: 0 });
   const isDraggingRef = useRef(false);
+  const tapStartTimeRef = useRef(0);
+  const cardRef = useRef<View>(null);
   const MIN_DRAG_DISTANCE = 12;
-  const cardDimensionsRef = useRef<{ width: number; height: number }>({ width: 80, height: 120 });
+  const TAP_TIMEOUT = 200;
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => isSelected && isPlayable && isMyTurn && !isPlayingCard,
+      // Allow responder to be set for both selected and unselected cards
+      onStartShouldSetPanResponder: () => {
+        if (!isMyTurn || !isPlayable) return false;
+        return true;
+      },
       onMoveShouldSetPanResponder: (evt, { dx, dy }) => {
+        if (!isMyTurn || !isPlayable) return false;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance > MIN_DRAG_DISTANCE && isSelected && isPlayable && isMyTurn && !isPlayingCard;
+        return distance > MIN_DRAG_DISTANCE && isSelected;
       },
       onPanResponderGrant: (evt, { x0, y0 }) => {
-        isDraggingRef.current = true;
-        cardStartPosRef.current = { x: x0, y: y0 };
+        tapStartTimeRef.current = Date.now();
+
+        if (cardRef.current) {
+          cardRef.current.measure((fx, fy, width, height, px, py) => {
+            cardStartPosRef.current = {
+              x: x0,
+              y: y0,
+              screenX: px,
+              screenY: py,
+            };
+            console.log(`[${cardKey}] GRANT - Local: {x0:${x0}, y0:${y0}} Screen: {px:${px}, py:${py}}`);
+          });
+        } else {
+          cardStartPosRef.current = { x: x0, y: y0, screenX: x0, screenY: y0 };
+        }
+
         pan.setOffset({ x: pan.x._value, y: pan.y._value });
         pan.setValue({ x: 0, y: 0 });
-
-        // Animate to elevated state
-        Animated.parallel([
-          Animated.timing(scale, {
-            toValue: 1.1,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-          Animated.timing(shadowOpacity, {
-            toValue: 0.8,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-        ]).start();
       },
       onPanResponderMove: (evt, { dx, dy }) => {
-        if (!isDraggingRef.current) return;
-        pan.setValue({ x: dx, y: dy });
-      },
-      onPanResponderRelease: (evt, { dx, dy, x0, y0 }) => {
-        isDraggingRef.current = false;
-        const finalX = cardStartPosRef.current.x + dx;
-        const finalY = cardStartPosRef.current.y + dy;
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // Check if released over pile
+        if (distance > MIN_DRAG_DISTANCE && !isDraggingRef.current && isSelected) {
+          isDraggingRef.current = true;
+          console.log(`[${cardKey}] DRAG START - distance: ${distance.toFixed(2)}`);
+
+          Animated.parallel([
+            Animated.timing(scale, {
+              toValue: 1.1,
+              duration: 150,
+              useNativeDriver: true,
+            }),
+            Animated.timing(shadowOpacity, {
+              toValue: 0.8,
+              duration: 150,
+              useNativeDriver: true,
+            }),
+          ]).start();
+        }
+
+        if (!isDraggingRef.current) return;
+
+        pan.setValue({ x: dx, y: dy });
+
+        const currentScreenX = cardStartPosRef.current.screenX + dx;
+        const currentScreenY = cardStartPosRef.current.screenY + dy;
+
+        if (pileLayout) {
+          const isOverPile =
+            currentScreenX >= pileLayout.x &&
+            currentScreenX <= pileLayout.x + pileLayout.width &&
+            currentScreenY >= pileLayout.y &&
+            currentScreenY <= pileLayout.y + pileLayout.height;
+
+          onCardDragStateChange?.({ isOverPile });
+          console.log(`[${cardKey}] MOVE - pos: {${currentScreenX.toFixed(0)}, ${currentScreenY.toFixed(0)}} isOverPile: ${isOverPile}`);
+        }
+      },
+      onPanResponderRelease: (evt, { dx, dy }) => {
+        const tapDuration = Date.now() - tapStartTimeRef.current;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        console.log(`[${cardKey}] RELEASE - duration: ${tapDuration}ms distance: ${distance.toFixed(2)}`);
+
+        if (distance < MIN_DRAG_DISTANCE && tapDuration < TAP_TIMEOUT) {
+          console.log(`[${cardKey}] TAP detected - toggling selection`);
+          onSelect();
+          isDraggingRef.current = false;
+          return;
+        }
+
+        if (!isDraggingRef.current) {
+          isDraggingRef.current = false;
+          return;
+        }
+
+        isDraggingRef.current = false;
+        const finalScreenX = cardStartPosRef.current.screenX + dx;
+        const finalScreenY = cardStartPosRef.current.screenY + dy;
+
         const isOverPile =
           pileLayout &&
-          finalX >= pileLayout.x &&
-          finalX <= pileLayout.x + pileLayout.width &&
-          finalY >= pileLayout.y &&
-          finalY <= pileLayout.y + pileLayout.height;
+          finalScreenX >= pileLayout.x &&
+          finalScreenX <= pileLayout.x + pileLayout.width &&
+          finalScreenY >= pileLayout.y &&
+          finalScreenY <= pileLayout.y + pileLayout.height;
+
+        console.log(`[${cardKey}] RELEASE result - isOverPile: ${isOverPile}`);
 
         if (isOverPile) {
-          // Play card with animation to pile
+          console.log(`[${cardKey}] PLAYING CARD`);
           Animated.parallel([
             Animated.timing(pan, {
               toValue: {
-                x: pileLayout!.x + pileLayout!.width / 2 - cardStartPosRef.current.x,
-                y: pileLayout!.y + pileLayout!.height / 2 - cardStartPosRef.current.y,
+                x: pileLayout!.x + pileLayout!.width / 2 - cardStartPosRef.current.screenX,
+                y: pileLayout!.y + pileLayout!.height / 2 - cardStartPosRef.current.screenY,
               },
               duration: 300,
               useNativeDriver: true,
@@ -97,7 +162,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
             resetCardState();
           });
         } else {
-          // Snap back to original position
+          console.log(`[${cardKey}] SNAPPING BACK`);
           Animated.parallel([
             Animated.spring(pan, {
               toValue: { x: 0, y: 0 },
@@ -116,11 +181,15 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
               useNativeDriver: true,
             }),
           ]).start();
+
+          onCardDragStateChange?.({ isOverPile: false });
         }
       },
       onPanResponderTerminate: () => {
+        console.log(`[${cardKey}] TERMINATED`);
         isDraggingRef.current = false;
         resetCardState();
+        onCardDragStateChange?.({ isOverPile: false });
       },
     })
   ).current;
@@ -145,27 +214,12 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
     ]).start();
   };
 
-  const handleLayout = (e: LayoutChangeEvent) => {
-    cardDimensionsRef.current = {
-      width: e.nativeEvent.layout.width,
-      height: e.nativeEvent.layout.height,
-    };
-  };
-
   const cardImage = getCardImagePath(card.suit, card.value);
 
   return (
     <View style={{ marginRight: 8 }}>
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={() => {
-          if (isMyTurn && isPlayable) {
-            onSelect();
-          }
-        }}
-        disabled={!isMyTurn || !isPlayable}
-      >
       <Animated.View
+        ref={cardRef}
         style={[
           {
             transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale }],
@@ -178,7 +232,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
             width: 60,
             height: 90,
             borderRadius: 8,
-            borderWidth: isSelected ? 3 : 1,
+            borderWidth: isSelected ? 5 : 1,
             borderColor: isSelected ? '#f0b429' : 'rgba(240, 180, 41, 0.2)',
             backgroundColor: isSelected ? 'rgba(240, 180, 41, 0.1)' : 'rgba(240, 180, 41, 0.05)',
             overflow: 'hidden',
@@ -189,8 +243,6 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
             shadowRadius: isDraggingRef.current ? 12 : 4,
             elevation: isDraggingRef.current ? 8 : 3,
           }}
-          onLayout={handleLayout}
-          pointerEvents="box-none"
         >
           {cardImage ? (
             <Image
@@ -209,7 +261,6 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
           )}
         </View>
       </Animated.View>
-      </TouchableOpacity>
     </View>
   );
 };
