@@ -176,14 +176,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   // Get playable card indices based on led suit
   const getPlayableIndices = (): Set<string> => {
     if (!gameStore.ledSuit || !gameStore.myHand || gameStore.myHand.length === 0) {
-      return new Set(gameStore.myHand?.map(c => c.id) || []);
+      return new Set(gameStore.myHand?.map(c => `${c.suit}-${c.value}`) || []);
     }
 
     const cardsOfLedSuit = gameStore.myHand.filter(c => c.suit?.toLowerCase() === gameStore.ledSuit?.toLowerCase());
     if (cardsOfLedSuit.length > 0) {
-      return new Set(cardsOfLedSuit.map(c => c.id));
+      return new Set(cardsOfLedSuit.map(c => `${c.suit}-${c.value}`));
     }
-    return new Set(gameStore.myHand.map(c => c.id));
+    return new Set(gameStore.myHand.map(c => `${c.suit}-${c.value}`));
   };
 
   const playableCards = getPlayableIndices();
@@ -607,7 +607,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             horizontal
             renderItem={({ item }) => {
               const cardKey = `${item.suit}-${item.value}`;
-              const isPlayable = playableCards.has(item.id || cardKey);
+              const isPlayable = playableCards.has(cardKey);
               const isSelected = selectedCard === cardKey;
               return (
                 <DraggableCard
