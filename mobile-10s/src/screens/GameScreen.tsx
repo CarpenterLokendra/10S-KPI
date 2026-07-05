@@ -50,8 +50,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   const [isPlayingCard, setIsPlayingCard] = useState(false);
   const [activeTurnRemaining, setActiveTurnRemaining] = useState<number>(gameStore.turnTimeoutSeconds || 60);
   const [pileLayout, setPileLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [flatListScroll, setFlatListScroll] = useState(0);
   const blinkOpacityRef = useRef(new Animated.Value(1));
   const cardDimensionsRef = useRef<{ [key: string]: { width: number; height: number } }>({});
+  const flatListRef = useRef<FlatList>(null);
+  const pileHighlightScaleRef = useRef(new Animated.Value(1));
+  const pileHighlightOpacityRef = useRef(new Animated.Value(0));
 
   // Reset stale game state if navigating to a different game (matches GameTable.tsx:277-282)
   useEffect(() => {
@@ -102,6 +106,36 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       alert('Failed to pass turn');
     } finally {
       setIsPlayingCard(false);
+    }
+  };
+
+  const handleCardDragStateChange = (state: { isOverPile: boolean }) => {
+    if (state.isOverPile) {
+      Animated.parallel([
+        Animated.timing(pileHighlightScaleRef.current, {
+          toValue: 1.08,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pileHighlightOpacityRef.current, {
+          toValue: 0.4,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(pileHighlightScaleRef.current, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pileHighlightOpacityRef.current, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
   };
 
@@ -465,10 +499,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
       {/* Game Area (Card Pile) */}
       <View style={styles.gameAreaPortrait}>
-        <View style={[styles.cardPile, {
-          backgroundColor: 'rgba(20, 30, 45, 0.4)',
-          borderColor: 'rgba(34, 197, 94, 0.5)',
-        }]}
+        <Animated.View style={[
+          styles.cardPile,
+          {
+            backgroundColor: 'rgba(20, 30, 45, 0.4)',
+            borderColor: pileHighlightOpacityRef.current.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['rgba(34, 197, 94, 0.5)', 'rgba(240, 180, 41, 0.8)'],
+            }),
+            transform: [{ scale: pileHighlightScaleRef.current }],
+          }
+        ]}
         onLayout={(e) => {
           setPileLayout({
             x: e.nativeEvent.layout.x,
@@ -528,7 +569,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
               ⏳ No cards played yet
             </Text>
           )}
-        </View>
+        </Animated.View>
       </View>
 
       {/* My Player Card + Hand Section */}
@@ -603,8 +644,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         </Text>
         {gameStore.myHand && gameStore.myHand.length > 0 ? (
           <FlatList
+            ref={flatListRef}
             data={gameStore.myHand}
             horizontal
+            onScroll={(e) => {
+              setFlatListScroll(e.nativeEvent.contentOffset.x);
+            }}
+            scrollEventThrottle={16}
             renderItem={({ item }) => {
               const cardKey = `${item.suit}-${item.value}`;
               const isPlayable = playableCards.has(cardKey);
@@ -633,6 +679,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                   }}
                   pileLayout={pileLayout}
                   isPlayingCard={isPlayingCard}
+                  flatListScrollOffset={flatListScroll}
+                  onCardDragStateChange={handleCardDragStateChange}
                 />
               );
             }}
