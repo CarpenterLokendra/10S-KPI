@@ -79,9 +79,6 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
             console.log(`[${cardKey}] Measure failed`);
           }
         }
-
-        pan.setOffset({ x: pan.x._value, y: pan.y._value });
-        pan.setValue({ x: 0, y: 0 });
       },
 
       onPanResponderMove: (evt, { dx, dy }) => {
@@ -224,10 +221,23 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   };
 
   const resetCardState = () => {
-    pan.setValue({ x: 0, y: 0 });
-    pan.setOffset({ x: 0, y: 0 });
-    scale.setValue(1);
-    shadowOpacity.setValue(0.3);
+    Animated.parallel([
+      Animated.timing(pan, {
+        toValue: { x: 0, y: 0 },
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shadowOpacity, {
+        toValue: 0.3,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   const cardImage = getCardImagePath(card.suit, card.value);
