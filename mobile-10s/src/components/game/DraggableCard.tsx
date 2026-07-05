@@ -40,23 +40,29 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => {
-        // Only allow drag if card is selected, playable, and it's my turn
-        const shouldDrag = isSelected && isPlayable && isMyTurn && !isPlayingCard;
-        console.log(`[${cardKey}] onStartShouldSetPanResponder: ${shouldDrag}`);
-        return shouldDrag;
+        // Allow responder to grab on first touch if playable and it's my turn
+        const canRespond = isPlayable && isMyTurn && !isPlayingCard;
+        console.log(`[${cardKey}] onStartShouldSetPanResponder: ${canRespond} (isSelected: ${isSelected})`);
+        return canRespond;
       },
       onMoveShouldSetPanResponder: (evt, { dx, dy }) => {
-        // Only activate drag with sufficient movement
+        // Activate responder for drag if sufficient movement AND card is selected
         const distance = Math.sqrt(dx * dx + dy * dy);
         const shouldDrag = distance > MIN_DRAG_DISTANCE && isSelected && isPlayable && isMyTurn && !isPlayingCard;
         if (distance > MIN_DRAG_DISTANCE) {
-          console.log(`[${cardKey}] onMoveShouldSetPanResponder: ${shouldDrag} (distance: ${distance.toFixed(2)})`);
+          console.log(`[${cardKey}] onMoveShouldSetPanResponder: ${shouldDrag} (distance: ${distance.toFixed(2)}, isSelected: ${isSelected})`);
         }
         return shouldDrag;
       },
       onPanResponderGrant: (evt, { x0, y0 }) => {
-        console.log(`[${cardKey}] DRAG START - x0:${x0}, y0:${y0}`);
+        console.log(`[${cardKey}] GRANT - x0:${x0}, y0:${y0}, isSelected: ${isSelected}`);
+        // Only enable drag if card is selected
+        if (!isSelected) {
+          console.log(`[${cardKey}] GRANT but card not selected, will not drag`);
+          return;
+        }
         isDraggingRef.current = true;
+        console.log(`[${cardKey}] DRAG ENABLED`);
 
         // Set fallback position immediately
         cardStartPosRef.current = { x: x0, y: y0, screenX: x0, screenY: y0 };
@@ -75,22 +81,30 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
 
         pan.setOffset({ x: pan.x._value, y: pan.y._value });
         pan.setValue({ x: 0, y: 0 });
-
-        // Animate to elevated state
-        Animated.parallel([
-          Animated.timing(scale, {
-            toValue: 1.1,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-          Animated.timing(shadowOpacity, {
-            toValue: 0.8,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-        ]).start();
       },
       onPanResponderMove: (evt, { dx, dy }) => {
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Only drag if we have sufficient movement and card is selected
+        if (distance > MIN_DRAG_DISTANCE && isSelected && !isDraggingRef.current) {
+          isDraggingRef.current = true;
+          console.log(`[${cardKey}] MOVE triggered drag start (distance: ${distance.toFixed(2)})`);
+
+          // Animate to elevated state
+          Animated.parallel([
+            Animated.timing(scale, {
+              toValue: 1.1,
+              duration: 150,
+              useNativeDriver: true,
+            }),
+            Animated.timing(shadowOpacity, {
+              toValue: 0.8,
+              duration: 150,
+              useNativeDriver: true,
+            }),
+          ]).start();
+        }
+
         if (!isDraggingRef.current) return;
 
         pan.setValue({ x: dx, y: dy });
@@ -107,7 +121,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
             currentScreenY <= pileLayout.y + pileLayout.height;
 
           onCardDragStateChange?.({ isOverPile });
-          console.log(`[${cardKey}] MOVE - isOverPile: ${isOverPile} pos: (${currentScreenX.toFixed(0)}, ${currentScreenY.toFixed(0)})`);
+          console.log(`[${cardKey}] MOVE - distance: ${distance.toFixed(2)}, isOverPile: ${isOverPile}`);
         }
       },
       onPanResponderRelease: (evt, { dx, dy }) => {
