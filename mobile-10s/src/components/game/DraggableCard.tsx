@@ -43,29 +43,39 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
     PanResponder.create({
       // Allow responder to be set for both selected and unselected cards
       onStartShouldSetPanResponder: () => {
-        if (!isMyTurn || !isPlayable) return false;
-        return true;
+        const shouldSet = isMyTurn && isPlayable;
+        console.log(`[${cardKey}] onStartShouldSetPanResponder: ${shouldSet} (isMyTurn: ${isMyTurn}, isPlayable: ${isPlayable})`);
+        return shouldSet;
       },
       onMoveShouldSetPanResponder: (evt, { dx, dy }) => {
         if (!isMyTurn || !isPlayable) return false;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance > MIN_DRAG_DISTANCE && isSelected;
+        const shouldSet = distance > MIN_DRAG_DISTANCE && isSelected;
+        console.log(`[${cardKey}] onMoveShouldSetPanResponder: ${shouldSet} (distance: ${distance.toFixed(2)}, isSelected: ${isSelected})`);
+        return shouldSet;
       },
       onPanResponderGrant: (evt, { x0, y0 }) => {
         tapStartTimeRef.current = Date.now();
+        console.log(`[${cardKey}] GRANT started - x0:${x0}, y0:${y0}`);
 
+        // Immediately set fallback positions
+        cardStartPosRef.current = { x: x0, y: y0, screenX: x0, screenY: y0 };
+
+        // Try to get absolute position via measure
         if (cardRef.current) {
-          cardRef.current.measure((fx, fy, width, height, px, py) => {
-            cardStartPosRef.current = {
-              x: x0,
-              y: y0,
-              screenX: px,
-              screenY: py,
-            };
-            console.log(`[${cardKey}] GRANT - Local: {x0:${x0}, y0:${y0}} Screen: {px:${px}, py:${py}}`);
-          });
-        } else {
-          cardStartPosRef.current = { x: x0, y: y0, screenX: x0, screenY: y0 };
+          try {
+            cardRef.current.measure((fx, fy, width, height, px, py) => {
+              cardStartPosRef.current = {
+                x: x0,
+                y: y0,
+                screenX: px,
+                screenY: py,
+              };
+              console.log(`[${cardKey}] GRANT measured - px:${px.toFixed(0)}, py:${py.toFixed(0)}`);
+            });
+          } catch (e) {
+            console.log(`[${cardKey}] GRANT measure error, using local coords`);
+          }
         }
 
         pan.setOffset({ x: pan.x._value, y: pan.y._value });
