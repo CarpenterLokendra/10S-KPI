@@ -98,7 +98,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
         if (distance > MIN_DRAG_DISTANCE && isSelectedRef.current && !isDraggingRef.current) {
           isDraggingRef.current = true;
           setIsDragging(true);
-          console.log(`[${cardKey}] DRAG START - distance: ${distance.toFixed(2)}`);
+          console.log(`[${cardKey}] DRAG START - distance: ${distance.toFixed(2)}, pileLayout:`, pileLayout);
 
           // Call drag start handler with card position
           const startScreenX = cardStartPosRef.current.screenX;

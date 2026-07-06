@@ -94,30 +94,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   useEffect(() => {
     const measurePile = () => {
       if (pileViewRef.current) {
-        try {
-          pileViewRef.current.measure((fx, fy, width, height, px, py) => {
-            if (px !== undefined && py !== undefined) {
-              console.log('[GameScreen] Pile measured successfully:', { x: px, y: py, width, height });
-              setPileLayout({
-                x: px,
-                y: py,
-                width: width,
-                height: height,
-              });
-            } else {
-              console.log('[GameScreen] Pile measure returned undefined coordinates:', { fx, fy, width, height, px, py });
-            }
-          });
-        } catch (err) {
-          console.error('[GameScreen] Pile measure failed:', err);
-        }
-      } else {
-        console.log('[GameScreen] pileViewRef.current is null');
+        pileViewRef.current.measure((fx, fy, width, height, px, py) => {
+          if (px !== undefined && py !== undefined) {
+            setPileLayout({
+              x: px,
+              y: py,
+              width: width,
+              height: height,
+            });
+          }
+        });
       }
     };
 
     const timer = setInterval(measurePile, 500);
     measurePile();
+    console.log('[GameScreen] Pile measurement interval started');
     return () => clearInterval(timer);
   }, []);
 
@@ -780,7 +772,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             keyExtractor={(item) => `${item.suit}-${item.value}`}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.handContent}
-            extraData={pileLayout ? JSON.stringify(pileLayout) : null}
+            extraData={pileLayout}
           />
         ) : (
           <Text style={{ color: '#fff', fontSize: 12 }}>No cards in hand</Text>
