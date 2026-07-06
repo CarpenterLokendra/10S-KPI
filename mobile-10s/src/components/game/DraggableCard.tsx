@@ -14,6 +14,9 @@ interface DraggableCardProps {
   isPlayingCard?: boolean;
   flatListScrollOffset?: number;
   onCardDragStateChange?: (state: { isOverPile: boolean }) => void;
+  onDragStart?: (card: Card, screenX: number, screenY: number) => void;
+  onDragMove?: (card: Card, screenX: number, screenY: number) => void;
+  onDragEnd?: () => void;
 }
 
 export const DraggableCard: React.FC<DraggableCardProps> = ({
@@ -27,9 +30,13 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   isPlayingCard = false,
   flatListScrollOffset = 0,
   onCardDragStateChange,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
 }) => {
   const cardKey = `${card.suit}-${card.value}`;
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   const scale = useRef(new Animated.Value(1)).current;
   const shadowOpacity = useRef(new Animated.Value(0.3)).current;
   const cardStartPosRef = useRef({ x: 0, y: 0, screenX: 0, screenY: 0 });
@@ -90,7 +97,13 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
 
         if (distance > MIN_DRAG_DISTANCE && isSelectedRef.current && !isDraggingRef.current) {
           isDraggingRef.current = true;
+          setIsDragging(true);
           console.log(`[${cardKey}] DRAG START - distance: ${distance.toFixed(2)}`);
+
+          // Call drag start handler with card position
+          const startScreenX = cardStartPosRef.current.screenX;
+          const startScreenY = cardStartPosRef.current.screenY;
+          onDragStart?.(card, startScreenX, startScreenY);
 
           startAnimation(
             Animated.timing(scale, {
@@ -107,16 +120,18 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
         // Update drag position using state instead of setValue
         setDragOffset({ x: dx, y: dy });
 
-        // Check pile collision
-        const currentX = cardStartPosRef.current.screenX + dx;
-        const currentY = cardStartPosRef.current.screenY + dy;
+        // Call drag move handler with updated position
+        const currentScreenX = cardStartPosRef.current.screenX + dx;
+        const currentScreenY = cardStartPosRef.current.screenY + dy;
+        onDragMove?.(card, currentScreenX, currentScreenY);
 
+        // Check pile collision
         if (pileLayout) {
           const isOverPile =
-            currentX >= pileLayout.x &&
-            currentX <= pileLayout.x + pileLayout.width &&
-            currentY >= pileLayout.y &&
-            currentY <= pileLayout.y + pileLayout.height;
+            currentScreenX >= pileLayout.x &&
+            currentScreenX <= pileLayout.x + pileLayout.width &&
+            currentScreenY >= pileLayout.y &&
+            currentScreenY <= pileLayout.y + pileLayout.height;
 
           onCardDragStateChange?.({ isOverPile });
         }
@@ -128,9 +143,11 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
 
         console.log(`[${cardKey}] RELEASE - distance: ${distance.toFixed(2)}, duration: ${duration}ms, isDragging: ${isDraggingRef.current}`);
 
-        // Detect tap
-        if (distance < MIN_DRAG_DISTANCE && duration < TAP_TIMEOUT && !isDraggingRef.current) {
+        // Detect tap (even if drag was briefly initiated, if final distance is small it's a tap)
+        if (distance < MIN_DRAG_DISTANCE && duration < TAP_TIMEOUT) {
           console.log(`[${cardKey}] TAP - toggle selection`);
+          isDraggingRef.current = false;
+          setIsDragging(false);
           onSelect();
           setDragOffset({ x: 0, y: 0 });
           return;
@@ -151,6 +168,9 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
 
           console.log(`[${cardKey}] DRAG END - over pile: ${isOverPile}`);
 
+          // Call drag end handler
+          onDragEnd?.();
+
           if (isOverPile) {
             console.log(`[${cardKey}] PLAY CARD`);
             onPlayCard(card);
@@ -161,6 +181,8 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
           }
         } else {
           // Non-drag release
+          isDraggingRef.current = false;
+          setIsDragging(false);
           if (distance > MIN_DRAG_DISTANCE) {
             snapBack();
           }
@@ -170,6 +192,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
       onPanResponderTerminate: () => {
         console.log(`[${cardKey}] TERMINATE`);
         isDraggingRef.current = false;
+        onDragEnd?.();
         resetCardState();
         onCardDragStateChange?.({ isOverPile: false });
       },
@@ -197,6 +220,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   };
 
   const snapBack = () => {
+    setIsDragging(false);
     startAnimation(
       Animated.timing(scale, {
         toValue: 1,
@@ -211,6 +235,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   };
 
   const resetCardState = () => {
+    setIsDragging(false);
     startAnimation(
       Animated.timing(scale, {
         toValue: 1,
@@ -236,6 +261,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
               { translateY: dragOffset.y },
               { scale },
             ],
+            opacity: isDragging ? 0 : 1,
           },
         ]}
         {...panResponder.panHandlers}

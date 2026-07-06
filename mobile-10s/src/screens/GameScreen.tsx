@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useGameStore } from '../store/game.store';
+import { useGameStore, Card } from '../store/game.store';
 import { useAuthStore } from '../store/auth.store';
 import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
@@ -51,6 +51,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   const [activeTurnRemaining, setActiveTurnRemaining] = useState<number>(gameStore.turnTimeoutSeconds || 60);
   const [pileLayout, setPileLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [flatListScroll, setFlatListScroll] = useState(0);
+  const [ghostCard, setGhostCard] = useState<{
+    visible: boolean;
+    card: Card | null;
+    x: number;
+    y: number;
+  }>({
+    visible: false,
+    card: null,
+    x: 0,
+    y: 0,
+  });
   const blinkOpacityRef = useRef(new Animated.Value(1));
   const cardDimensionsRef = useRef<{ [key: string]: { width: number; height: number } }>({});
   const flatListRef = useRef<FlatList>(null);
@@ -148,6 +159,34 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       'clubs': '♣',
     };
     return suitMap[suit.toLowerCase()] || '-';
+  };
+
+  const handleDragStart = (card: Card, screenX: number, screenY: number) => {
+    console.log('[GameScreen] Drag start - card:', `${card.suit}-${card.value}`, 'at:', { screenX, screenY });
+    setGhostCard({
+      visible: true,
+      card,
+      x: screenX,
+      y: screenY,
+    });
+  };
+
+  const handleDragMove = (card: Card, screenX: number, screenY: number) => {
+    setGhostCard(prev => ({
+      ...prev,
+      x: screenX,
+      y: screenY,
+    }));
+  };
+
+  const handleDragEnd = () => {
+    console.log('[GameScreen] Drag end - hiding ghost card');
+    setGhostCard({
+      visible: false,
+      card: null,
+      x: 0,
+      y: 0,
+    });
   };
 
   const handleQuitGame = () => {
@@ -663,7 +702,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                   isPlayable={isPlayable}
                   isMyTurn={isMyTurn}
                   onSelect={() => {
-                    setSelectedCard(selectedCard === cardKey ? null : cardKey);
+                    console.log(`[GameScreen] onSelect - cardKey: ${cardKey}, current selectedCard: ${selectedCard}`);
+                    const newSelection = selectedCard === cardKey ? null : cardKey;
+                    console.log(`[GameScreen] Setting selectedCard to: ${newSelection}`);
+                    setSelectedCard(newSelection);
                   }}
                   onPlayCard={async (card) => {
                     try {
@@ -682,12 +724,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                   isPlayingCard={isPlayingCard}
                   flatListScrollOffset={flatListScroll}
                   onCardDragStateChange={handleCardDragStateChange}
+                  onDragStart={handleDragStart}
+                  onDragMove={handleDragMove}
+                  onDragEnd={handleDragEnd}
                 />
               );
             }}
             keyExtractor={(item) => `${item.suit}-${item.value}`}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.handContent}
+            extraData={selectedCard}
           />
         ) : (
           <Text style={{ color: '#fff', fontSize: 12 }}>No cards in hand</Text>
@@ -715,6 +761,42 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
       {/* Game Completed Screen */}
       <GameCompletedScreen onHome={onHomePress || onGameEnd} />
+
+      {/* Ghost Card Portal - rendered at root level to escape FlatList clipping */}
+      {ghostCard.visible && ghostCard.card && (
+        <View
+          style={{
+            position: 'absolute',
+            top: ghostCard.y - 45,
+            left: ghostCard.x - 30,
+            zIndex: 9999,
+            pointerEvents: 'none',
+          }}
+        >
+          <View
+            style={{
+              width: 60,
+              height: 90,
+              borderRadius: 8,
+              borderWidth: 5,
+              borderColor: '#f0b429',
+              backgroundColor: 'rgba(240, 180, 41, 0.1)',
+              overflow: 'hidden',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.5,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
+          >
+            <Image
+              source={getCardImagePath(ghostCard.card.suit, ghostCard.card.value)}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
+            />
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
