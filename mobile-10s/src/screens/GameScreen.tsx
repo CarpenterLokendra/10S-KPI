@@ -90,6 +90,28 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
     });
   }, [gameStore.gameId, gameStore.players.length, gameStore.myHand.length]);
 
+  // Measure pile layout periodically to ensure accurate collision detection
+  useEffect(() => {
+    const measurePile = () => {
+      if (pileViewRef.current) {
+        pileViewRef.current.measure((fx, fy, width, height, px, py) => {
+          if (px !== undefined && py !== undefined) {
+            setPileLayout({
+              x: px,
+              y: py,
+              width: width,
+              height: height,
+            });
+          }
+        });
+      }
+    };
+
+    const timer = setInterval(measurePile, 500);
+    measurePile();
+    return () => clearInterval(timer);
+  }, []);
+
   const handlePlayCard = async () => {
     if (!selectedCard || !gameStore.myHand) return;
 
@@ -540,34 +562,37 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
       {/* Game Area (Card Pile) */}
       <View style={styles.gameAreaPortrait}>
-        <Animated.View style={[
-          styles.cardPile,
-          {
-            backgroundColor: pileHighlightOpacityRef.current.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['rgba(20, 30, 45, 0.4)', 'rgba(240, 180, 41, 0.15)'],
-            }),
-            borderColor: pileHighlightOpacityRef.current.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['rgba(34, 197, 94, 0.5)', 'rgba(240, 180, 41, 1)'],
-            }),
-            transform: [{ scale: pileHighlightScaleRef.current }],
-          }
-        ]}
-        onLayout={() => {
-          if (pileViewRef.current) {
-            pileViewRef.current.measure((fx, fy, width, height, px, py) => {
-              console.log('[GameScreen] Pile measured - screen position:', { px, py, width, height });
-              setPileLayout({
-                x: px,
-                y: py,
-                width: width,
-                height: height,
-              });
-            });
-          }
-        }}
-        ref={pileViewRef}>
+        <Animated.View
+          ref={pileViewRef}
+          style={[
+            styles.cardPile,
+            {
+              backgroundColor: pileHighlightOpacityRef.current.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['rgba(20, 30, 45, 0.4)', 'rgba(240, 180, 41, 0.15)'],
+              }),
+              borderColor: pileHighlightOpacityRef.current.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['rgba(34, 197, 94, 0.5)', 'rgba(240, 180, 41, 1)'],
+              }),
+              transform: [{ scale: pileHighlightScaleRef.current }],
+            }
+          ]}
+          onLayout={() => {
+            setTimeout(() => {
+              if (pileViewRef.current) {
+                pileViewRef.current.measure((fx, fy, width, height, px, py) => {
+                  console.log('[GameScreen] Pile measured - screen position:', { px, py, width, height });
+                  setPileLayout({
+                    x: px,
+                    y: py,
+                    width: width,
+                    height: height,
+                  });
+                });
+              }
+            }, 100);
+          }}>
           {gameStore.playedCards && gameStore.playedCards.length > 0 ? (
             <>
               <Text style={[styles.cardPileLabel, { color: '#f0b429' }]}>
