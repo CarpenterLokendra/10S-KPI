@@ -46,18 +46,41 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   const activeAnimationRef = useRef<Animated.CompositeAnimation | null>(null);
   const isSelectedRef = useRef(isSelected);
   const cardAbsolutePosRef = useRef({ x: 0, y: 0 });
+
+  // Refs for syncing props used inside PanResponder closures (to avoid stale closure values)
+  const pileLayoutRef = useRef(pileLayout);
+  const isPlayableRef = useRef(isPlayable);
+  const isMyTurnRef = useRef(isMyTurn);
+  const isPlayingCardRef = useRef(isPlayingCard);
+  const onSelectRef = useRef(onSelect);
+  const onPlayCardRef = useRef(onPlayCard);
+  const onCardDragStateChangeRef = useRef(onCardDragStateChange);
+  const onDragStartRef = useRef(onDragStart);
+  const onDragMoveRef = useRef(onDragMove);
+  const onDragEndRef = useRef(onDragEnd);
+
   const MIN_DRAG_DISTANCE = 12;
   const TAP_TIMEOUT = 200;
 
-  // Keep isSelectedRef up-to-date
+  // Keep all prop refs up-to-date so PanResponder handlers always read fresh values
   useEffect(() => {
     isSelectedRef.current = isSelected;
-  }, [isSelected]);
+    pileLayoutRef.current = pileLayout;
+    isPlayableRef.current = isPlayable;
+    isMyTurnRef.current = isMyTurn;
+    isPlayingCardRef.current = isPlayingCard;
+    onSelectRef.current = onSelect;
+    onPlayCardRef.current = onPlayCard;
+    onCardDragStateChangeRef.current = onCardDragStateChange;
+    onDragStartRef.current = onDragStart;
+    onDragMoveRef.current = onDragMove;
+    onDragEndRef.current = onDragEnd;
+  }); // no dep array — runs after every render to mirror latest props
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => {
-        const canRespond = isPlayable && isMyTurn && !isPlayingCard;
+        const canRespond = isPlayableRef.current && isMyTurnRef.current && !isPlayingCardRef.current;
         console.log(`[${cardKey}] START - can respond: ${canRespond}`);
         return canRespond;
       },
@@ -98,12 +121,12 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
         if (distance > MIN_DRAG_DISTANCE && isSelectedRef.current && !isDraggingRef.current) {
           isDraggingRef.current = true;
           setIsDragging(true);
-          console.log(`[${cardKey}] DRAG START - distance: ${distance.toFixed(2)}, pileLayout:`, pileLayout);
+          console.log(`[${cardKey}] DRAG START - distance: ${distance.toFixed(2)}, pileLayout:`, pileLayoutRef.current);
 
           // Call drag start handler with card position
           const startScreenX = cardStartPosRef.current.screenX;
           const startScreenY = cardStartPosRef.current.screenY;
-          onDragStart?.(card, startScreenX, startScreenY);
+          onDragStartRef.current?.(card, startScreenX, startScreenY);
 
           startAnimation(
             Animated.timing(scale, {
@@ -123,26 +146,26 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
         // Call drag move handler with updated position
         const currentScreenX = cardStartPosRef.current.screenX + dx;
         const currentScreenY = cardStartPosRef.current.screenY + dy;
-        onDragMove?.(card, currentScreenX, currentScreenY);
+        onDragMoveRef.current?.(card, currentScreenX, currentScreenY);
 
         // Check pile collision using AABB (Axis-Aligned Bounding Box) collision detection
-        if (pileLayout) {
+        if (pileLayoutRef.current) {
           const CARD_WIDTH = 60;
           const CARD_HEIGHT = 90;
 
           const cardRight = currentScreenX + CARD_WIDTH;
           const cardBottom = currentScreenY + CARD_HEIGHT;
-          const pileRight = pileLayout.x + pileLayout.width;
-          const pileBottom = pileLayout.y + pileLayout.height;
+          const pileRight = pileLayoutRef.current.x + pileLayoutRef.current.width;
+          const pileBottom = pileLayoutRef.current.y + pileLayoutRef.current.height;
 
           const isOverPile =
-            cardRight > pileLayout.x &&      // Card's right past pile's left
+            cardRight > pileLayoutRef.current.x &&      // Card's right past pile's left
             currentScreenX < pileRight &&    // Card's left before pile's right
-            cardBottom > pileLayout.y &&     // Card's bottom past pile's top
+            cardBottom > pileLayoutRef.current.y &&     // Card's bottom past pile's top
             currentScreenY < pileBottom;     // Card's top before pile's bottom
 
-          console.log(`[${cardKey}] DRAG MOVE - card: (${currentScreenX.toFixed(0)}, ${currentScreenY.toFixed(0)}) to (${cardRight.toFixed(0)}, ${cardBottom.toFixed(0)}), pile: (${pileLayout.x.toFixed(0)}, ${pileLayout.y.toFixed(0)}) to (${pileRight.toFixed(0)}, ${pileBottom.toFixed(0)}), collision: ${isOverPile}`);
-          onCardDragStateChange?.({ isOverPile });
+          console.log(`[${cardKey}] DRAG MOVE - card: (${currentScreenX.toFixed(0)}, ${currentScreenY.toFixed(0)}) to (${cardRight.toFixed(0)}, ${cardBottom.toFixed(0)}), pile: (${pileLayoutRef.current.x.toFixed(0)}, ${pileLayoutRef.current.y.toFixed(0)}) to (${pileRight.toFixed(0)}, ${pileBottom.toFixed(0)}), collision: ${isOverPile}`);
+          onCardDragStateChangeRef.current?.({ isOverPile });
         }
       },
 
@@ -157,7 +180,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
           console.log(`[${cardKey}] TAP - toggle selection`);
           isDraggingRef.current = false;
           setIsDragging(false);
-          onSelect();
+          onSelectRef.current?.();
           setDragOffset({ x: 0, y: 0 });
           return;
         }
@@ -169,30 +192,30 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
           const finalY = cardStartPosRef.current.screenY + dy;
 
           let isOverPile = false;
-          if (pileLayout) {
+          if (pileLayoutRef.current) {
             const CARD_WIDTH = 60;
             const CARD_HEIGHT = 90;
 
             const cardRight = finalX + CARD_WIDTH;
             const cardBottom = finalY + CARD_HEIGHT;
-            const pileRight = pileLayout.x + pileLayout.width;
-            const pileBottom = pileLayout.y + pileLayout.height;
+            const pileRight = pileLayoutRef.current.x + pileLayoutRef.current.width;
+            const pileBottom = pileLayoutRef.current.y + pileLayoutRef.current.height;
 
             isOverPile =
-              cardRight > pileLayout.x &&
+              cardRight > pileLayoutRef.current.x &&
               finalX < pileRight &&
-              cardBottom > pileLayout.y &&
+              cardBottom > pileLayoutRef.current.y &&
               finalY < pileBottom;
           }
 
-          console.log(`[${cardKey}] DRAG END - position: (${finalX.toFixed(0)}, ${finalY.toFixed(0)}), pile: (${pileLayout?.x.toFixed(0)}, ${pileLayout?.y.toFixed(0)}) - ${pileLayout?.width}x${pileLayout?.height}, over pile: ${isOverPile}`);
+          console.log(`[${cardKey}] DRAG END - position: (${finalX.toFixed(0)}, ${finalY.toFixed(0)}), pile: (${pileLayoutRef.current?.x.toFixed(0)}, ${pileLayoutRef.current?.y.toFixed(0)}) - ${pileLayoutRef.current?.width}x${pileLayoutRef.current?.height}, over pile: ${isOverPile}`);
 
           // Call drag end handler
-          onDragEnd?.();
+          onDragEndRef.current?.();
 
           if (isOverPile) {
             console.log(`[${cardKey}] PLAY CARD`);
-            onPlayCard(card);
+            onPlayCardRef.current?.(card);
             resetCardState();
           } else {
             console.log(`[${cardKey}] SNAP BACK`);
@@ -211,9 +234,9 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
       onPanResponderTerminate: () => {
         console.log(`[${cardKey}] TERMINATE`);
         isDraggingRef.current = false;
-        onDragEnd?.();
+        onDragEndRef.current?.();
         resetCardState();
-        onCardDragStateChange?.({ isOverPile: false });
+        onCardDragStateChangeRef.current?.({ isOverPile: false });
       },
     })
   ).current;
@@ -250,7 +273,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
     );
 
     setDragOffset({ x: 0, y: 0 });
-    onCardDragStateChange?.({ isOverPile: false });
+    onCardDragStateChangeRef.current?.({ isOverPile: false });
   };
 
   const resetCardState = () => {

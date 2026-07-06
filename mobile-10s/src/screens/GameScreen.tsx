@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -97,7 +97,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   }, [gameStore.gameId, gameStore.players.length, gameStore.myHand.length]);
 
   // Measure pile layout periodically to ensure accurate collision detection
-  useEffect(() => {
+  // Use useLayoutEffect to measure synchronously after layout, before paint
+  useLayoutEffect(() => {
     const measurePile = () => {
       if (pileViewRef.current) {
         pileViewRef.current.measure((fx, fy, width, height, px, py) => {
@@ -113,8 +114,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       }
     };
 
-    const timer = setInterval(measurePile, 500);
+    // Measure immediately on layout
     measurePile();
+
+    // Also measure every 500ms in case layout changes
+    const timer = setInterval(measurePile, 500);
     return () => clearInterval(timer);
   }, []);
 
@@ -381,6 +385,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       setLastCaughtTens(gameStore.playedCards.length.toString());
     }
   }, [gameStore.playedCards?.length, lastCaughtTens]);
+
+  // Memoize pileLayout to prevent unnecessary object recreation from setInterval
+  // Only create a new object when actual x/y/width/height values change
+  const memoizedPileLayout = useMemo(
+    () => pileLayout,
+    [pileLayout?.x, pileLayout?.y, pileLayout?.width, pileLayout?.height]
+  );
 
   // Loading state
   if (gameStore.players.length === 0 || !currentPlayer) {
@@ -736,6 +747,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
               setFlatListScroll(e.nativeEvent.contentOffset.x);
             }}
             scrollEventThrottle={16}
+            extraData={memoizedPileLayout}
             renderItem={({ item }) => {
               const cardKey = `${item.suit}-${item.value}`;
               const isPlayable = playableCards.has(cardKey);
@@ -765,7 +777,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
                       setIsPlayingCard(false);
                     }
                   }}
-                  pileLayout={pileLayout}
+                  pileLayout={memoizedPileLayout}
                   isPlayingCard={isPlayingCard}
                   flatListScrollOffset={flatListScroll}
                   onCardDragStateChange={handleCardDragStateChange}
