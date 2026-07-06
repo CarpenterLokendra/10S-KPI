@@ -9,6 +9,8 @@ import { TopControlsBar } from '../components/TopControlsBar';
 import { DownloadAppScreen } from './DownloadAppScreen';
 import { FeatureModal } from '../components/FeatureModal';
 import { GuideModal } from '../components/GuideModal';
+import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { useAuthStore } from '../store/auth.store';
 
 interface LandingScreenProps {
   onLoginPress: () => void;
@@ -25,6 +27,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
   const { t } = useTranslation();
   const colors = useThemeColors();
   const isDark = colors.isDark;
+  const authStore = useAuthStore();
   const [showDownloadApp, setShowDownloadApp] = useState(false);
   const [activeFeatureModal, setActiveFeatureModal] = useState<'fast-paced' | 'multiplayer' | null>(null);
   const [showGuide, setShowGuide] = useState(false);
@@ -173,8 +176,9 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <View style={{ flex: 1 }}>
+        <TopControlsBar />
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
           <Image
@@ -337,6 +341,17 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
           </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Advertisement Banner */}
+      {!authStore.isPremium && (
+        <AdvertisementBanner
+          showGoAdFreeButton={true}
+          onGoAdFree={() => {
+            console.log('[LandingScreen] Go Ad Free tapped');
+          }}
+        />
+      )}
+      </View>
 
       {/* Feature Modal */}
       <FeatureModal

@@ -10,6 +10,7 @@ import { useThemeColors } from '../hooks/useThemeColors';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { StrengthIndicator } from '../components/StrengthIndicator';
 import { useTranslation } from '../hooks/useTranslation';
+import { AdvertisementBanner } from '../components/AdvertisementBanner';
 
 interface AuthScreenProps {
   onLoginSuccess: () => void;
@@ -45,7 +46,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 }) => {
   const { mode } = useThemeStore();
   const { setUser } = useUserStore();
-  const { setUserId } = useAuthStore();
+  const { setUserId, isPremium } = useAuthStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
@@ -222,10 +223,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar
-        onHomePress={onHomePress}
-      />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <View style={{ flex: 1 }}>
+        <TopControlsBar
+          onHomePress={onHomePress}
+        />
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={[
           styles.cardContainer,
           {
@@ -405,9 +407,20 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
-        </View>
-      </ScrollView>
+          </View>
+          </View>
+        </ScrollView>
+
+        {/* Advertisement Banner */}
+        {!isPremium && (
+          <AdvertisementBanner
+            showGoAdFreeButton={true}
+            onGoAdFree={() => {
+              console.log('[AuthScreen] Go Ad Free tapped');
+            }}
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 };

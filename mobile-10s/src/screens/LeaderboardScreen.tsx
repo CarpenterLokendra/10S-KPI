@@ -15,6 +15,8 @@ import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { leaderboardService, type LeaderboardEntry, type GlobalStatsResponse } from '../services/leaderboard.service';
+import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { useAuthStore } from '../store/auth.store';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
@@ -35,6 +37,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
 }) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
+  const authStore = useAuthStore();
   const { t } = useTranslation();
   const isDark = colors.isDark;
 
@@ -223,74 +226,86 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
-      <TopControlsBar
-        isAuthenticated={true}
-        title={t('page.leaderboard')}
-        onBackPress={onBackPress}
-        onNavigate={onNavigate}
-        onLogout={onLogout}
-        onHomePress={onHomePress}
-        showBackButton={true}
-        showGuideButton={false}
-      />
+      <View style={{ flex: 1 }}>
+        <TopControlsBar
+          isAuthenticated={true}
+          title={t('page.leaderboard')}
+          onBackPress={onBackPress}
+          onNavigate={onNavigate}
+          onLogout={onLogout}
+          onHomePress={onHomePress}
+          showBackButton={true}
+          showGuideButton={false}
+        />
 
-      {error && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={() => fetchLeaderboard()}>
-            <Text style={styles.errorRetry}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        {error && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity onPress={() => fetchLeaderboard()}>
+              <Text style={styles.errorRetry}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-      {/* Loading State */}
-      {isLoading && !players.length ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={colors.primaryButtonBg} />
-        </View>
-      ) : (
-        <FlatList
-          ListHeaderComponent={
-            <>
-              {/* Global Stats */}
-              {globalStats && renderGlobalStats()}
+        {/* Loading State */}
+        {isLoading && !players.length ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color={colors.primaryButtonBg} />
+          </View>
+        ) : (
+          <FlatList
+            ListHeaderComponent={
+              <>
+                {/* Global Stats */}
+                {globalStats && renderGlobalStats()}
 
-              {/* Sort Buttons */}
-              {renderSortButtons()}
+                {/* Sort Buttons */}
+                {renderSortButtons()}
 
-              {/* Players Header */}
-              {players.length > 0 && (
-                <View style={[styles.tableHeader, { borderBottomColor: colors.cardBorder }]}>
-                  <Text style={[styles.headerRank, { color: colors.textMuted }]}>Rank</Text>
-                  <Text style={[styles.headerPlayer, { color: colors.textMuted }]}>Player</Text>
-                  <Text style={[styles.headerStats, { color: colors.textMuted }]}>Rating / Win% / Pts</Text>
+                {/* Players Header */}
+                {players.length > 0 && (
+                  <View style={[styles.tableHeader, { borderBottomColor: colors.cardBorder }]}>
+                    <Text style={[styles.headerRank, { color: colors.textMuted }]}>Rank</Text>
+                    <Text style={[styles.headerPlayer, { color: colors.textMuted }]}>Player</Text>
+                    <Text style={[styles.headerStats, { color: colors.textMuted }]}>Rating / Win% / Pts</Text>
+                  </View>
+                )}
+              </>
+            }
+            data={players}
+            renderItem={renderPlayerItem}
+            keyExtractor={(item) => item.user_id}
+            contentContainerStyle={styles.listContent}
+            scrollIndicatorInsets={{ right: 1 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={colors.primaryButtonBg}
+              />
+            }
+            ListEmptyComponent={
+              !isLoading ? (
+                <View style={styles.emptyContainer}>
+                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                    No players yet. Be the first!
+                  </Text>
                 </View>
-              )}
-            </>
-          }
-          data={players}
-          renderItem={renderPlayerItem}
-          keyExtractor={(item) => item.user_id}
-          contentContainerStyle={styles.listContent}
-          scrollIndicatorInsets={{ right: 1 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={colors.primaryButtonBg}
-            />
-          }
-          ListEmptyComponent={
-            !isLoading ? (
-              <View style={styles.emptyContainer}>
-                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                  No players yet. Be the first!
-                </Text>
-              </View>
-            ) : null
-          }
+              ) : null
+            }
+          />
+        )}
+
+      {/* Advertisement Banner */}
+      {!authStore.isPremium && (
+        <AdvertisementBanner
+          showGoAdFreeButton={true}
+          onGoAdFree={() => {
+            console.log('[LeaderboardScreen] Go Ad Free tapped');
+          }}
         />
       )}
+      </View>
     </SafeAreaView>
   );
 };

@@ -24,6 +24,8 @@ import { HamburgerMenu } from '../components/HamburgerMenu';
 import { profileService } from '../services/profile.service';
 import apiClient from '../services/api';
 import type { ProfileData } from '../types/profile';
+import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { useAuthStore } from '../store/auth.store';
 
 interface ProfileScreenProps {
   onLogout: () => void;
@@ -42,6 +44,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 }) => {
   const { mode } = useThemeStore();
   const { userId: currentUserId } = useUserStore();
+  const authStore = useAuthStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
@@ -157,174 +160,186 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
-      {/* Custom Header with Hamburger Menu and Back Button */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 8,
-          paddingVertical: 12,
-          backgroundColor: 'transparent',
-          gap: 8,
-        }}
-      >
-        <HamburgerMenu
-          isAuthenticated={true}
-          onNavigate={onNavigate}
-          onLogout={onLogout}
-          showThemeAndLanguage={true}
-        />
-
-        <View
-          style={{
-            flex: 0,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            gap: 12,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 28,
-              fontWeight: '800',
-              color: isDark ? '#f59e0b' : '#6125c9',
-              textAlign: 'center',
-              letterSpacing: 0.5,
-            }}
-          >
-            Profile
-          </Text>
-        </View>
-
+      <View style={{ flex: 1 }}>
+        {/* Custom Header with Hamburger Menu and Back Button */}
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
+            paddingHorizontal: 8,
+            paddingVertical: 12,
+            backgroundColor: 'transparent',
             gap: 8,
-            marginLeft: 'auto',
           }}
         >
-          <TouchableOpacity
-            onPress={() => {
-              if (onBackPress) {
-                onBackPress();
-              }
-            }}
+          <HamburgerMenu
+            isAuthenticated={true}
+            onNavigate={onNavigate}
+            onLogout={onLogout}
+            showThemeAndLanguage={true}
+          />
+
+          <View
             style={{
-              paddingVertical: 8,
-              paddingHorizontal: 14,
-              backgroundColor: colors.primaryButtonBg,
-              borderRadius: 8,
-              justifyContent: 'center',
+              flex: 0,
+              flexDirection: 'row',
               alignItems: 'center',
+              justifyContent: 'flex-start',
+              gap: 12,
             }}
           >
             <Text
               style={{
-                color: colors.primaryButtonText,
-                fontWeight: '600',
-                fontSize: 13,
+                fontSize: 28,
+                fontWeight: '800',
+                color: isDark ? '#f59e0b' : '#6125c9',
+                textAlign: 'center',
+                letterSpacing: 0.5,
               }}
             >
-              Back
+              Profile
             </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {error && (
-        <View
-          style={{
-            backgroundColor: '#FF3B30',
-            padding: 12,
-            marginHorizontal: 16,
-            marginTop: 8,
-            borderRadius: 8,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Text style={{ color: '#fff', flex: 1, fontSize: 14 }}>{error}</Text>
-          <TouchableOpacity onPress={() => fetchProfile()}>
-            <Text style={{ color: '#fff', fontWeight: '600' }}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.primaryButtonBg}
-          />
-        }
-      >
-        {loading && !profileData ? (
-          <View style={{ paddingVertical: 48, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color={colors.primaryButtonBg} />
           </View>
-        ) : (
-          <>
-            {/* Profile Header */}
-            <ProfileHeader
-              user={profileData?.user || null}
-              loading={false}
-              isOwnProfile={isOwnProfile}
-              onEditPress={() => setEditModalVisible(true)}
-              colors={colors}
-            />
 
-            {/* Profile Stats */}
-            <ProfileStats
-              stats={profileData?.stats || null}
-              loading={false}
-              colors={colors}
-            />
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginLeft: 'auto',
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => {
+                if (onBackPress) {
+                  onBackPress();
+                }
+              }}
+              style={{
+                paddingVertical: 8,
+                paddingHorizontal: 14,
+                backgroundColor: colors.primaryButtonBg,
+                borderRadius: 8,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.primaryButtonText,
+                  fontWeight: '600',
+                  fontSize: 13,
+                }}
+              >
+                Back
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-            {/* Account Info Section (Own Profile Only) */}
-            {isOwnProfile && (
-              <AccountInfo
-                user={profileData?.user || null}
-                loading={false}
-                isDarkMode={isDark}
-                colors={colors}
-                onLogout={handleLogout}
-                onDeleteAccount={handleDeleteAccount}
-                isDeleting={isDeleting}
-              />
-            )}
-
-            {/* Premium Subscription Section (Own Profile Only) */}
-            {isOwnProfile && (
-              <PremiumSubscription
-                user={profileData?.user || null}
-                loading={false}
-                isDarkMode={isDark}
-                colors={colors}
-                onPurchase={handlePurchasePremium}
-              />
-            )}
-          </>
+        {error && (
+          <View
+            style={{
+              backgroundColor: '#FF3B30',
+              padding: 12,
+              marginHorizontal: 16,
+              marginTop: 8,
+              borderRadius: 8,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ color: '#fff', flex: 1, fontSize: 14 }}>{error}</Text>
+            <TouchableOpacity onPress={() => fetchProfile()}>
+              <Text style={{ color: '#fff', fontWeight: '600' }}>Retry</Text>
+            </TouchableOpacity>
+          </View>
         )}
-      </ScrollView>
 
-      {/* Edit Profile Modal */}
-      {isOwnProfile && (
-        <EditProfileModal
-          visible={editModalVisible}
-          user={profileData?.user || null}
-          loading={isSaving}
-          onClose={handleEditModalClose}
-          onSave={handleSaveProfile}
-          colors={colors}
-        />
-      )}
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primaryButtonBg}
+            />
+          }
+        >
+          {loading && !profileData ? (
+            <View style={{ paddingVertical: 48, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator size="large" color={colors.primaryButtonBg} />
+            </View>
+          ) : (
+            <>
+              {/* Profile Header */}
+              <ProfileHeader
+                user={profileData?.user || null}
+                loading={false}
+                isOwnProfile={isOwnProfile}
+                onEditPress={() => setEditModalVisible(true)}
+                colors={colors}
+              />
+
+              {/* Profile Stats */}
+              <ProfileStats
+                stats={profileData?.stats || null}
+                loading={false}
+                colors={colors}
+              />
+
+              {/* Account Info Section (Own Profile Only) */}
+              {isOwnProfile && (
+                <AccountInfo
+                  user={profileData?.user || null}
+                  loading={false}
+                  isDarkMode={isDark}
+                  colors={colors}
+                  onLogout={handleLogout}
+                  onDeleteAccount={handleDeleteAccount}
+                  isDeleting={isDeleting}
+                />
+              )}
+
+              {/* Premium Subscription Section (Own Profile Only) */}
+              {isOwnProfile && (
+                <PremiumSubscription
+                  user={profileData?.user || null}
+                  loading={false}
+                  isDarkMode={isDark}
+                  colors={colors}
+                  onPurchase={handlePurchasePremium}
+                />
+              )}
+            </>
+          )}
+        </ScrollView>
+
+        {/* Edit Profile Modal */}
+        {isOwnProfile && (
+          <EditProfileModal
+            visible={editModalVisible}
+            user={profileData?.user || null}
+            loading={isSaving}
+            onClose={handleEditModalClose}
+            onSave={handleSaveProfile}
+            colors={colors}
+          />
+        )}
+
+        {/* Advertisement Banner */}
+        {!authStore.isPremium && (
+          <AdvertisementBanner
+            showGoAdFreeButton={true}
+            onGoAdFree={() => {
+              console.log('[ProfileScreen] Go Ad Free tapped');
+            }}
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 };

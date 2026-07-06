@@ -11,6 +11,8 @@ import { useThemeStore } from '../store/theme.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
+import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { useAuthStore } from '../store/auth.store';
 interface Game {
   id: string;
   players: Array<{
@@ -37,6 +39,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   onHomePress,
 }) => {
   const { mode } = useThemeStore();
+  const authStore = useAuthStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
@@ -45,74 +48,86 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? 'transparent' : 'transparent' }]}>
-      <TopControlsBar
-        title={t('page.results')}
-        onHomePress={onHomePress}
-      />
-
-      <View style={[styles.winnerSection, { backgroundColor: '#f0b429' }]}>
-        <Text style={[styles.winnerLabel, { color: '#000' }]}>🏆 Winner 🏆</Text>
-        <Text style={[styles.winnerName, { color: '#000' }]}>{winner?.username || 'Unknown'}</Text>
-        <Text style={[styles.winnerScore, { color: '#000' }]}>{winner?.final_score || 0} Points</Text>
-      </View>
-
-      <View style={styles.resultsSection}>
-        <Text style={[styles.resultsTitle, { color: colors.textPrimary }]}>Final Standings</Text>
-        <FlatList
-          data={sortedPlayers}
-          scrollEnabled={false}
-          renderItem={({ item, index }) => (
-            <View
-              style={[
-                styles.playerResult,
-                {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)',
-                  borderLeftColor: index === 0 ? '#f0b429' : isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
-                },
-                index === 0 && {
-                  backgroundColor: isDark ? 'rgba(240,180,41,0.15)' : 'rgba(240,180,41,0.2)',
-                },
-              ]}
-            >
-              <Text style={[styles.rank, { color: colors.headingAccent }]}>#{index + 1}</Text>
-              <View style={styles.playerInfo}>
-                <Text style={[styles.playerName, { color: colors.textPrimary }]}>{item.username}</Text>
-                <Text style={[styles.playerStats, { color: colors.textSecondary }]}>
-                  {item.final_score} Points
-                </Text>
-              </View>
-              <Text style={[styles.score, { color: colors.headingAccent }]}>{item.final_score}</Text>
-            </View>
-          )}
-          keyExtractor={(item) => item.user_id}
+      <View style={{ flex: 1 }}>
+        <TopControlsBar
+          title={t('page.results')}
+          onHomePress={onHomePress}
         />
-      </View>
 
-      <View
-        style={[
-          styles.controls,
-          {
-            backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.15)',
-            borderTopColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
-          },
-        ]}
-      >
-        <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primaryButtonBg }]} onPress={onPlayAgain}>
-          <Text style={[styles.buttonText, { color: colors.primaryButtonText }]}>Play Again</Text>
-        </TouchableOpacity>
+        <View style={[styles.winnerSection, { backgroundColor: '#f0b429' }]}>
+          <Text style={[styles.winnerLabel, { color: '#000' }]}>🏆 Winner 🏆</Text>
+          <Text style={[styles.winnerName, { color: '#000' }]}>{winner?.username || 'Unknown'}</Text>
+          <Text style={[styles.winnerScore, { color: '#000' }]}>{winner?.final_score || 0} Points</Text>
+        </View>
 
-        <TouchableOpacity
+        <View style={styles.resultsSection}>
+          <Text style={[styles.resultsTitle, { color: colors.textPrimary }]}>Final Standings</Text>
+          <FlatList
+            data={sortedPlayers}
+            scrollEnabled={false}
+            renderItem={({ item, index }) => (
+              <View
+                style={[
+                  styles.playerResult,
+                  {
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)',
+                    borderLeftColor: index === 0 ? '#f0b429' : isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
+                  },
+                  index === 0 && {
+                    backgroundColor: isDark ? 'rgba(240,180,41,0.15)' : 'rgba(240,180,41,0.2)',
+                  },
+                ]}
+              >
+                <Text style={[styles.rank, { color: colors.headingAccent }]}>#{index + 1}</Text>
+                <View style={styles.playerInfo}>
+                  <Text style={[styles.playerName, { color: colors.textPrimary }]}>{item.username}</Text>
+                  <Text style={[styles.playerStats, { color: colors.textSecondary }]}>
+                    {item.final_score} Points
+                  </Text>
+                </View>
+                <Text style={[styles.score, { color: colors.headingAccent }]}>{item.final_score}</Text>
+              </View>
+            )}
+            keyExtractor={(item) => item.user_id}
+          />
+        </View>
+
+        <View
           style={[
-            styles.secondaryButton,
+            styles.controls,
             {
-              backgroundColor: colors.secondaryButtonBg,
-              borderColor: colors.secondaryButtonBorder,
+              backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.15)',
+              borderTopColor: isDark ? 'rgba(240,180,41,0.2)' : 'rgba(240,180,41,0.3)',
             },
           ]}
-          onPress={onBackToLobby}
         >
-          <Text style={[styles.secondaryButtonText, { color: colors.secondaryButtonText }]}>Back to Lobby</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primaryButtonBg }]} onPress={onPlayAgain}>
+            <Text style={[styles.buttonText, { color: colors.primaryButtonText }]}>Play Again</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.secondaryButton,
+              {
+                backgroundColor: colors.secondaryButtonBg,
+                borderColor: colors.secondaryButtonBorder,
+              },
+            ]}
+            onPress={onBackToLobby}
+          >
+            <Text style={[styles.secondaryButtonText, { color: colors.secondaryButtonText }]}>Back to Lobby</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Advertisement Banner */}
+        {!authStore.isPremium && (
+          <AdvertisementBanner
+            showGoAdFreeButton={true}
+            onGoAdFree={() => {
+              console.log('[ResultsScreen] Go Ad Free tapped');
+            }}
+          />
+        )}
       </View>
     </SafeAreaView>
   );

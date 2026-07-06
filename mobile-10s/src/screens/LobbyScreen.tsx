@@ -19,6 +19,8 @@ import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { CoachModal } from '../components/CoachModal';
+import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { useAuthStore } from '../store/auth.store';
 
 interface Lobby {
   id: string;
@@ -56,6 +58,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 }) => {
   const { mode } = useThemeStore();
   const { userId } = useUserStore();
+  const authStore = useAuthStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
@@ -420,7 +423,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   return (
     <View style={styles.container}>
       <SafeAreaView style={{ flex: 1 }}>
-        <TopControlsBar
+        <View style={{ flex: 1 }}>
+          <TopControlsBar
           isAuthenticated={true}
           title={t('page.lobby')}
           onNavigate={onNavigate}
@@ -558,6 +562,17 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             )}
           </View>
         </ScrollView>
+
+        {/* Advertisement Banner */}
+        {!authStore.isPremium && (
+          <AdvertisementBanner
+            showGoAdFreeButton={true}
+            onGoAdFree={() => {
+              console.log('[LobbyScreen] Go Ad Free tapped');
+            }}
+          />
+        )}
+        </View>
       </SafeAreaView>
 
       {/* Create Lobby Modal */}

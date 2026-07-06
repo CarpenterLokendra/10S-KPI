@@ -10,6 +10,8 @@ import { SoundToggle } from '../components/SoundToggle';
 import { SettingsSection } from '../components/SettingsSection';
 import { OptionGrid, type OptionGridItem } from '../components/OptionGrid';
 import { VolumeSlider } from '../components/VolumeSlider';
+import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { useAuthStore } from '../store/auth.store';
 
 interface SettingsScreenProps {
   onBackPress: () => void;
@@ -24,6 +26,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 }) => {
   const { language, setLanguage, soundTheme, setSoundTheme, soundVolume, setSoundVolume } =
     useThemeStore();
+  const authStore = useAuthStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
 
@@ -73,74 +76,86 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
-      <TopControlsBar
-        isAuthenticated={true}
-        title={t('settings.title') || 'Settings'}
-        onBackPress={onBackPress}
-        onNavigate={onNavigate}
-        onHomePress={onHomePress}
-        showBackButton={true}
-        showGuideButton={false}
-      />
+      <View style={{ flex: 1 }}>
+        <TopControlsBar
+          isAuthenticated={true}
+          title={t('settings.title') || 'Settings'}
+          onBackPress={onBackPress}
+          onNavigate={onNavigate}
+          onHomePress={onHomePress}
+          showBackButton={true}
+          showGuideButton={false}
+        />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Audio Section */}
-        <SettingsSection title={t('settings.audio') || 'Audio'} emoji="🔊">
-          <SoundToggle />
-          <VolumeSlider volume={soundVolume} onVolumeChange={setSoundVolume} />
-        </SettingsSection>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Audio Section */}
+          <SettingsSection title={t('settings.audio') || 'Audio'} emoji="🔊">
+            <SoundToggle />
+            <VolumeSlider volume={soundVolume} onVolumeChange={setSoundVolume} />
+          </SettingsSection>
 
-        {/* Language Section */}
-        <SettingsSection title={t('settings.language') || 'Language'} emoji="🌐">
-          <OptionGrid
-            items={languages}
-            selectedCode={language}
-            onSelect={(code) => setLanguage(code as Language)}
-            columns={2}
-          />
-        </SettingsSection>
+          {/* Language Section */}
+          <SettingsSection title={t('settings.language') || 'Language'} emoji="🌐">
+            <OptionGrid
+              items={languages}
+              selectedCode={language}
+              onSelect={(code) => setLanguage(code as Language)}
+              columns={2}
+            />
+          </SettingsSection>
 
-        {/* Sound Theme Section */}
-        <SettingsSection
-          title={t('settings.soundTheme') || 'Sound Theme'}
-          emoji="🎵"
-          description={t('settings.soundThemeDesc') || 'Choose your sound pack'}
-        >
-          <OptionGrid
-            items={soundThemes}
-            selectedCode={soundTheme}
-            onSelect={(code) => setSoundTheme(code as SoundTheme)}
-            columns={2}
-          />
-          <Text
-            style={[
-              styles.soundNote,
-              {
-                color: colors.textSecondary,
-              },
-            ]}
+          {/* Sound Theme Section */}
+          <SettingsSection
+            title={t('settings.soundTheme') || 'Sound Theme'}
+            emoji="🎵"
+            description={t('settings.soundThemeDesc') || 'Choose your sound pack'}
           >
-            💬 Audio playback coming in next release
-          </Text>
-        </SettingsSection>
+            <OptionGrid
+              items={soundThemes}
+              selectedCode={soundTheme}
+              onSelect={(code) => setSoundTheme(code as SoundTheme)}
+              columns={2}
+            />
+            <Text
+              style={[
+                styles.soundNote,
+                {
+                  color: colors.textSecondary,
+                },
+              ]}
+            >
+              💬 Audio playback coming in next release
+            </Text>
+          </SettingsSection>
 
-        {/* Theme Mode Section */}
-        <SettingsSection title="Theme Mode" emoji="🌙">
-          <DarkModeToggle />
-        </SettingsSection>
+          {/* Theme Mode Section */}
+          <SettingsSection title="Theme Mode" emoji="🌙">
+            <DarkModeToggle />
+          </SettingsSection>
 
-        {/* About Section */}
-        <SettingsSection title={t('settings.about') || 'About'} emoji="ℹ️">
-          <View style={styles.settingRow}>
-            <View>
-              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                {t('settings.version') || 'Version'}
-              </Text>
+          {/* About Section */}
+          <SettingsSection title={t('settings.about') || 'About'} emoji="ℹ️">
+            <View style={styles.settingRow}>
+              <View>
+                <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
+                  {t('settings.version') || 'Version'}
+                </Text>
+              </View>
+              <Text style={[styles.versionText, { color: colors.textSecondary }]}>1.0.0</Text>
             </View>
-            <Text style={[styles.versionText, { color: colors.textSecondary }]}>1.0.0</Text>
-          </View>
-        </SettingsSection>
-      </ScrollView>
+          </SettingsSection>
+        </ScrollView>
+
+        {/* Advertisement Banner */}
+        {!authStore.isPremium && (
+          <AdvertisementBanner
+            showGoAdFreeButton={true}
+            onGoAdFree={() => {
+              console.log('[SettingsScreen] Go Ad Free tapped');
+            }}
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 };

@@ -22,6 +22,8 @@ import { LobbyHeaderSection } from '../components/lobby/LobbyHeaderSection';
 import { ActionButtonBar } from '../components/lobby/ActionButtonBar';
 import { BotDifficultyModal } from '../components/lobby/BotDifficultyModal';
 import { BOT_NAMES, BOT_COLOR_MAP } from '../utils/botAvatars';
+import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { useAuthStore } from '../store/auth.store';
 
 interface Player {
   user_id: string;
@@ -66,6 +68,7 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
 }) => {
   const { mode } = useThemeStore();
   const colors = useThemeColors();
+  const authStore = useAuthStore();
   const { t } = useTranslation();
 
   const [lobby, setLobby] = useState<Lobby | null>(null);
@@ -324,14 +327,15 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
   // Main lobby room state
   return (
     <View style={styles.screenContainer}>
-      <StatusBar barStyle={colors.isDark ? 'light-content' : 'dark-content'} />
+      <View style={{ flex: 1 }}>
+        <StatusBar barStyle={colors.isDark ? 'light-content' : 'dark-content'} />
 
-      <SafeAreaView edges={['top']} style={styles.safeTop}>
-        <TopControlsBar onHomePress={onHomePress} />
-      </SafeAreaView>
+        <SafeAreaView edges={['top']} style={styles.safeTop}>
+          <TopControlsBar onHomePress={onHomePress} />
+        </SafeAreaView>
 
-      {/* Main Content */}
-      <ScrollView
+        {/* Main Content */}
+        <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -433,17 +437,28 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
         </View>
       </ScrollView>
 
-      {/* Action Button Bar */}
-      <ActionButtonBar
-        isCreator={isCreator}
-        isReady={currentPlayer?.is_ready || false}
-        canStart={canStart}
-        isLoading={isLoading}
-        isLeaving={isLeaving}
-        onStartGame={isCreator ? handleStartGame : undefined}
-        onLeaveLobby={handleLeaveLobby}
-        onDeleteLobby={isCreator ? handleDeleteLobby : undefined}
-      />
+        {/* Action Button Bar */}
+        <ActionButtonBar
+          isCreator={isCreator}
+          isReady={currentPlayer?.is_ready || false}
+          canStart={canStart}
+          isLoading={isLoading}
+          isLeaving={isLeaving}
+          onStartGame={isCreator ? handleStartGame : undefined}
+          onLeaveLobby={handleLeaveLobby}
+          onDeleteLobby={isCreator ? handleDeleteLobby : undefined}
+        />
+
+        {/* Advertisement Banner */}
+        {!authStore.isPremium && (
+          <AdvertisementBanner
+            showGoAdFreeButton={true}
+            onGoAdFree={() => {
+              console.log('[LobbyRoomScreen] Go Ad Free tapped');
+            }}
+          />
+        )}
+      </View>
 
       {/* Bot Difficulty Modal */}
       <BotDifficultyModal

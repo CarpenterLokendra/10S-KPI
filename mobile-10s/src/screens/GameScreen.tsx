@@ -26,6 +26,7 @@ import { TimeoutModal } from '../components/TimeoutModal';
 import { GameEndedScreen } from '../components/GameEndedScreen';
 import { GameCompletedScreen } from '../components/GameCompletedScreen';
 import { BotAvatar } from '../components/BotAvatar';
+import { AdvertisementBanner } from '../components/AdvertisementBanner';
 import { BOT_NAMES } from '../utils/botAvatars';
 import { RectangularTimer } from '../components/game/RectangularTimer';
 import { soundService } from '../services/sound.service';
@@ -45,7 +46,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
   // Get game store and auth
   const gameStore = useGameStore();
-  const { userId } = useAuthStore();
+  const { userId, isPremium } = useAuthStore();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [isPlayingCard, setIsPlayingCard] = useState(false);
   const [activeTurnRemaining, setActiveTurnRemaining] = useState<number>(gameStore.turnTimeoutSeconds || 60);
@@ -396,31 +397,32 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
-      {/* Background */}
-      <View style={styles.backgroundGradient} />
+      <View style={{ flex: 1 }}>
+        {/* Background */}
+        <View style={styles.backgroundGradient} />
 
-      {/* Trump Banner */}
-      {showTrumpBanner && (
-        <View style={[styles.banner, { backgroundColor: 'rgba(168, 85, 247, 0.9)' }]}>
-          <Text style={styles.bannerText}>🃏 {bannerMessage}</Text>
-        </View>
-      )}
+        {/* Trump Banner */}
+        {showTrumpBanner && (
+          <View style={[styles.banner, { backgroundColor: 'rgba(168, 85, 247, 0.9)' }]}>
+            <Text style={styles.bannerText}>🃏 {bannerMessage}</Text>
+          </View>
+        )}
 
-      {/* Round Winner Banner */}
-      {showRoundWinnerBanner && (
-        <View style={[styles.banner, { backgroundColor: 'rgba(34, 197, 94, 0.9)' }]}>
-          <Text style={styles.bannerText}>{bannerMessage}</Text>
-        </View>
-      )}
+        {/* Round Winner Banner */}
+        {showRoundWinnerBanner && (
+          <View style={[styles.banner, { backgroundColor: 'rgba(34, 197, 94, 0.9)' }]}>
+            <Text style={styles.bannerText}>{bannerMessage}</Text>
+          </View>
+        )}
 
-      {/* 10s Caught Banner */}
-      {showTensCaughtBanner && (
-        <View style={[styles.banner, { backgroundColor: 'rgba(240, 180, 41, 0.9)' }]}>
-          <Text style={styles.bannerText}>{bannerMessage}</Text>
-        </View>
-      )}
+        {/* 10s Caught Banner */}
+        {showTensCaughtBanner && (
+          <View style={[styles.banner, { backgroundColor: 'rgba(240, 180, 41, 0.9)' }]}>
+            <Text style={styles.bannerText}>{bannerMessage}</Text>
+          </View>
+        )}
 
-      {/* Top Bar */}
+        {/* Top Bar */}
       <View style={[
         styles.topBar,
         {
@@ -801,41 +803,52 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       {/* Game Completed Screen */}
       <GameCompletedScreen onHome={onHomePress || onGameEnd} />
 
-      {/* Ghost Card Portal - rendered at root level to escape FlatList clipping */}
-      {ghostCard.visible && ghostCard.card && (
-        <View
-          style={{
-            position: 'absolute',
-            top: ghostCard.y - 45,
-            left: ghostCard.x - 30,
-            zIndex: 9999,
-            pointerEvents: 'none',
-          }}
-        >
+        {/* Ghost Card Portal - rendered at root level to escape FlatList clipping */}
+        {ghostCard.visible && ghostCard.card && (
           <View
             style={{
-              width: 60,
-              height: 90,
-              borderRadius: 8,
-              borderWidth: 5,
-              borderColor: '#f0b429',
-              backgroundColor: 'rgba(240, 180, 41, 0.1)',
-              overflow: 'hidden',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.5,
-              shadowRadius: 12,
-              elevation: 8,
+              position: 'absolute',
+              top: ghostCard.y - 45,
+              left: ghostCard.x - 30,
+              zIndex: 9999,
+              pointerEvents: 'none',
             }}
           >
-            <Image
-              source={getCardImagePath(ghostCard.card.suit, ghostCard.card.value)}
-              style={{ width: '100%', height: '100%' }}
-              resizeMode="cover"
-            />
+            <View
+              style={{
+                width: 60,
+                height: 90,
+                borderRadius: 8,
+                borderWidth: 5,
+                borderColor: '#f0b429',
+                backgroundColor: 'rgba(240, 180, 41, 0.1)',
+                overflow: 'hidden',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.5,
+                shadowRadius: 12,
+                elevation: 8,
+              }}
+            >
+              <Image
+                source={getCardImagePath(ghostCard.card.suit, ghostCard.card.value)}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="cover"
+              />
+            </View>
           </View>
-        </View>
-      )}
+        )}
+
+        {/* Advertisement Banner */}
+        {!isPremium && (
+          <AdvertisementBanner
+            showGoAdFreeButton={true}
+            onGoAdFree={() => {
+              console.log('[GameScreen] Go Ad Free tapped');
+            }}
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 };

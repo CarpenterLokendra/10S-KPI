@@ -7,6 +7,8 @@ import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { generateQRCode } from '../utils/qrcode.util';
+import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { useAuthStore } from '../store/auth.store';
 
 const ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=com.lokendra.mobile10s';
 const IOS_STORE_URL = 'https://apps.apple.com/app/catch-the-ten/id000000000';
@@ -18,6 +20,7 @@ interface DownloadAppScreenProps {
 }
 
 export const DownloadAppScreen: React.FC<DownloadAppScreenProps> = ({ onClose, onHomePress }) => {
+  const authStore = useAuthStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
@@ -33,9 +36,10 @@ export const DownloadAppScreen: React.FC<DownloadAppScreenProps> = ({ onClose, o
       onRequestClose={onClose}
     >
       <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }]}>
-        <TopControlsBar onHomePress={onHomePress || onClose} />
+        <View style={{ flex: 1 }}>
+          <TopControlsBar onHomePress={onHomePress || onClose} />
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Title */}
           <View style={styles.titleSection}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
@@ -134,8 +138,19 @@ export const DownloadAppScreen: React.FC<DownloadAppScreenProps> = ({ onClose, o
             <Text style={[styles.footerText, { color: colors.textSecondary }]}>
               {t('download.footer')}
             </Text>
-          </View>
-        </ScrollView>
+            </View>
+          </ScrollView>
+
+          {/* Advertisement Banner */}
+          {!authStore.isPremium && (
+            <AdvertisementBanner
+              showGoAdFreeButton={true}
+              onGoAdFree={() => {
+                console.log('[DownloadAppScreen] Go Ad Free tapped');
+              }}
+            />
+          )}
+        </View>
       </SafeAreaView>
     </Modal>
   );
