@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, ScrollView, Modal } from 'react-native';
 import { useGameStore } from '../store/game.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,13 +13,12 @@ export const GameCompletedScreen: React.FC<GameCompletedScreenProps> = ({ onPlay
   const { isGameCompleted, players } = useGameStore();
   const colors = useThemeColors();
 
-  if (!isGameCompleted) return null;
-
   // Sort players by final score (descending)
   const sortedPlayers = [...players].sort((a, b) => (b.final_score || 0) - (a.final_score || 0));
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: 'rgba(0, 0, 0, 0.95)' }]}>
+    <Modal visible={isGameCompleted} transparent={false} animationType="fade" onRequestClose={onHome}>
+      <SafeAreaView style={[styles.container, { backgroundColor: 'rgba(0, 0, 0, 0.95)' }]}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>🏁 Game Complete</Text>
 
@@ -93,6 +92,7 @@ export const GameCompletedScreen: React.FC<GameCompletedScreenProps> = ({ onPlay
         </View>
       </ScrollView>
     </SafeAreaView>
+    </Modal>
   );
 };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { useGameStore } from '../store/game.store';
 import { useThemeColors } from '../hooks/useThemeColors';
 
@@ -11,8 +11,6 @@ export const GameEndedScreen: React.FC<GameEndedScreenProps> = ({ onHome }) => {
   const { isGameEnded, quitterUsername } = useGameStore();
   const colors = useThemeColors();
 
-  if (!isGameEnded) return null;
-
   const reason = quitterUsername?.includes('timed out')
     ? `${quitterUsername} - Game abandoned`
     : quitterUsername
@@ -20,7 +18,8 @@ export const GameEndedScreen: React.FC<GameEndedScreenProps> = ({ onHome }) => {
       : 'Game ended';
 
   return (
-    <View style={[styles.container, { backgroundColor: 'rgba(0, 0, 0, 0.95)' }]}>
+    <Modal visible={isGameEnded} transparent={false} animationType="fade" onRequestClose={onHome}>
+      <View style={[styles.container, { backgroundColor: 'rgba(0, 0, 0, 0.95)' }]}>
       <View style={styles.content}>
         <Text style={[styles.icon]}>❌</Text>
 
@@ -41,6 +40,7 @@ export const GameEndedScreen: React.FC<GameEndedScreenProps> = ({ onHome }) => {
         </TouchableOpacity>
       </View>
     </View>
+    </Modal>
   );
 };
 
