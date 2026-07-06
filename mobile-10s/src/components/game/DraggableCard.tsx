@@ -166,7 +166,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
             finalY >= pileLayout.y &&
             finalY <= pileLayout.y + pileLayout.height;
 
-          console.log(`[${cardKey}] DRAG END - over pile: ${isOverPile}`);
+          console.log(`[${cardKey}] DRAG END - position: (${finalX.toFixed(0)}, ${finalY.toFixed(0)}), pile: (${pileLayout?.x.toFixed(0)}, ${pileLayout?.y.toFixed(0)}) - ${pileLayout?.width}x${pileLayout?.height}, over pile: ${isOverPile}`);
 
           // Call drag end handler
           onDragEnd?.();

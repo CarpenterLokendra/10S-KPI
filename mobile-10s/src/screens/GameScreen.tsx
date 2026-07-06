@@ -67,6 +67,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   const flatListRef = useRef<FlatList>(null);
   const pileHighlightScaleRef = useRef(new Animated.Value(1));
   const pileHighlightOpacityRef = useRef(new Animated.Value(0));
+  const pileViewRef = useRef<View>(null);
 
   // Reset stale game state if navigating to a different game (matches GameTable.tsx:277-282)
   useEffect(() => {
@@ -122,15 +123,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
 
   const handleCardDragStateChange = (state: { isOverPile: boolean }) => {
     if (state.isOverPile) {
+      console.log('[GameScreen] Card over pile - highlighting');
       Animated.parallel([
         Animated.timing(pileHighlightScaleRef.current, {
-          toValue: 1.08,
-          duration: 150,
+          toValue: 1.12,
+          duration: 100,
           useNativeDriver: true,
         }),
         Animated.timing(pileHighlightOpacityRef.current, {
-          toValue: 0.4,
-          duration: 150,
+          toValue: 1,
+          duration: 100,
           useNativeDriver: true,
         }),
       ]).start();
@@ -541,22 +543,35 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         <Animated.View style={[
           styles.cardPile,
           {
-            backgroundColor: 'rgba(20, 30, 45, 0.4)',
+            backgroundColor: pileHighlightOpacityRef.current.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['rgba(20, 30, 45, 0.4)', 'rgba(240, 180, 41, 0.15)'],
+            }),
             borderColor: pileHighlightOpacityRef.current.interpolate({
               inputRange: [0, 1],
-              outputRange: ['rgba(34, 197, 94, 0.5)', 'rgba(240, 180, 41, 0.8)'],
+              outputRange: ['rgba(34, 197, 94, 0.5)', 'rgba(240, 180, 41, 1)'],
+            }),
+            borderWidth: pileHighlightOpacityRef.current.interpolate({
+              inputRange: [0, 1],
+              outputRange: [2, 3],
             }),
             transform: [{ scale: pileHighlightScaleRef.current }],
           }
         ]}
-        onLayout={(e) => {
-          setPileLayout({
-            x: e.nativeEvent.layout.x,
-            y: e.nativeEvent.layout.y,
-            width: e.nativeEvent.layout.width,
-            height: e.nativeEvent.layout.height,
-          });
-        }}>
+        onLayout={() => {
+          if (pileViewRef.current) {
+            pileViewRef.current.measure((fx, fy, width, height, px, py) => {
+              console.log('[GameScreen] Pile measured - screen position:', { px, py, width, height });
+              setPileLayout({
+                x: px,
+                y: py,
+                width: width,
+                height: height,
+              });
+            });
+          }
+        }}
+        ref={pileViewRef}>
           {gameStore.playedCards && gameStore.playedCards.length > 0 ? (
             <>
               <Text style={[styles.cardPileLabel, { color: '#f0b429' }]}>
