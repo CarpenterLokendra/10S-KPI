@@ -780,7 +780,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             keyExtractor={(item) => `${item.suit}-${item.value}`}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.handContent}
-            extraData={selectedCard}
+            extraData={pileLayout ? JSON.stringify(pileLayout) : null}
           />
         ) : (
           <Text style={{ color: '#fff', fontSize: 12 }}>No cards in hand</Text>
