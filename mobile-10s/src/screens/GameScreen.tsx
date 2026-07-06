@@ -948,7 +948,7 @@ const styles = StyleSheet.create({
   handSection: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    height: 220,
+    minHeight: 220,
   },
   handLabel: {
     fontSize: 11,

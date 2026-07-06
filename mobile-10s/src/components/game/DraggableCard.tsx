@@ -30,7 +30,6 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
 }) => {
   const cardKey = `${card.suit}-${card.value}`;
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
   const scale = useRef(new Animated.Value(1)).current;
   const shadowOpacity = useRef(new Animated.Value(0.3)).current;
   const cardStartPosRef = useRef({ x: 0, y: 0, screenX: 0, screenY: 0 });
@@ -91,9 +90,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
 
         if (distance > MIN_DRAG_DISTANCE && isSelectedRef.current && !isDraggingRef.current) {
           isDraggingRef.current = true;
-          setIsDragging(true);
           console.log(`[${cardKey}] DRAG START - distance: ${distance.toFixed(2)}`);
-          console.log(`[${cardKey}] Absolute pos: x=${cardAbsolutePosRef.current.x}, y=${cardAbsolutePosRef.current.y}`);
 
           startAnimation(
             Animated.timing(scale, {
@@ -200,7 +197,6 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   };
 
   const snapBack = () => {
-    setIsDragging(false);
     startAnimation(
       Animated.timing(scale, {
         toValue: 1,
@@ -215,7 +211,6 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   };
 
   const resetCardState = () => {
-    setIsDragging(false);
     startAnimation(
       Animated.timing(scale, {
         toValue: 1,
@@ -232,24 +227,16 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
 
   return (
     <View style={{ marginRight: 8 }}>
-      {isDragging && console.log(`[${cardKey}] Rendering with isDragging=true, pos: (${cardAbsolutePosRef.current.x + dragOffset.x}, ${cardAbsolutePosRef.current.y + dragOffset.y})`)}
       <Animated.View
         ref={cardRef}
         style={[
-          isDragging
-            ? {
-                position: 'absolute',
-                left: cardAbsolutePosRef.current.x + dragOffset.x,
-                top: cardAbsolutePosRef.current.y + dragOffset.y,
-                zIndex: 1000,
-              }
-            : {
-                transform: [
-                  { translateX: dragOffset.x },
-                  { translateY: dragOffset.y },
-                  { scale },
-                ],
-              },
+          {
+            transform: [
+              { translateX: dragOffset.x },
+              { translateY: dragOffset.y },
+              { scale },
+            ],
+          },
         ]}
         {...panResponder.panHandlers}
       >
