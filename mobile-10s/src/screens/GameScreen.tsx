@@ -647,6 +647,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
             ref={flatListRef}
             data={gameStore.myHand}
             horizontal
+            removeClippedSubviews={false}
             onScroll={(e) => {
               setFlatListScroll(e.nativeEvent.contentOffset.x);
             }}
