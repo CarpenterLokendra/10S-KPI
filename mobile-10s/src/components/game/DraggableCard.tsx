@@ -125,14 +125,23 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
         const currentScreenY = cardStartPosRef.current.screenY + dy;
         onDragMove?.(card, currentScreenX, currentScreenY);
 
-        // Check pile collision
+        // Check pile collision using AABB (Axis-Aligned Bounding Box) collision detection
         if (pileLayout) {
-          const isOverPile =
-            currentScreenX >= pileLayout.x &&
-            currentScreenX <= pileLayout.x + pileLayout.width &&
-            currentScreenY >= pileLayout.y &&
-            currentScreenY <= pileLayout.y + pileLayout.height;
+          const CARD_WIDTH = 60;
+          const CARD_HEIGHT = 90;
 
+          const cardRight = currentScreenX + CARD_WIDTH;
+          const cardBottom = currentScreenY + CARD_HEIGHT;
+          const pileRight = pileLayout.x + pileLayout.width;
+          const pileBottom = pileLayout.y + pileLayout.height;
+
+          const isOverPile =
+            cardRight > pileLayout.x &&      // Card's right past pile's left
+            currentScreenX < pileRight &&    // Card's left before pile's right
+            cardBottom > pileLayout.y &&     // Card's bottom past pile's top
+            currentScreenY < pileBottom;     // Card's top before pile's bottom
+
+          console.log(`[${cardKey}] DRAG MOVE - card: (${currentScreenX.toFixed(0)}, ${currentScreenY.toFixed(0)}) to (${cardRight.toFixed(0)}, ${cardBottom.toFixed(0)}), pile: (${pileLayout.x.toFixed(0)}, ${pileLayout.y.toFixed(0)}) to (${pileRight.toFixed(0)}, ${pileBottom.toFixed(0)}), collision: ${isOverPile}`);
           onCardDragStateChange?.({ isOverPile });
         }
       },
@@ -159,12 +168,22 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
           const finalX = cardStartPosRef.current.screenX + dx;
           const finalY = cardStartPosRef.current.screenY + dy;
 
-          const isOverPile =
-            pileLayout &&
-            finalX >= pileLayout.x &&
-            finalX <= pileLayout.x + pileLayout.width &&
-            finalY >= pileLayout.y &&
-            finalY <= pileLayout.y + pileLayout.height;
+          let isOverPile = false;
+          if (pileLayout) {
+            const CARD_WIDTH = 60;
+            const CARD_HEIGHT = 90;
+
+            const cardRight = finalX + CARD_WIDTH;
+            const cardBottom = finalY + CARD_HEIGHT;
+            const pileRight = pileLayout.x + pileLayout.width;
+            const pileBottom = pileLayout.y + pileLayout.height;
+
+            isOverPile =
+              cardRight > pileLayout.x &&
+              finalX < pileRight &&
+              cardBottom > pileLayout.y &&
+              finalY < pileBottom;
+          }
 
           console.log(`[${cardKey}] DRAG END - position: (${finalX.toFixed(0)}, ${finalY.toFixed(0)}), pile: (${pileLayout?.x.toFixed(0)}, ${pileLayout?.y.toFixed(0)}) - ${pileLayout?.width}x${pileLayout?.height}, over pile: ${isOverPile}`);
 
