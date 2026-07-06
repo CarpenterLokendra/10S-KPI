@@ -102,20 +102,24 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
       if (pileViewRef.current) {
         pileViewRef.current.measure((fx, fy, width, height, px, py) => {
           if (px !== undefined && py !== undefined) {
+            console.log('[GameScreen] Pile measured:', { px, py, width, height });
             setPileLayout({
               x: px,
               y: py,
               width: width,
               height: height,
             });
+          } else {
+            console.log('[GameScreen] Pile measure failed - undefined coordinates:', { fx, fy, width, height, px, py });
           }
         });
+      } else {
+        console.log('[GameScreen] pileViewRef.current is null');
       }
     };
 
     const timer = setInterval(measurePile, 500);
     measurePile();
-    console.log('[GameScreen] Pile measurement interval started');
     return () => clearInterval(timer);
   }, []);
 

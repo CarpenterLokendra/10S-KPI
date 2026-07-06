@@ -37,6 +37,15 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   const cardKey = `${card.suit}-${card.value}`;
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+
+  // Log when pileLayout changes
+  React.useEffect(() => {
+    if (pileLayout) {
+      console.log(`[${cardKey}] pileLayout received:`, pileLayout);
+    } else {
+      console.log(`[${cardKey}] pileLayout is null`);
+    }
+  }, [pileLayout, cardKey]);
   const scale = useRef(new Animated.Value(1)).current;
   const shadowOpacity = useRef(new Animated.Value(0.3)).current;
   const cardStartPosRef = useRef({ x: 0, y: 0, screenX: 0, screenY: 0 });
