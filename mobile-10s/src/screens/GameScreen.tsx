@@ -551,10 +551,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
               inputRange: [0, 1],
               outputRange: ['rgba(34, 197, 94, 0.5)', 'rgba(240, 180, 41, 1)'],
             }),
-            borderWidth: pileHighlightOpacityRef.current.interpolate({
-              inputRange: [0, 1],
-              outputRange: [2, 3],
-            }),
             transform: [{ scale: pileHighlightScaleRef.current }],
           }
         ]}
