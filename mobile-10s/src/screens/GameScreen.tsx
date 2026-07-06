@@ -27,6 +27,8 @@ import { GameEndedScreen } from '../components/GameEndedScreen';
 import { GameCompletedScreen } from '../components/GameCompletedScreen';
 import { BotAvatar } from '../components/BotAvatar';
 import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { GoPremiumModal } from '../components/modals/GoPremiumModal';
+import { useGoPremium } from '../hooks/useGoPremium';
 import { BOT_NAMES } from '../utils/botAvatars';
 import { RectangularTimer } from '../components/game/RectangularTimer';
 import { soundService } from '../services/sound.service';
@@ -43,6 +45,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const isPortrait = height > width;
+
+  // Premium modal
+  const { showPremiumModal, handleGoAdFree, handleClosePremiumModal, handleGoToPremium } = useGoPremium();
 
   // Get game store and auth
   const gameStore = useGameStore();
@@ -843,11 +848,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         {!isPremium && (
           <AdvertisementBanner
             showGoAdFreeButton={true}
-            onGoAdFree={() => {
-              console.log('[GameScreen] Go Ad Free tapped');
-            }}
+            onGoAdFree={handleGoAdFree}
           />
         )}
+
+        <GoPremiumModal
+          visible={showPremiumModal}
+          onDismiss={handleClosePremiumModal}
+          onGoToPremium={handleGoToPremium}
+        />
       </View>
     </SafeAreaView>
   );

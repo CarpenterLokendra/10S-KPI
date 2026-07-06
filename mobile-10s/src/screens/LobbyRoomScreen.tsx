@@ -23,6 +23,8 @@ import { ActionButtonBar } from '../components/lobby/ActionButtonBar';
 import { BotDifficultyModal } from '../components/lobby/BotDifficultyModal';
 import { BOT_NAMES, BOT_COLOR_MAP } from '../utils/botAvatars';
 import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { GoPremiumModal } from '../components/modals/GoPremiumModal';
+import { useGoPremium } from '../hooks/useGoPremium';
 import { useAuthStore } from '../store/auth.store';
 
 interface Player {
@@ -70,6 +72,7 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
   const colors = useThemeColors();
   const authStore = useAuthStore();
   const { t } = useTranslation();
+  const { showPremiumModal, handleGoAdFree, handleClosePremiumModal, handleGoToPremium } = useGoPremium();
 
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -453,12 +456,16 @@ export const LobbyRoomScreen: React.FC<LobbyRoomScreenProps> = ({
         {!authStore.isPremium && (
           <AdvertisementBanner
             showGoAdFreeButton={true}
-            onGoAdFree={() => {
-              console.log('[LobbyRoomScreen] Go Ad Free tapped');
-            }}
+            onGoAdFree={handleGoAdFree}
           />
         )}
       </View>
+
+      <GoPremiumModal
+        visible={showPremiumModal}
+        onDismiss={handleClosePremiumModal}
+        onGoToPremium={handleGoToPremium}
+      />
 
       {/* Bot Difficulty Modal */}
       <BotDifficultyModal

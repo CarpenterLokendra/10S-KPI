@@ -11,6 +11,8 @@ import { TopControlsBar } from '../components/TopControlsBar';
 import { StrengthIndicator } from '../components/StrengthIndicator';
 import { useTranslation } from '../hooks/useTranslation';
 import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { GoPremiumModal } from '../components/modals/GoPremiumModal';
+import { useGoPremium } from '../hooks/useGoPremium';
 
 interface AuthScreenProps {
   onLoginSuccess: () => void;
@@ -48,6 +50,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const { setUser } = useUserStore();
   const { setUserId, isPremium } = useAuthStore();
   const colors = useThemeColors();
+  const { showPremiumModal, handleGoAdFree, handleClosePremiumModal, handleGoToPremium } = useGoPremium();
   const { t } = useTranslation();
   const isDark = colors.isDark;
 
@@ -415,12 +418,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         {!isPremium && (
           <AdvertisementBanner
             showGoAdFreeButton={true}
-            onGoAdFree={() => {
-              console.log('[AuthScreen] Go Ad Free tapped');
-            }}
+            onGoAdFree={handleGoAdFree}
           />
         )}
       </View>
+
+      <GoPremiumModal
+        visible={showPremiumModal}
+        onDismiss={handleClosePremiumModal}
+        onGoToPremium={handleGoToPremium}
+      />
     </SafeAreaView>
   );
 };

@@ -12,7 +12,10 @@ import { useThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { GoPremiumModal } from '../components/modals/GoPremiumModal';
+import { useGoPremium } from '../hooks/useGoPremium';
 import { useAuthStore } from '../store/auth.store';
+
 interface Game {
   id: string;
   players: Array<{
@@ -43,6 +46,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
+  const { showPremiumModal, handleGoAdFree, handleClosePremiumModal, handleGoToPremium } = useGoPremium();
   const sortedPlayers = [...game.players].sort((a, b) => b.final_score - a.final_score);
   const winner = sortedPlayers[0];
 
@@ -123,12 +127,16 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
         {!authStore.isPremium && (
           <AdvertisementBanner
             showGoAdFreeButton={true}
-            onGoAdFree={() => {
-              console.log('[ResultsScreen] Go Ad Free tapped');
-            }}
+            onGoAdFree={handleGoAdFree}
           />
         )}
       </View>
+
+      <GoPremiumModal
+        visible={showPremiumModal}
+        onDismiss={handleClosePremiumModal}
+        onGoToPremium={handleGoToPremium}
+      />
     </SafeAreaView>
   );
 };

@@ -25,6 +25,8 @@ import { profileService } from '../services/profile.service';
 import apiClient from '../services/api';
 import type { ProfileData } from '../types/profile';
 import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { GoPremiumModal } from '../components/modals/GoPremiumModal';
+import { useGoPremium } from '../hooks/useGoPremium';
 import { useAuthStore } from '../store/auth.store';
 
 interface ProfileScreenProps {
@@ -48,6 +50,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
+  const { showPremiumModal, handleGoAdFree, handleClosePremiumModal, handleGoToPremium } = useGoPremium();
 
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -334,12 +337,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         {!authStore.isPremium && (
           <AdvertisementBanner
             showGoAdFreeButton={true}
-            onGoAdFree={() => {
-              console.log('[ProfileScreen] Go Ad Free tapped');
-            }}
+            onGoAdFree={handleGoAdFree}
           />
         )}
       </View>
+
+      <GoPremiumModal
+        visible={showPremiumModal}
+        onDismiss={handleClosePremiumModal}
+        onGoToPremium={handleGoToPremium}
+      />
     </SafeAreaView>
   );
 };

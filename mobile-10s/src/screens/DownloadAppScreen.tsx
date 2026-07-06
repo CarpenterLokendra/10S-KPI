@@ -8,6 +8,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { generateQRCode } from '../utils/qrcode.util';
 import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { GoPremiumModal } from '../components/modals/GoPremiumModal';
+import { useGoPremium } from '../hooks/useGoPremium';
 import { useAuthStore } from '../store/auth.store';
 
 const ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=com.lokendra.mobile10s';
@@ -24,6 +26,7 @@ export const DownloadAppScreen: React.FC<DownloadAppScreenProps> = ({ onClose, o
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
+  const { showPremiumModal, handleGoAdFree, handleClosePremiumModal, handleGoToPremium } = useGoPremium();
   const iosQR = generateQRCode(IOS_STORE_URL);
   const androidQR = generateQRCode(ANDROID_STORE_URL);
   const webQR = generateQRCode(WEB_URL);
@@ -145,12 +148,16 @@ export const DownloadAppScreen: React.FC<DownloadAppScreenProps> = ({ onClose, o
           {!authStore.isPremium && (
             <AdvertisementBanner
               showGoAdFreeButton={true}
-              onGoAdFree={() => {
-                console.log('[DownloadAppScreen] Go Ad Free tapped');
-              }}
+              onGoAdFree={handleGoAdFree}
             />
           )}
         </View>
+
+        <GoPremiumModal
+          visible={showPremiumModal}
+          onDismiss={handleClosePremiumModal}
+          onGoToPremium={handleGoToPremium}
+        />
       </SafeAreaView>
     </Modal>
   );

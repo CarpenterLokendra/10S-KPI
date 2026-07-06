@@ -16,6 +16,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { leaderboardService, type LeaderboardEntry, type GlobalStatsResponse } from '../services/leaderboard.service';
 import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { GoPremiumModal } from '../components/modals/GoPremiumModal';
+import { useGoPremium } from '../hooks/useGoPremium';
 import { useAuthStore } from '../store/auth.store';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -40,6 +42,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
   const authStore = useAuthStore();
   const { t } = useTranslation();
   const isDark = colors.isDark;
+  const { showPremiumModal, handleGoAdFree, handleClosePremiumModal, handleGoToPremium } = useGoPremium();
 
   const [sortBy, setSortBy] = useState<'rating' | 'total_games_won' | 'total_games_played' | 'total_points_scored'>('total_points_scored');
   const [players, setPlayers] = useState<LeaderboardEntry[]>([]);
@@ -300,11 +303,15 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
       {!authStore.isPremium && (
         <AdvertisementBanner
           showGoAdFreeButton={true}
-          onGoAdFree={() => {
-            console.log('[LeaderboardScreen] Go Ad Free tapped');
-          }}
+          onGoAdFree={handleGoAdFree}
         />
       )}
+
+      <GoPremiumModal
+        visible={showPremiumModal}
+        onDismiss={handleClosePremiumModal}
+        onGoToPremium={handleGoToPremium}
+      />
       </View>
     </SafeAreaView>
   );

@@ -11,6 +11,8 @@ import { SettingsSection } from '../components/SettingsSection';
 import { OptionGrid, type OptionGridItem } from '../components/OptionGrid';
 import { VolumeSlider } from '../components/VolumeSlider';
 import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { GoPremiumModal } from '../components/modals/GoPremiumModal';
+import { useGoPremium } from '../hooks/useGoPremium';
 import { useAuthStore } from '../store/auth.store';
 
 interface SettingsScreenProps {
@@ -29,6 +31,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const authStore = useAuthStore();
   const colors = useThemeColors();
   const { t } = useTranslation();
+  const { showPremiumModal, handleGoAdFree, handleClosePremiumModal, handleGoToPremium } = useGoPremium();
 
   const languages: OptionGridItem[] = [
     { code: 'en', emoji: '🇬🇧', label: 'English', sublabel: 'English' },
@@ -150,12 +153,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         {!authStore.isPremium && (
           <AdvertisementBanner
             showGoAdFreeButton={true}
-            onGoAdFree={() => {
-              console.log('[SettingsScreen] Go Ad Free tapped');
-            }}
+            onGoAdFree={handleGoAdFree}
           />
         )}
       </View>
+
+      <GoPremiumModal
+        visible={showPremiumModal}
+        onDismiss={handleClosePremiumModal}
+        onGoToPremium={handleGoToPremium}
+      />
     </SafeAreaView>
   );
 };

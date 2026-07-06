@@ -20,6 +20,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import { TopControlsBar } from '../components/TopControlsBar';
 import { CoachModal } from '../components/CoachModal';
 import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { GoPremiumModal } from '../components/modals/GoPremiumModal';
+import { useGoPremium } from '../hooks/useGoPremium';
 import { useAuthStore } from '../store/auth.store';
 
 interface Lobby {
@@ -62,6 +64,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   const colors = useThemeColors();
   const { t } = useTranslation();
   const isDark = colors.isDark;
+  const { showPremiumModal, handleGoAdFree, handleClosePremiumModal, handleGoToPremium } = useGoPremium();
 
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -567,12 +570,16 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         {!authStore.isPremium && (
           <AdvertisementBanner
             showGoAdFreeButton={true}
-            onGoAdFree={() => {
-              console.log('[LobbyScreen] Go Ad Free tapped');
-            }}
+            onGoAdFree={handleGoAdFree}
           />
         )}
         </View>
+
+        <GoPremiumModal
+          visible={showPremiumModal}
+          onDismiss={handleClosePremiumModal}
+          onGoToPremium={handleGoToPremium}
+        />
       </SafeAreaView>
 
       {/* Create Lobby Modal */}

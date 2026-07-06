@@ -10,6 +10,8 @@ import { DownloadAppScreen } from './DownloadAppScreen';
 import { FeatureModal } from '../components/FeatureModal';
 import { GuideModal } from '../components/GuideModal';
 import { AdvertisementBanner } from '../components/AdvertisementBanner';
+import { GoPremiumModal } from '../components/modals/GoPremiumModal';
+import { useGoPremium } from '../hooks/useGoPremium';
 import { useAuthStore } from '../store/auth.store';
 
 interface LandingScreenProps {
@@ -28,6 +30,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
   const colors = useThemeColors();
   const isDark = colors.isDark;
   const authStore = useAuthStore();
+  const { showPremiumModal, handleGoAdFree, handleClosePremiumModal, handleGoToPremium } = useGoPremium();
   const [showDownloadApp, setShowDownloadApp] = useState(false);
   const [activeFeatureModal, setActiveFeatureModal] = useState<'fast-paced' | 'multiplayer' | null>(null);
   const [showGuide, setShowGuide] = useState(false);
@@ -346,12 +349,16 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onLoginPress, onSi
       {!authStore.isPremium && (
         <AdvertisementBanner
           showGoAdFreeButton={true}
-          onGoAdFree={() => {
-            console.log('[LandingScreen] Go Ad Free tapped');
-          }}
+          onGoAdFree={handleGoAdFree}
         />
       )}
       </View>
+
+      <GoPremiumModal
+        visible={showPremiumModal}
+        onDismiss={handleClosePremiumModal}
+        onGoToPremium={handleGoToPremium}
+      />
 
       {/* Feature Modal */}
       <FeatureModal
