@@ -94,16 +94,25 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   useEffect(() => {
     const measurePile = () => {
       if (pileViewRef.current) {
-        pileViewRef.current.measure((fx, fy, width, height, px, py) => {
-          if (px !== undefined && py !== undefined) {
-            setPileLayout({
-              x: px,
-              y: py,
-              width: width,
-              height: height,
-            });
-          }
-        });
+        try {
+          pileViewRef.current.measure((fx, fy, width, height, px, py) => {
+            if (px !== undefined && py !== undefined) {
+              console.log('[GameScreen] Pile measured successfully:', { x: px, y: py, width, height });
+              setPileLayout({
+                x: px,
+                y: py,
+                width: width,
+                height: height,
+              });
+            } else {
+              console.log('[GameScreen] Pile measure returned undefined coordinates:', { fx, fy, width, height, px, py });
+            }
+          });
+        } catch (err) {
+          console.error('[GameScreen] Pile measure failed:', err);
+        }
+      } else {
+        console.log('[GameScreen] pileViewRef.current is null');
       }
     };
 
@@ -144,6 +153,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
   };
 
   const handleCardDragStateChange = (state: { isOverPile: boolean }) => {
+    console.log('[GameScreen] handleCardDragStateChange called:', state);
     if (state.isOverPile) {
       console.log('[GameScreen] Card over pile - highlighting');
       Animated.parallel([
@@ -159,6 +169,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameId, onGameEnd, onHom
         }),
       ]).start();
     } else {
+      console.log('[GameScreen] Card not over pile - resetting highlight');
       Animated.parallel([
         Animated.timing(pileHighlightScaleRef.current, {
           toValue: 1,
