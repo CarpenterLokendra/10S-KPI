@@ -7,9 +7,9 @@ interface AdvertisementBannerProps {
   showGoAdFreeButton?: boolean;
 }
 
-export const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({ 
-  onGoAdFree, 
-  showGoAdFreeButton = true 
+export const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
+  onGoAdFree,
+  showGoAdFreeButton = true
 }) => {
   const colors = useThemeColors();
   const isDark = colors.isDark;
@@ -18,23 +18,19 @@ export const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     <View style={[
       styles.container,
       {
-        backgroundColor: isDark ? 'rgba(10, 1, 24, 0.9)' : 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.4)',
         borderTopColor: 'rgba(240, 180, 41, 0.3)',
       }
     ]}>
       <View style={styles.contentContainer}>
-        <Text style={[
-          styles.adText,
-          {
-            color: 'rgba(240, 180, 41, 0.5)',
-          }
-        ]}>
+        <Text style={styles.adText}>
           Advertisement Space
         </Text>
         {showGoAdFreeButton && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.goAdFreeButton}
             onPress={onGoAdFree}
+            activeOpacity={0.8}
           >
             <Text style={styles.goAdFreeButtonText}>Go Ad Free</Text>
           </TouchableOpacity>
@@ -46,14 +42,14 @@ export const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
+    position: 'relative',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 120,
+    minHeight: 100,
     borderTopWidth: 2,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     zIndex: 10,
   },
   contentContainer: {
@@ -65,23 +61,26 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: 'rgba(240, 180, 41, 0.3)',
     borderRadius: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
   },
   adText: {
     fontSize: 12,
     fontWeight: '600',
-    fontFamily: 'Inter',
+    color: 'rgba(240, 180, 41, 0.5)',
   },
   goAdFreeButton: {
     backgroundColor: '#22c55e',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   goAdFreeButtonText: {
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '700',
-    fontFamily: 'Inter',
   },
 });
