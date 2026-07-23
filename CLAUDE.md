@@ -48,3 +48,22 @@ All 4 security waves completed:
 2. Configure environment variables with AWS RDS endpoint
 3. Deploy web frontend to S3 + CloudFront
 4. Build and distribute mobile app
+
+## 🔐 Security Configuration
+
+### Secrets Management
+All sensitive data is stored in **AWS Parameter Store**:
+- Database credentials
+- JWT secret keys
+- API keys
+- CORS origins
+
+**CRITICAL**: Never commit secrets to git. Use `.gitignore` and AWS Parameter Store.
+
+See `SECURITY.md` in each repository for detailed security guidelines.
+
+### Environment Files
+- `docker-compose.dev.yml` - **NOT IN GIT** (use .example as template)
+- `.env` files - **NEVER COMMITTED** (local development only)
+- Parameter Store - **PRODUCTION SOURCE** (encrypted, auditable)
+
