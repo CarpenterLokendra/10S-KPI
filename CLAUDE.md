@@ -31,9 +31,10 @@
 ## AWS Deployment
 
 ### Database
-- RDS PostgreSQL: `db-10s-game`
+- RDS PostgreSQL: `db10s-game-v3`
 - Status: Available
-- Endpoint: db-10s-game.xxxxx.us-east-1.rds.amazonaws.com:5432
+- Endpoint: db10s-game-v3.cvgyyk8coe1d.ap-southeast-2.rds.amazonaws.com:5432
+- Region: ap-southeast-2
 
 ### Security Configuration
 All 4 security waves completed:
