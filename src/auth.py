@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthCredentials
+from fastapi import Depends, HTTPException, status, Cookie
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from slowapi import Limiter
@@ -9,7 +8,6 @@ from slowapi.util import get_remote_address
 from src.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-security = HTTPBearer()
 limiter = Limiter(key_func=get_remote_address)
 
 
@@ -47,6 +45,10 @@ def verify_token(token: str) -> dict:
         )
 
 
-async def get_current_user(credentials: HTTPAuthCredentials = Depends(security)) -> dict:
-    token = credentials.credentials
-    return verify_token(token)
+async def get_current_user(access_token: Optional[str] = Cookie(None)) -> dict:
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+    return verify_token(access_token)
