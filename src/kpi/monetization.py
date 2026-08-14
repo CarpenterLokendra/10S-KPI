@@ -106,7 +106,7 @@ async def get_ad_engagement(db: Session, days: int = 30) -> Dict:
             COUNT(*) as total_ads,
             COUNT(CASE WHEN is_completed THEN 1 END) as completed_ads,
             COUNT(CASE WHEN clicked_at IS NOT NULL THEN 1 END) as clicked_ads
-        FROM "10s_schema".ad_serving
+        FROM "10s_schema".ad_servings
         WHERE created_at >= :start_date
         GROUP BY ad_network
     """)
