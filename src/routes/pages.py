@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Form, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Form, Response, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -31,6 +31,7 @@ def get_user_from_cookie(request):
 @router.post("/login")
 @limiter.limit("5/minute")
 async def login(
+    request: Request,
     email: str = Form(...),
     password: str = Form(...),
     response: Response = None,
