@@ -1,5 +1,5 @@
 // Chart.js instances
-let signupsChart, engagementChart, revenueChart, healthChart;
+let signupsChart, engagementChart, revenueChart, healthChart, retentionChart, botHumanChart, revenueByProviderChart, userCompositionChart;
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', () => {
@@ -79,7 +79,11 @@ async function loadAllKPIs(days = 30) {
     // Load signups chart
     const signupsDaily = await fetchKPI(`/acquisition/signups-daily?days=${days}`);
     if (signupsDaily) {
-        renderSignupsChart(signupsDaily);
+        try {
+            renderSignupsChart(signupsDaily);
+        } catch (err) {
+            console.error('Failed to render signups chart:', err);
+        }
     }
 
     // Engagement KPIs
@@ -105,10 +109,34 @@ async function loadAllKPIs(days = 30) {
         document.getElementById('avg-duration').textContent = Math.round(avgDuration.avg_duration_minutes) + ' min';
     }
 
+    const lobbyConversion = await fetchKPI(`/engagement/lobby-conversion?days=${days}`);
+    if (lobbyConversion) {
+        document.getElementById('lobby-conversion').textContent = formatPercent(lobbyConversion.conversion_rate_percent);
+    }
+
+    const botVsHuman = await fetchKPI(`/engagement/bot-vs-human?days=${days}`);
+    if (botVsHuman) {
+        document.getElementById('bot-percent').textContent = formatPercent(botVsHuman.bot_percent);
+        document.getElementById('human-percent').textContent = formatPercent(botVsHuman.human_percent);
+    }
+
     // Load engagement chart
     const gamesDaily = await fetchKPI(`/engagement/games-played-daily?days=${days}`);
     if (gamesDaily) {
-        renderEngagementChart(gamesDaily);
+        try {
+            renderEngagementChart(gamesDaily);
+        } catch (err) {
+            console.error('Failed to render engagement chart:', err);
+        }
+    }
+
+    // Load bot vs human composition chart
+    if (botVsHuman) {
+        try {
+            renderBotHumanChart(botVsHuman);
+        } catch (err) {
+            console.error('Failed to render bot vs human chart:', err);
+        }
     }
 
     // Retention KPIs
@@ -133,6 +161,15 @@ async function loadAllKPIs(days = 30) {
         document.getElementById('churn-rate').textContent = formatPercent(churn.churn_rate_percent);
     }
 
+    // Load retention comparison chart
+    if (d1 && d7 && d30 && churn) {
+        try {
+            renderRetentionChart(d1, d7, d30, churn);
+        } catch (err) {
+            console.error('Failed to render retention chart:', err);
+        }
+    }
+
     // Monetization KPIs
     const totalRevenue = await fetchKPI(`/monetization/total-revenue?days=${days}`);
     if (totalRevenue) {
@@ -155,10 +192,25 @@ async function loadAllKPIs(days = 30) {
         document.getElementById('ad-completion').textContent = formatPercent(avgCompletion);
     }
 
+    const revenueByProvider = await fetchKPI(`/monetization/revenue-by-provider?days=${days}`);
+
     // Load revenue chart
     const revenueDaily = await fetchKPI(`/monetization/revenue-daily?days=${days}`);
     if (revenueDaily) {
-        renderRevenueChart(revenueDaily);
+        try {
+            renderRevenueChart(revenueDaily);
+        } catch (err) {
+            console.error('Failed to render revenue chart:', err);
+        }
+    }
+
+    // Load revenue by provider chart
+    if (revenueByProvider && revenueByProvider.length > 0) {
+        try {
+            renderRevenueByProviderChart(revenueByProvider);
+        } catch (err) {
+            console.error('Failed to render revenue by provider chart:', err);
+        }
     }
 
     // Product Health KPIs
@@ -185,7 +237,35 @@ async function loadAllKPIs(days = 30) {
     // Load health chart
     const healthTrend = await fetchKPI(`/health/health-trend?days=${days}`);
     if (healthTrend) {
-        renderHealthChart(healthTrend);
+        try {
+            renderHealthChart(healthTrend);
+        } catch (err) {
+            console.error('Failed to render health chart:', err);
+        }
+    }
+
+    // Users KPIs
+    const userComposition = await fetchKPI('/users/composition');
+    if (userComposition) {
+        document.getElementById('real-users').textContent = formatNumber(userComposition.real_users);
+        document.getElementById('test-accounts').textContent = formatNumber(userComposition.test_accounts);
+        try {
+            renderUserCompositionChart(userComposition);
+        } catch (err) {
+            console.error('Failed to render user composition chart:', err);
+        }
+    }
+
+    const activePremium = await fetchKPI('/users/active-premium');
+    if (activePremium) {
+        document.getElementById('active-users').textContent = formatNumber(activePremium.active_users);
+        document.getElementById('premium-users').textContent = formatNumber(activePremium.premium_users);
+    }
+
+    const activation = await fetchKPI('/users/activation');
+    if (activation) {
+        document.getElementById('played-games').textContent = formatNumber(activation.users_played);
+        document.getElementById('dormant-users').textContent = formatNumber(activation.users_dormant);
     }
 
     // Remove loading state
@@ -359,6 +439,127 @@ function renderHealthChart(data) {
                     ticks: {
                         callback: function(value) {
                             return value.toFixed(0);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderRetentionChart(d1, d7, d30, churn) {
+    const ctx = document.getElementById('retentionChart').getContext('2d');
+    if (retentionChart) retentionChart.destroy();
+
+    retentionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['D1 Retention', 'D7 Retention', 'D30 Retention', 'Churn Rate'],
+            datasets: [{
+                label: 'Rate (%)',
+                data: [d1.retention_rate_percent, d7.retention_rate_percent, d30.retention_rate_percent, churn.churn_rate_percent],
+                backgroundColor: ['#667eea', '#667eea', '#667eea', '#e74c3c'],
+                borderRadius: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            indexAxis: 'x',
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100 }
+            }
+        }
+    });
+}
+
+function renderBotHumanChart(data) {
+    const ctx = document.getElementById('botHumanChart').getContext('2d');
+    if (botHumanChart) botHumanChart.destroy();
+
+    botHumanChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Bot Players', 'Human Players'],
+            datasets: [{
+                data: [data.bot_percent, data.human_percent],
+                backgroundColor: ['#f39c12', '#667eea'],
+                borderColor: '#fff',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderRevenueByProviderChart(data) {
+    const ctx = document.getElementById('revenueByProviderChart').getContext('2d');
+    if (revenueByProviderChart) revenueByProviderChart.destroy();
+
+    revenueByProviderChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(item => item.provider || 'unknown'),
+            datasets: [{
+                label: 'Revenue (USD)',
+                data: data.map(item => item.revenue),
+                backgroundColor: '#27ae60',
+                borderRadius: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+function renderUserCompositionChart(data) {
+    const ctx = document.getElementById('userCompositionChart').getContext('2d');
+    if (userCompositionChart) userCompositionChart.destroy();
+
+    userCompositionChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Real Users', 'Test/QA Accounts'],
+            datasets: [{
+                data: [data.real_users, data.test_accounts],
+                backgroundColor: ['#667eea', '#bdc3c7'],
+                borderColor: '#fff',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + ' accounts';
                         }
                     }
                 }

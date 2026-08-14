@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.auth import get_current_user, limiter
-from src.kpi import acquisition, engagement, retention, monetization, product_health
+from src.kpi import acquisition, engagement, retention, monetization, product_health, users
 
 router = APIRouter(prefix="/api/kpi", tags=["kpi"])
 
@@ -153,6 +153,25 @@ async def ad_engagement(request: Request, days: int = 30, _user=Depends(get_curr
 @limiter.limit("10/minute")
 async def arpu(request: Request, days: int = 30, _user=Depends(get_current_user), db: Session = Depends(get_db)):
     return await monetization.get_arpu(db, days)
+
+
+# Users KPIs
+@router.get("/users/composition")
+@limiter.limit("10/minute")
+async def user_composition(request: Request, _user=Depends(get_current_user), db: Session = Depends(get_db)):
+    return await users.get_user_composition(db)
+
+
+@router.get("/users/active-premium")
+@limiter.limit("10/minute")
+async def active_premium_counts(request: Request, _user=Depends(get_current_user), db: Session = Depends(get_db)):
+    return await users.get_active_premium_counts(db)
+
+
+@router.get("/users/activation")
+@limiter.limit("10/minute")
+async def activation_rate(request: Request, _user=Depends(get_current_user), db: Session = Depends(get_db)):
+    return await users.get_played_vs_dormant(db)
 
 
 # Product Health KPIs

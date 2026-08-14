@@ -210,6 +210,40 @@ async def dashboard(request=None):
             </header>
 
             <main class="dashboard-main">
+                <!-- Users Section -->
+                <section class="kpi-section">
+                    <h2>👤 Users</h2>
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <h3>Real Users</h3>
+                            <p class="kpi-value" id="real-users">--</p>
+                        </div>
+                        <div class="kpi-card">
+                            <h3>Test/QA Accounts</h3>
+                            <p class="kpi-value" id="test-accounts">--</p>
+                        </div>
+                        <div class="kpi-card">
+                            <h3>Active Users</h3>
+                            <p class="kpi-value" id="active-users">--</p>
+                        </div>
+                        <div class="kpi-card">
+                            <h3>Premium Users</h3>
+                            <p class="kpi-value" id="premium-users">--</p>
+                        </div>
+                        <div class="kpi-card">
+                            <h3>Played ≥1 Game</h3>
+                            <p class="kpi-value" id="played-games">--</p>
+                        </div>
+                        <div class="kpi-card">
+                            <h3>Never Played</h3>
+                            <p class="kpi-value" id="dormant-users">--</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="userCompositionChart"></canvas>
+                    </div>
+                </section>
+
                 <!-- Acquisition Section -->
                 <section class="kpi-section">
                     <h2>📈 Acquisition</h2>
@@ -256,9 +290,24 @@ async def dashboard(request=None):
                             <h3>Avg Game Duration</h3>
                             <p class="kpi-value" id="avg-duration">--</p>
                         </div>
+                        <div class="kpi-card">
+                            <h3>Lobby Conversion</h3>
+                            <p class="kpi-value" id="lobby-conversion">--</p>
+                        </div>
+                        <div class="kpi-card">
+                            <h3>Bot Players %</h3>
+                            <p class="kpi-value" id="bot-percent">--</p>
+                        </div>
+                        <div class="kpi-card">
+                            <h3>Human Players %</h3>
+                            <p class="kpi-value" id="human-percent">--</p>
+                        </div>
                     </div>
                     <div class="chart-container">
                         <canvas id="engagementChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="botHumanChart"></canvas>
                     </div>
                 </section>
 
@@ -282,6 +331,9 @@ async def dashboard(request=None):
                             <h3>Churn Rate</h3>
                             <p class="kpi-value" id="churn-rate">--</p>
                         </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="retentionChart"></canvas>
                     </div>
                 </section>
 
@@ -308,6 +360,9 @@ async def dashboard(request=None):
                     </div>
                     <div class="chart-container">
                         <canvas id="revenueChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenueByProviderChart"></canvas>
                     </div>
                 </section>
 
