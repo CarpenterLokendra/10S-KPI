@@ -44,6 +44,11 @@ async function fetchKPI(endpoint) {
             window.location.href = '/login';
             return null;
         }
+        if (!response.ok) {
+            const text = await response.text();
+            console.error(`API Error [${response.status}] ${endpoint}:`, text);
+            return null;
+        }
         return await response.json();
     } catch (error) {
         console.error(`Error fetching ${endpoint}:`, error);
