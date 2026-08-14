@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  analytics:
+    container_name: 10s-analytics
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8002:8002"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH}
+      - JWT_SECRET=${JWT_SECRET}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-false}
+      - AWS_REGION=ap-southeast-2
+    networks:
+      - 10s-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+networks:
+  10s-net:
+    driver: bridge
