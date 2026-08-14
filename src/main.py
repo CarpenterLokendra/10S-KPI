@@ -51,6 +51,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(AuthMiddleware)
 
+# Mount static files (CSS, JS, charts)
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
+
 # Include routers
 app.include_router(pages.router)
 app.include_router(api.router)

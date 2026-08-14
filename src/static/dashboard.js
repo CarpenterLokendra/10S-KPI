@@ -16,7 +16,25 @@ function setDefaultDateRange() {
 }
 
 function applyDateRange() {
-    loadAllKPIs();
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+
+    if (!dateFrom || !dateTo) {
+        alert('Please select both start and end dates');
+        return;
+    }
+
+    // Calculate days between dates
+    const from = new Date(dateFrom);
+    const to = new Date(dateTo);
+    const days = Math.ceil((to - from) / (1000 * 60 * 60 * 24)) + 1;
+
+    if (days < 1) {
+        alert('End date must be after start date');
+        return;
+    }
+
+    loadAllKPIs(days);
 }
 
 async function fetchKPI(endpoint) {
@@ -33,7 +51,13 @@ async function fetchKPI(endpoint) {
     }
 }
 
-async function loadAllKPIs() {
+async function loadAllKPIs(days = 30) {
+    // Show loading state
+    document.querySelectorAll('.kpi-value').forEach(el => {
+        el.style.opacity = '0.6';
+        el.textContent = '...';
+    });
+
     // Acquisition KPIs
     const totalSignups = await fetchKPI('/acquisition/total-signups');
     if (totalSignups) {
@@ -48,50 +72,53 @@ async function loadAllKPIs() {
     }
 
     // Load signups chart
-    const signupsDaily = await fetchKPI('/acquisition/signups-daily?days=30');
+    const signupsDaily = await fetchKPI(`/acquisition/signups-daily?days=${days}`);
     if (signupsDaily) {
         renderSignupsChart(signupsDaily);
     }
 
     // Engagement KPIs
-    const dau = await fetchKPI('/engagement/dau?days=1');
+    const dau = await fetchKPI(`/engagement/dau?days=${Math.min(days, 30)}`);
     if (dau && dau.length > 0) {
         document.getElementById('dau').textContent = formatNumber(dau[dau.length - 1].count);
     }
 
-    const wau = await fetchKPI('/engagement/wau?weeks=1');
+    const weeks = Math.max(1, Math.ceil(days / 7));
+    const wau = await fetchKPI(`/engagement/wau?weeks=${weeks}`);
     if (wau && wau.length > 0) {
         document.getElementById('wau').textContent = formatNumber(wau[wau.length - 1].count);
     }
 
-    const mau = await fetchKPI('/engagement/mau?months=1');
+    const months = Math.max(1, Math.ceil(days / 30));
+    const mau = await fetchKPI(`/engagement/mau?months=${months}`);
     if (mau && mau.length > 0) {
         document.getElementById('mau').textContent = formatNumber(mau[mau.length - 1].count);
     }
 
-    const avgDuration = await fetchKPI('/engagement/avg-game-duration?days=30');
+    const avgDuration = await fetchKPI(`/engagement/avg-game-duration?days=${days}`);
     if (avgDuration) {
         document.getElementById('avg-duration').textContent = Math.round(avgDuration.avg_duration_minutes) + ' min';
     }
 
     // Load engagement chart
-    const gamesDaily = await fetchKPI('/engagement/games-played-daily?days=30');
+    const gamesDaily = await fetchKPI(`/engagement/games-played-daily?days=${days}`);
     if (gamesDaily) {
         renderEngagementChart(gamesDaily);
     }
 
     // Retention KPIs
-    const d1 = await fetchKPI('/retention/d1?days=90');
+    const retentionDays = Math.max(90, days);
+    const d1 = await fetchKPI(`/retention/d1?days=${retentionDays}`);
     if (d1) {
         document.getElementById('d1-retention').textContent = formatPercent(d1.retention_rate_percent);
     }
 
-    const d7 = await fetchKPI('/retention/d7?days=90');
+    const d7 = await fetchKPI(`/retention/d7?days=${retentionDays}`);
     if (d7) {
         document.getElementById('d7-retention').textContent = formatPercent(d7.retention_rate_percent);
     }
 
-    const d30 = await fetchKPI('/retention/d30?days=90');
+    const d30 = await fetchKPI(`/retention/d30?days=${retentionDays}`);
     if (d30) {
         document.getElementById('d30-retention').textContent = formatPercent(d30.retention_rate_percent);
     }
@@ -102,7 +129,7 @@ async function loadAllKPIs() {
     }
 
     // Monetization KPIs
-    const totalRevenue = await fetchKPI('/monetization/total-revenue?days=30');
+    const totalRevenue = await fetchKPI(`/monetization/total-revenue?days=${days}`);
     if (totalRevenue) {
         document.getElementById('total-revenue').textContent = '$' + formatNumber(totalRevenue.total_revenue_usd);
     }
@@ -112,49 +139,54 @@ async function loadAllKPIs() {
         document.getElementById('premium-conversion').textContent = formatPercent(premiumConversion.conversion_rate_percent);
     }
 
-    const arpu = await fetchKPI('/monetization/arpu?days=30');
+    const arpu = await fetchKPI(`/monetization/arpu?days=${days}`);
     if (arpu) {
         document.getElementById('arpu').textContent = '$' + arpu.arpu.toFixed(2);
     }
 
-    const adEngagement = await fetchKPI('/monetization/ad-engagement?days=30');
+    const adEngagement = await fetchKPI(`/monetization/ad-engagement?days=${days}`);
     if (adEngagement && adEngagement.length > 0) {
         const avgCompletion = adEngagement.reduce((sum, item) => sum + item.completion_rate_percent, 0) / adEngagement.length;
         document.getElementById('ad-completion').textContent = formatPercent(avgCompletion);
     }
 
     // Load revenue chart
-    const revenueDaily = await fetchKPI('/monetization/revenue-daily?days=30');
+    const revenueDaily = await fetchKPI(`/monetization/revenue-daily?days=${days}`);
     if (revenueDaily) {
         renderRevenueChart(revenueDaily);
     }
 
     // Product Health KPIs
-    const healthScore = await fetchKPI('/health/health-score?days=30');
+    const healthScore = await fetchKPI(`/health/health-score?days=${days}`);
     if (healthScore) {
         document.getElementById('health-score').textContent = healthScore.health_score.toFixed(0) + '/100';
     }
 
-    const gameCompletion = await fetchKPI('/health/game-completion?days=30');
+    const gameCompletion = await fetchKPI(`/health/game-completion?days=${days}`);
     if (gameCompletion) {
         document.getElementById('game-completion').textContent = formatPercent(gameCompletion.completion_rate_percent);
     }
 
-    const disconnectRate = await fetchKPI('/health/disconnect-rate?days=30');
+    const disconnectRate = await fetchKPI(`/health/disconnect-rate?days=${days}`);
     if (disconnectRate) {
         document.getElementById('disconnect-rate').textContent = formatPercent(disconnectRate.disconnect_rate_percent);
     }
 
-    const avgPlayers = await fetchKPI('/health/avg-players-per-game?days=30');
+    const avgPlayers = await fetchKPI(`/health/avg-players-per-game?days=${days}`);
     if (avgPlayers) {
         document.getElementById('avg-players').textContent = avgPlayers.avg_players.toFixed(1);
     }
 
     // Load health chart
-    const healthTrend = await fetchKPI('/health/health-trend?days=30');
+    const healthTrend = await fetchKPI(`/health/health-trend?days=${days}`);
     if (healthTrend) {
         renderHealthChart(healthTrend);
     }
+
+    // Remove loading state
+    document.querySelectorAll('.kpi-value').forEach(el => {
+        el.style.opacity = '1';
+    });
 }
 
 function renderSignupsChart(data) {
