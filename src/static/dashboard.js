@@ -249,6 +249,7 @@ async function loadAllKPIs(days = 30) {
     if (userComposition) {
         document.getElementById('real-users').textContent = formatNumber(userComposition.real_users);
         document.getElementById('test-accounts').textContent = formatNumber(userComposition.test_accounts);
+        document.getElementById('bot-accounts').textContent = formatNumber(userComposition.bot_accounts);
         try {
             renderUserCompositionChart(userComposition);
         } catch (err) {
@@ -543,10 +544,10 @@ function renderUserCompositionChart(data) {
     userCompositionChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Real Users', 'Test/QA Accounts'],
+            labels: ['Real Users', 'Test/QA Accounts', 'Bot Accounts'],
             datasets: [{
-                data: [data.real_users, data.test_accounts],
-                backgroundColor: ['#667eea', '#bdc3c7'],
+                data: [data.real_users, data.test_accounts, data.bot_accounts],
+                backgroundColor: ['#667eea', '#bdc3c7', '#f39c12'],
                 borderColor: '#fff',
                 borderWidth: 2,
             }]

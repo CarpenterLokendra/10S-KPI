@@ -223,6 +223,10 @@ async def dashboard(request=None):
                             <p class="kpi-value" id="test-accounts">--</p>
                         </div>
                         <div class="kpi-card">
+                            <h3>Bot Accounts</h3>
+                            <p class="kpi-value" id="bot-accounts">--</p>
+                        </div>
+                        <div class="kpi-card">
                             <h3>Active Users</h3>
                             <p class="kpi-value" id="active-users">--</p>
                         </div>

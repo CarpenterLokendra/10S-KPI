@@ -13,6 +13,7 @@ async def get_dau(db: Session, days: int = 30) -> List[Dict]:
             COUNT(DISTINCT gp.user_id) as active_users
         FROM "10s_schema".game_players gp
         WHERE gp.joined_at >= :start_date
+          AND gp.is_bot = false
         GROUP BY DATE(gp.joined_at)
         ORDER BY date ASC
     """)
@@ -29,6 +30,7 @@ async def get_wau(db: Session, weeks: int = 12) -> List[Dict]:
             COUNT(DISTINCT gp.user_id) as active_users
         FROM "10s_schema".game_players gp
         WHERE gp.joined_at >= :start_date
+          AND gp.is_bot = false
         GROUP BY DATE_TRUNC('week', gp.joined_at)
         ORDER BY week ASC
     """)
@@ -45,6 +47,7 @@ async def get_mau(db: Session, months: int = 12) -> List[Dict]:
             COUNT(DISTINCT gp.user_id) as active_users
         FROM "10s_schema".game_players gp
         WHERE gp.joined_at >= :start_date
+          AND gp.is_bot = false
         GROUP BY DATE_TRUNC('month', gp.joined_at)
         ORDER BY month ASC
     """)

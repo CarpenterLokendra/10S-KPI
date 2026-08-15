@@ -16,6 +16,7 @@ async def get_d1_retention(db: Session, days: int = 90) -> Dict:
             FROM "10s_schema".users u
             LEFT JOIN "10s_schema".game_players gp ON u.id = gp.user_id
             WHERE u.created_at >= :cutoff_date
+              AND u.id NOT LIKE 'bot_%'
             GROUP BY u.id, u.created_at
         )
         SELECT
@@ -46,6 +47,7 @@ async def get_d7_retention(db: Session, days: int = 90) -> Dict:
             FROM "10s_schema".users u
             LEFT JOIN "10s_schema".game_players gp ON u.id = gp.user_id
             WHERE u.created_at >= :cutoff_date
+              AND u.id NOT LIKE 'bot_%'
             GROUP BY u.id, u.created_at
         )
         SELECT
@@ -76,6 +78,7 @@ async def get_d30_retention(db: Session, days: int = 90) -> Dict:
             FROM "10s_schema".users u
             LEFT JOIN "10s_schema".game_players gp ON u.id = gp.user_id
             WHERE u.created_at >= :cutoff_date
+              AND u.id NOT LIKE 'bot_%'
             GROUP BY u.id, u.created_at
         )
         SELECT
@@ -104,6 +107,7 @@ async def get_churn_rate(db: Session, inactive_days: int = 7) -> Dict:
                 MAX(gp.joined_at) as last_activity
             FROM "10s_schema".users u
             LEFT JOIN "10s_schema".game_players gp ON u.id = gp.user_id
+            WHERE u.id NOT LIKE 'bot_%'
             GROUP BY u.id
         )
         SELECT

@@ -5,26 +5,29 @@ from typing import List, Dict
 
 
 async def get_user_composition(db: Session) -> Dict:
-    """Total users split into real users and test/QA accounts"""
+    """Total users split into real users, test/QA accounts, and bot accounts"""
     query = text("""
         SELECT
             COUNT(*) as total_users,
+            SUM(CASE WHEN id LIKE 'bot_%' THEN 1 ELSE 0 END) as bot_accounts,
             SUM(CASE WHEN username ILIKE 'testuser%' OR username ILIKE 'newuser%' OR username ILIKE 'uniqueuser%' THEN 1 ELSE 0 END) as test_accounts
         FROM "10s_schema".users
     """)
     result = db.execute(query).fetchone()
     total = result[0] or 0
-    test = result[1] or 0
-    real = total - test
+    bots = result[1] or 0
+    test = result[2] or 0
+    real = total - test - bots
     return {
         "total_users": total,
         "real_users": real,
         "test_accounts": test,
+        "bot_accounts": bots,
     }
 
 
 async def get_active_premium_counts(db: Session) -> Dict:
-    """Active and premium users (excluding test accounts)"""
+    """Active and premium users (excluding test accounts and bot accounts)"""
     query = text("""
         SELECT
             COUNT(*) as total_real,
@@ -34,6 +37,7 @@ async def get_active_premium_counts(db: Session) -> Dict:
         WHERE username NOT ILIKE 'testuser%'
           AND username NOT ILIKE 'newuser%'
           AND username NOT ILIKE 'uniqueuser%'
+          AND id NOT LIKE 'bot_%'
     """)
     result = db.execute(query).fetchone()
     total_real = result[0] or 0
@@ -57,6 +61,7 @@ async def get_played_vs_dormant(db: Session) -> Dict:
         WHERE username NOT ILIKE 'testuser%'
           AND username NOT ILIKE 'newuser%'
           AND username NOT ILIKE 'uniqueuser%'
+          AND id NOT LIKE 'bot_%'
     """)
     result = db.execute(query).fetchone()
     total = result[0] or 0

@@ -12,6 +12,7 @@ async def get_new_signups_per_day(db: Session, days: int = 30) -> List[Dict]:
             COUNT(*) as signup_count
         FROM "10s_schema".users
         WHERE created_at >= :start_date
+          AND id NOT LIKE 'bot_%'
         GROUP BY DATE(created_at)
         ORDER BY date ASC
     """)
@@ -27,6 +28,7 @@ async def get_signups_weekly(db: Session, weeks: int = 12) -> List[Dict]:
             COUNT(*) as signup_count
         FROM "10s_schema".users
         WHERE created_at >= :start_date
+          AND id NOT LIKE 'bot_%'
         GROUP BY DATE_TRUNC('week', created_at)
         ORDER BY week ASC
     """)
@@ -42,6 +44,7 @@ async def get_signups_monthly(db: Session, months: int = 12) -> List[Dict]:
             COUNT(*) as signup_count
         FROM "10s_schema".users
         WHERE created_at >= :start_date
+          AND id NOT LIKE 'bot_%'
         GROUP BY DATE_TRUNC('month', created_at)
         ORDER BY month ASC
     """)
@@ -50,7 +53,7 @@ async def get_signups_monthly(db: Session, months: int = 12) -> List[Dict]:
 
 
 async def get_total_signups(db: Session) -> int:
-    query = text("SELECT COUNT(*) FROM \"10s_schema\".users")
+    query = text("SELECT COUNT(*) FROM \"10s_schema\".users WHERE id NOT LIKE 'bot_%'")
     result = db.execute(query)
     return result.scalar() or 0
 
@@ -70,6 +73,7 @@ async def get_signup_growth_rate(db: Session) -> Dict:
             SUM(CASE WHEN created_at >= :month_ago THEN 1 ELSE 0 END) as this_month,
             SUM(CASE WHEN created_at >= :two_months_ago AND created_at < :month_ago THEN 1 ELSE 0 END) as last_month
         FROM "10s_schema".users
+        WHERE id NOT LIKE 'bot_%'
     """)
     result = db.execute(query, {
         "week_ago": week_ago,
