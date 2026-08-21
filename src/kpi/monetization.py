@@ -150,3 +150,164 @@ async def get_arpu(db: Session, days: int = 30) -> Dict:
         "arpu": round(arpu, 2),
         "days": days,
     }
+
+
+async def get_paid_users_analytics(db: Session, days: int = 30) -> Dict:
+    """Get paid users count and growth metrics"""
+    start_date = datetime.utcnow() - timedelta(days=days)
+    previous_start = start_date - timedelta(days=days)
+
+    # Total paid users (unique users with active subscriptions)
+    query = text("""
+        SELECT COUNT(DISTINCT user_id) as paid_users
+        FROM "10s_schema".premium_subscriptions
+        WHERE is_active = true
+    """)
+    total_paid = db.execute(query).fetchone()[0] or 0
+
+    # Active subscriptions breakdown
+    query = text("""
+        SELECT
+            COUNT(*) as total,
+            SUM(CASE WHEN billing_period = 'monthly' THEN 1 ELSE 0 END) as monthly,
+            SUM(CASE WHEN billing_period = 'yearly' THEN 1 ELSE 0 END) as yearly
+        FROM "10s_schema".premium_subscriptions
+        WHERE is_active = true
+    """)
+    result = db.execute(query).fetchone()
+    total_subs = result[0] or 0
+    monthly_subs = result[1] or 0
+    yearly_subs = result[2] or 0
+
+    # Calculate MRR and ARR (in INR for consistent base)
+    query = text("""
+        SELECT
+            COALESCE(SUM(CASE WHEN billing_period = 'monthly' THEN amount ELSE 0 END), 0) as monthly_revenue,
+            COALESCE(SUM(CASE WHEN billing_period = 'yearly' THEN amount/12 ELSE 0 END), 0) as yearly_monthly_equivalent
+        FROM "10s_schema".premium_subscriptions
+        WHERE is_active = true AND currency = 'INR'
+    """)
+    result = db.execute(query).fetchone()
+    mrr = float(result[0] or 0) + float(result[1] or 0)
+    arr = mrr * 12
+
+    # Growth metrics - new subscriptions this period
+    query = text("""
+        SELECT COUNT(*) as new_subs
+        FROM "10s_schema".premium_subscriptions
+        WHERE started_at >= :start_date
+    """)
+    new_subs_this = db.execute(query, {"start_date": start_date}).fetchone()[0] or 0
+
+    # Previous period
+    query = text("""
+        SELECT COUNT(*) as new_subs
+        FROM "10s_schema".premium_subscriptions
+        WHERE started_at >= :start_date AND started_at < :end_date
+    """)
+    new_subs_prev = db.execute(query, {"start_date": previous_start, "end_date": start_date}).fetchone()[0] or 0
+
+    growth_rate = ((new_subs_this - new_subs_prev) / new_subs_prev * 100) if new_subs_prev > 0 else 0
+
+    # Subscription status breakdown
+    query = text("""
+        SELECT
+            SUM(CASE WHEN is_active = true THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN is_active = false THEN 1 ELSE 0 END) as cancelled,
+            SUM(CASE WHEN is_active = true AND expires_at < NOW() THEN 1 ELSE 0 END) as expired
+        FROM "10s_schema".premium_subscriptions
+    """)
+    result = db.execute(query).fetchone()
+
+    return {
+        "total_paid_users": total_paid,
+        "active_subscriptions": total_subs,
+        "monthly_subscriptions": monthly_subs,
+        "yearly_subscriptions": yearly_subs,
+        "mrr_inr": round(mrr, 2),
+        "arr_inr": round(arr, 2),
+        "growth": {
+            "new_subscriptions_this_period": new_subs_this,
+            "growth_rate_percent": round(growth_rate, 2),
+        },
+        "subscription_breakdown": {
+            "active": result[0] or 0,
+            "cancelled": result[1] or 0,
+            "expired": result[2] or 0,
+        },
+        "period_days": days,
+    }
+
+
+async def get_region_distribution(db: Session, days: int = 30) -> Dict:
+    """Get user distribution by region with conversion rates"""
+    start_date = datetime.utcnow() - timedelta(days=days)
+    previous_start = start_date - timedelta(days=days)
+
+    # Total user counts
+    query = text("""
+        SELECT COUNT(DISTINCT id) as total_users
+        FROM "10s_schema".users
+    """)
+    total_users = db.execute(query).fetchone()[0] or 0
+
+    # Total paid users
+    query = text("""
+        SELECT COUNT(DISTINCT user_id) as paid_users
+        FROM "10s_schema".premium_subscriptions
+        WHERE is_active = true
+    """)
+    total_paid = db.execute(query).fetchone()[0] or 0
+
+    # Regional breakdown
+    query = text("""
+        SELECT
+            u.country,
+            COUNT(DISTINCT u.id) as total_users,
+            COUNT(DISTINCT CASE WHEN ps.is_active THEN ps.user_id END) as paid_users,
+            COUNT(DISTINCT CASE WHEN u.created_at >= :start_date THEN u.id END) as new_users_this_period
+        FROM "10s_schema".users u
+        LEFT JOIN "10s_schema".premium_subscriptions ps ON u.id = ps.user_id
+        WHERE u.country IS NOT NULL
+        GROUP BY u.country
+        ORDER BY total_users DESC
+    """)
+    regions = []
+
+    for row in db.execute(query, {"start_date": start_date}):
+        country = row[0] or "Unknown"
+        total = row[1] or 0
+        paid = row[2] or 0
+        new_users = row[3] or 0
+
+        # Previous period count for growth
+        prev_query = text("""
+            SELECT COUNT(DISTINCT id) as count
+            FROM "10s_schema".users
+            WHERE country = :country AND created_at >= :start_date AND created_at < :end_date
+        """)
+        prev_count = db.execute(prev_query, {
+            "country": country,
+            "start_date": previous_start,
+            "end_date": start_date
+        }).fetchone()[0] or 0
+
+        growth_rate = ((new_users - prev_count) / prev_count * 100) if prev_count > 0 else 0
+        conversion_rate = (paid / total * 100) if total > 0 else 0
+
+        regions.append({
+            "country": country,
+            "total_users": total,
+            "paid_users": paid,
+            "conversion_rate_percent": round(conversion_rate, 2),
+            "new_users_this_period": new_users,
+            "growth_rate_percent": round(growth_rate, 2),
+        })
+
+    return {
+        "total_users": total_users,
+        "total_paid_users": total_paid,
+        "regions": regions[:50],  # Top 50 regions
+        "top_regions": regions[:10],  # Top 10
+        "period_days": days,
+    }

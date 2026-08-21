@@ -155,6 +155,18 @@ async def arpu(request: Request, days: int = 30, _user=Depends(get_current_user)
     return await monetization.get_arpu(db, days)
 
 
+@router.get("/monetization/paid-users")
+@limiter.limit("10/minute")
+async def paid_users_analytics(request: Request, days: int = 30, _user=Depends(get_current_user), db: Session = Depends(get_db)):
+    return await monetization.get_paid_users_analytics(db, days)
+
+
+@router.get("/monetization/region-distribution")
+@limiter.limit("10/minute")
+async def region_distribution(request: Request, days: int = 30, _user=Depends(get_current_user), db: Session = Depends(get_db)):
+    return await monetization.get_region_distribution(db, days)
+
+
 # Users KPIs
 @router.get("/users/composition")
 @limiter.limit("10/minute")
