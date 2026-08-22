@@ -22,6 +22,11 @@
    - Location: `/Users/lokendracarpenter/Documents/Projects/10S/mobile-10s`
    - URL: https://github.com/CarpenterLokendra/10s-mobile
 
+5. **Analytics & KPI**: `CarpenterLokendra/10S-KPI`
+   - Location: `/Users/lokendracarpenter/Documents/Projects/10S/Analytics`
+   - URL: https://github.com/CarpenterLokendra/10S-KPI
+   - Purpose: Tracks game analytics, KPIs, and metrics across all platforms
+
 ## Important Notes
 
 - **Projects/10S** subdirectory is shared/deprecated - ignore it
