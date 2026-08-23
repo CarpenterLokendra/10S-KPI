@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useAuth } from '@/hooks/useAuth'
+import { useTranslation } from '@/hooks/useTranslation'
 import { ROUTES } from '@/constants/routes'
 import { useThemeModeStore } from '@/store/themeMode.store'
 
@@ -15,6 +16,7 @@ interface FormData {
 
 export default function RegisterForm() {
   const { colorMode } = useThemeModeStore()
+  const { t } = useTranslation()
   const [formData, setFormData] = useState<FormData>({
     username: '',
     email: '',
