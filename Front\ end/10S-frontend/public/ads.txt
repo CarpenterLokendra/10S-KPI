@@ -1,0 +1,8 @@
+# Ads.txt file for Catch The Ten
+# This file helps advertisers verify the authorized sellers of inventory
+# Add the line from your Adsterra dashboard here when publisher ID is available
+# Format: domain, publisher_account_id, account_type, certification_authority_id
+
+# Placeholder - replace with your Adsterra ads.txt line from the dashboard
+# Example format (replace with your actual values):
+# highperformanceformat.com, [your_publisher_id], DIRECT
